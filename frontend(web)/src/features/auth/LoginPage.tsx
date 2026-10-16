@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,16 +11,15 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { AuthError, submitCredentials, submitTwoFactor } from '@/api/auth'
-import { hasWebAccess } from '@/types/role'
-import type { User } from '@/types/user'
-
-interface LoginPageProps {
-  onLoggedIn: (user: User) => void
-}
+import { useAuth } from '@/features/auth/useAuth'
+import { ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
 
 type Step = 'credentials' | 'twofactor' | 'mobile-only'
 
-export default function LoginPage({ onLoggedIn }: LoginPageProps) {
+export default function LoginPage() {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
   const [step, setStep] = useState<Step>('credentials')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -38,6 +38,7 @@ export default function LoginPage({ onLoggedIn }: LoginPageProps) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
     try {
       const result = await submitCredentials(username.trim(), password)
       setChallengeId(result.challengeId)
@@ -53,12 +54,16 @@ export default function LoginPage({ onLoggedIn }: LoginPageProps) {
     e.preventDefault()
     setError('')
     setLoading(true)
+
     try {
       const result = await submitTwoFactor(challengeId, code.trim())
-      if (!hasWebAccess(result.user.role)) {
+      const home = ROLE_HOME_PATH[result.user.role]
+
+      if (!hasWebAccess(result.user.role) || !home) {
         setStep('mobile-only')
       } else {
-        onLoggedIn(result.user)
+        login(result.user)
+        navigate(home, { replace: true })
       }
     } catch (err) {
       setError(messageFrom(err))
@@ -99,6 +104,7 @@ export default function LoginPage({ onLoggedIn }: LoginPageProps) {
                   required
                 />
               </div>
+
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -110,7 +116,9 @@ export default function LoginPage({ onLoggedIn }: LoginPageProps) {
                   required
                 />
               </div>
+
               {error && <p className="text-sm text-red-600">{error}</p>}
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Checking...' : 'Continue'}
               </Button>
@@ -131,10 +139,13 @@ export default function LoginPage({ onLoggedIn }: LoginPageProps) {
                   required
                 />
               </div>
+
               {error && <p className="text-sm text-red-600">{error}</p>}
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Verifying...' : 'Verify and sign in'}
               </Button>
+
               <Button
                 type="button"
                 variant="ghost"
