@@ -10,6 +10,7 @@ import { ROLES, ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
 import CaseDashboardPage from '@/features/resource-portal/CaseDashboardPage'
 import ComponentsDemoPage from '@/features/resource-portal/ComponentsDemoPage'
 import CaseFormPage from '@/features/resource-portal/CaseFormPage'
+import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
 
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
@@ -52,6 +53,11 @@ export default function AppRoutes() {
             <Route
               path="/resource/cases/new"
               element={<CaseFormPage />}
+            />
+
+            <Route
+              path="/resource/cases/:caseId"
+              element={<CaseDetailPage />}
             />
           </Route>
 

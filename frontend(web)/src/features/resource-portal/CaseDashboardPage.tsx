@@ -1,5 +1,7 @@
+
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+
 import DataTable, { type Column } from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -7,8 +9,25 @@ import { fetchCases } from '@/api/mockCases'
 import type { Case } from '@/types/case'
 
 const columns: Column<Case>[] = [
-  { header: 'Case ID', cell: (c) => c.id },
-  { header: 'Title', cell: (c) => c.title },
+  {
+    header: 'Case ID',
+    cell: (c) => (
+      <Link
+        to={`/resource/cases/${c.id}`}
+        className="font-medium text-blue-700 hover:underline"
+      >
+        {c.id}
+      </Link>
+    ),
+  },
+  {
+    header: 'Title',
+    cell: (c) => (
+      <Link to={`/resource/cases/${c.id}`} className="hover:underline">
+        {c.title}
+      </Link>
+    ),
+  },
   { header: 'Category', cell: (c) => c.category },
   { header: 'Area', cell: (c) => c.area },
   { header: 'Status', cell: (c) => <StatusBadge status={c.status} /> },
@@ -22,12 +41,14 @@ export default function CaseDashboardPage() {
 
   useEffect(() => {
     let cancelled = false
+
     fetchCases().then((data) => {
       if (!cancelled) {
         setCases(data)
         setLoading(false)
       }
     })
+
     return () => {
       cancelled = true
     }
@@ -39,12 +60,19 @@ export default function CaseDashboardPage() {
         <h1 className="text-2xl font-bold text-slate-900">
           Resource Organization Dashboard
         </h1>
-        <Button onClick={() => navigate('/resource/cases/new')}>New case</Button>
+        <Button onClick={() => navigate('/resource/cases/new')}>
+          New case
+        </Button>
       </div>
+
       {loading ? (
         <p className="text-slate-500">Loading cases...</p>
       ) : (
-        <DataTable columns={columns} rows={cases} getRowId={(c) => c.id} />
+        <DataTable
+          columns={columns}
+          rows={cases}
+          getRowId={(c) => c.id}
+        />
       )}
     </div>
   )

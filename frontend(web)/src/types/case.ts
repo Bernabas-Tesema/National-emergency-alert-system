@@ -1,4 +1,4 @@
-
+import type { Message } from './message'
 import type { AreaSelection } from './area'
 
 // The 8 case statuses from the Resource Organization Portal plan.
@@ -81,4 +81,16 @@ export interface CaseFormValues {
   description: string
   recommendedAction: string
   files: File[]
+}
+// A case with all its details, as shown on the detail page.
+// (The list on the dashboard only needs the smaller Case type.)
+export interface CaseRecord extends Case {
+  categoryId: CaseCategory | '' // drafts may not have one yet
+  severity: Severity | ''
+  areaSelection: AreaSelection
+  startTime: string
+  description: string
+  recommendedAction: string
+  attachmentNames: string[]
+  messages: Message[]
 }
