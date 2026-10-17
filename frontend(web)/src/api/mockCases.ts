@@ -8,14 +8,19 @@ import {
   type CaseFormValues,
   type CaseRecord,
   type CaseStatus,
+  type CaseUpdate,
+  type CaseUpdateKind,
+  type DeliveryChannelStats,
+  type InsaDecision,
   type Severity,
 } from '@/types/case'
 import type { Message } from '@/types/message'
 import type { User } from '@/types/user'
 
 const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
+const today = () => new Date().toISOString().slice(0, 10)
 
-// --- Sample data -------------------------------------------------------
+// --- Sample data (all invented, including names and numbers) ------------
 
 interface Seed {
   id: string
@@ -29,6 +34,8 @@ interface Seed {
   description: string
   recommendedAction: string
   messages?: Message[]
+  decision?: InsaDecision
+  delivery?: DeliveryChannelStats[]
 }
 
 function fromSeed(s: Seed): CaseRecord {
@@ -47,6 +54,9 @@ function fromSeed(s: Seed): CaseRecord {
     recommendedAction: s.recommendedAction,
     attachmentNames: [],
     messages: s.messages ?? [],
+    decision: s.decision ?? null,
+    delivery: s.delivery ?? null,
+    updates: [],
   }
 }
 
@@ -63,6 +73,17 @@ const MOCK_CASES: CaseRecord[] = (
       startTime: '2026-10-14T06:30',
       description: 'River level rising quickly after heavy overnight rain.',
       recommendedAction: 'Move away from riverbanks and low-lying areas.',
+      decision: {
+        outcome: 'approved',
+        decidedBy: 'Hanna Bekele',
+        decidedAt: '2026-10-14T07:10:00Z',
+        comment: 'Verified with the river authority readings.',
+      },
+      delivery: [
+        { channel: 'PUSH', sent: 12000, delivered: 11450, failed: 550 },
+        { channel: 'SMS', sent: 15000, delivered: 14200, failed: 800 },
+        { channel: 'VOICE', sent: 2000, delivered: 1700, failed: 300 },
+      ],
     },
     {
       id: 'CASE-1002',
@@ -109,6 +130,12 @@ const MOCK_CASES: CaseRecord[] = (
       startTime: '2026-10-13T17:45',
       description: 'Crash blocking both lanes, traffic backed up.',
       recommendedAction: 'Use alternative routes until further notice.',
+      decision: {
+        outcome: 'approved',
+        decidedBy: 'Hanna Bekele',
+        decidedAt: '2026-10-13T19:00:00Z',
+        comment: 'Confirmed with traffic police.',
+      },
     },
     {
       id: 'CASE-1005',
@@ -133,6 +160,12 @@ const MOCK_CASES: CaseRecord[] = (
       startTime: '2026-10-12T10:00',
       description: 'Social media reports with no confirmation from authorities.',
       recommendedAction: '',
+      decision: {
+        outcome: 'rejected',
+        decidedBy: 'Marta Haile',
+        decidedAt: '2026-10-12T12:30:00Z',
+        comment: 'No confirmation from the dam authority.',
+      },
     },
   ] satisfies Seed[]
 ).map(fromSeed)
@@ -149,7 +182,9 @@ export async function fetchCases(): Promise<Case[]> {
 export async function fetchCase(id: string): Promise<CaseRecord | null> {
   await delay()
   const found = MOCK_CASES.find((c) => c.id === id)
-  return found ? { ...found, messages: [...found.messages] } : null
+  return found
+    ? { ...found, messages: [...found.messages], updates: [...found.updates] }
+    : null
 }
 
 let nextCaseNumber = 1007
@@ -160,6 +195,10 @@ function describeArea(area: AreaSelection): string {
   if (region && area.points.length >= 3) return `${region.name} + drawn area`
   if (region) return region.name
   return 'Drawn area'
+}
+
+function categoryLabel(category: CaseFormValues['category']): string {
+  return category ? CATEGORY_LABELS[category] : 'Uncategorised'
 }
 
 // Saves a new case as a draft or submits it. The list lives only in memory,
@@ -173,10 +212,10 @@ export async function saveCase(
   const saved: CaseRecord = {
     id: `CASE-${nextCaseNumber++}`,
     title: values.title.trim(),
-    category: values.category ? CATEGORY_LABELS[values.category] : 'Uncategorised',
+    category: categoryLabel(values.category),
     area: describeArea(values.area),
     status,
-    updatedAt: new Date().toISOString().slice(0, 10),
+    updatedAt: today(),
     categoryId: values.category,
     severity: values.severity,
     areaSelection: values.area,
@@ -185,9 +224,53 @@ export async function saveCase(
     recommendedAction: values.recommendedAction.trim(),
     attachmentNames: values.files.map((f) => f.name),
     messages: [],
+    decision: null,
+    delivery: null,
+    updates: [],
   }
   MOCK_CASES.unshift(saved)
   return saved
+}
+
+// Edits a draft, and can submit it at the same time. Only drafts can change.
+// New files are added to the ones already attached.
+export async function updateDraft(
+  id: string,
+  values: CaseFormValues,
+  status: Extract<CaseStatus, 'draft' | 'submitted'>,
+): Promise<void> {
+  await delay()
+  const found = MOCK_CASES.find((c) => c.id === id)
+  if (!found) throw new Error('Case not found')
+  if (found.status !== 'draft') throw new Error('Only drafts can be edited')
+
+  found.title = values.title.trim()
+  found.category = categoryLabel(values.category)
+  found.categoryId = values.category
+  found.severity = values.severity
+  found.area = describeArea(values.area)
+  found.areaSelection = values.area
+  found.startTime = values.startTime
+  found.description = values.description.trim()
+  found.recommendedAction = values.recommendedAction.trim()
+  found.attachmentNames = [
+    ...found.attachmentNames,
+    ...values.files.map((f) => f.name),
+  ]
+  found.status = status
+  found.updatedAt = today()
+}
+
+// After answering INSA's question, the officer sends the case back for review.
+export async function resubmitCase(caseId: string): Promise<void> {
+  await delay(250)
+  const found = MOCK_CASES.find((c) => c.id === caseId)
+  if (!found) throw new Error('Case not found')
+  if (found.status !== 'needs_clarification') {
+    throw new Error('Only cases that need clarification can be resubmitted')
+  }
+  found.status = 'submitted'
+  found.updatedAt = today()
 }
 
 // The author and time are filled in here, the way a real server would do it,
@@ -210,4 +293,29 @@ export async function sendCaseMessage(
   }
   found.messages.push(message)
   return message
+}
+
+// Asks INSA to publish an update or an "all clear" for an active alert.
+// It is only a request: INSA must approve it before the public sees it.
+export async function requestCaseUpdate(
+  caseId: string,
+  kind: CaseUpdateKind,
+  text: string,
+  author: User,
+): Promise<CaseUpdate> {
+  await delay(250)
+  const found = MOCK_CASES.find((c) => c.id === caseId)
+  if (!found) throw new Error('Case not found')
+  if (found.status !== 'broadcast') {
+    throw new Error('Updates can only be requested for broadcast cases')
+  }
+  const update: CaseUpdate = {
+    id: crypto.randomUUID(),
+    kind,
+    text,
+    requestedBy: author.fullName,
+    requestedAt: new Date().toISOString(),
+  }
+  found.updates.push(update)
+  return update
 }

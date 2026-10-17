@@ -7,10 +7,12 @@ import PlaceholderPage from '@/components/PlaceholderPage'
 import AppShell from '@/layouts/AppShell'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES, ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
+
 import CaseDashboardPage from '@/features/resource-portal/CaseDashboardPage'
 import ComponentsDemoPage from '@/features/resource-portal/ComponentsDemoPage'
 import CaseFormPage from '@/features/resource-portal/CaseFormPage'
 import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
+import CaseEditPage from '@/features/resource-portal/CaseEditPage'
 
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
@@ -58,6 +60,11 @@ export default function AppRoutes() {
             <Route
               path="/resource/cases/:caseId"
               element={<CaseDetailPage />}
+            />
+
+            <Route
+              path="/resource/cases/:caseId/edit"
+              element={<CaseEditPage />}
             />
           </Route>
 

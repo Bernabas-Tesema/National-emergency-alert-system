@@ -1,3 +1,4 @@
+
 import type { Message } from './message'
 import type { AreaSelection } from './area'
 
@@ -77,13 +78,14 @@ export interface CaseFormValues {
   category: CaseCategory | ''
   severity: Severity | ''
   area: AreaSelection
-  startTime: string // The value of a datetime-local input
+  startTime: string
   description: string
   recommendedAction: string
   files: File[]
 }
+
 // A case with all its details, as shown on the detail page.
-// (The list on the dashboard only needs the smaller Case type.)
+// The list on the dashboard only needs the smaller Case type.
 export interface CaseRecord extends Case {
   categoryId: CaseCategory | '' // drafts may not have one yet
   severity: Severity | ''
@@ -93,4 +95,46 @@ export interface CaseRecord extends Case {
   recommendedAction: string
   attachmentNames: string[]
   messages: Message[]
+  decision: InsaDecision | null
+  delivery: DeliveryChannelStats[] | null
+  updates: CaseUpdate[]
+}
+
+export type DeliveryChannel = 'PUSH' | 'SMS' | 'VOICE'
+
+export const CHANNEL_LABELS: Record<DeliveryChannel, string> = {
+  PUSH: 'Push notification',
+  SMS: 'SMS',
+  VOICE: 'Voice call',
+}
+
+// Only counts: the Resource Portal never sees citizen identities.
+export interface DeliveryChannelStats {
+  channel: DeliveryChannel
+  sent: number
+  delivered: number
+  failed: number
+}
+
+export interface InsaDecision {
+  outcome: 'approved' | 'rejected'
+  decidedBy: string
+  decidedAt: string
+  comment: string
+}
+
+export type CaseUpdateKind = 'update' | 'all_clear'
+
+export const UPDATE_KIND_LABELS: Record<CaseUpdateKind, string> = {
+  update: 'Update',
+  all_clear: 'All clear',
+}
+
+// A request sent to INSA. It is not published until INSA approves it.
+export interface CaseUpdate {
+  id: string
+  kind: CaseUpdateKind
+  text: string
+  requestedBy: string
+  requestedAt: string
 }
