@@ -13,6 +13,7 @@ import ComponentsDemoPage from '@/features/resource-portal/ComponentsDemoPage'
 import CaseFormPage from '@/features/resource-portal/CaseFormPage'
 import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
 import CaseEditPage from '@/features/resource-portal/CaseEditPage'
+import OrgAdminPage from '@/features/resource-portal/OrgAdminPage'
 
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
@@ -36,7 +37,7 @@ export default function AppRoutes() {
           AppShell draws the sidebar and header for everything inside. */}
       <Route element={<ProtectedRoute allowedRoles={WEB_ROLES} />}>
         <Route element={<AppShell />}>
-          {/* Inner guards: only the listed roles see each group. */}
+          {/* Resource portal: providers and organization admins. */}
           <Route
             element={
               <ProtectedRoute allowedRoles={['provider', 'org_admin']} />
@@ -68,6 +69,15 @@ export default function AppRoutes() {
             />
           </Route>
 
+          {/* Organization management: org_admin only. */}
+          <Route element={<ProtectedRoute allowedRoles={['org_admin']} />}>
+            <Route
+              path="/resource/org-admin"
+              element={<OrgAdminPage />}
+            />
+          </Route>
+
+          {/* INSA command dashboard: system administrators only. */}
           <Route
             element={<ProtectedRoute allowedRoles={['system_admin']} />}
           >
@@ -77,6 +87,7 @@ export default function AppRoutes() {
             />
           </Route>
 
+          {/* SOS operations: dispatchers and system administrators. */}
           <Route
             element={
               <ProtectedRoute
@@ -90,6 +101,7 @@ export default function AppRoutes() {
             />
           </Route>
 
+          {/* Approvals: higher officers and system administrators. */}
           <Route
             element={
               <ProtectedRoute
@@ -103,6 +115,7 @@ export default function AppRoutes() {
             />
           </Route>
 
+          {/* Audit log: auditors and system administrators. */}
           <Route
             element={
               <ProtectedRoute

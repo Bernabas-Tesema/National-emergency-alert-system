@@ -16,6 +16,11 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['provider', 'org_admin'],
   },
   {
+    label: 'Organization',
+    path: '/resource/org-admin',
+    roles: ['org_admin'],
+  },
+  {
     label: 'Component demo (temporary)',
     path: '/resource/components-demo',
     roles: ['provider', 'org_admin'],
