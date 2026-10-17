@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import DataTable, { type Column } from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
+import { Button } from '@/components/ui/button'
 import { fetchCases } from '@/api/mockCases'
 import type { Case } from '@/types/case'
 
@@ -14,6 +16,7 @@ const columns: Column<Case>[] = [
 ]
 
 export default function CaseDashboardPage() {
+  const navigate = useNavigate()
   const [cases, setCases] = useState<Case[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -32,9 +35,12 @@ export default function CaseDashboardPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-900">
-        Resource Organization Dashboard
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Resource Organization Dashboard
+        </h1>
+        <Button onClick={() => navigate('/resource/cases/new')}>New case</Button>
+      </div>
       {loading ? (
         <p className="text-slate-500">Loading cases...</p>
       ) : (
