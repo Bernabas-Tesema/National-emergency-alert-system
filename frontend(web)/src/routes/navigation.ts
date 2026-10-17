@@ -1,3 +1,4 @@
+
 import type { Role } from '@/types/role'
 
 export interface NavItem {
@@ -12,6 +13,11 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Dashboard',
     path: '/resource/dashboard',
+    roles: ['provider', 'org_admin'],
+  },
+  {
+    label: 'Component demo (temporary)',
+    path: '/resource/components-demo',
     roles: ['provider', 'org_admin'],
   },
   {
