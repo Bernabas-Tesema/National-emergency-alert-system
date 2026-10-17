@@ -9,7 +9,6 @@ import ProtectedRoute from './ProtectedRoute'
 import { ROLES, ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
 
 import CaseDashboardPage from '@/features/resource-portal/CaseDashboardPage'
-import ComponentsDemoPage from '@/features/resource-portal/ComponentsDemoPage'
 import CaseFormPage from '@/features/resource-portal/CaseFormPage'
 import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
 import CaseEditPage from '@/features/resource-portal/CaseEditPage'
@@ -35,9 +34,9 @@ export default function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/" element={<HomeRedirect />} />
 
-      {/* Outer guard: must be signed in with a staff role.
+      {/* Outer guard: user must be signed in with a staff role.
           RealtimeProvider supplies live-update functionality.
-          AppShell draws the sidebar and header for everything inside. */}
+          AppShell draws the sidebar and header. */}
       <Route element={<ProtectedRoute allowedRoles={WEB_ROLES} />}>
         <Route
           element={
@@ -55,11 +54,6 @@ export default function AppRoutes() {
             <Route
               path="/resource/dashboard"
               element={<CaseDashboardPage />}
-            />
-
-            <Route
-              path="/resource/components-demo"
-              element={<ComponentsDemoPage />}
             />
 
             <Route

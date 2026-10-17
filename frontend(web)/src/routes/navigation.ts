@@ -21,11 +21,6 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['org_admin'],
   },
   {
-    label: 'Component demo (temporary)',
-    path: '/resource/components-demo',
-    roles: ['provider', 'org_admin'],
-  },
-  {
     label: 'Command Dashboard',
     path: '/insa/dashboard',
     roles: ['system_admin'],

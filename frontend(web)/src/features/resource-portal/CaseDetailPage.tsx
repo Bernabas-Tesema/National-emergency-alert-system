@@ -1,6 +1,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import SeverityBadge from '@/components/SeverityBadge'
 
 import {
   fetchCase,
@@ -17,7 +18,7 @@ import { useAuth } from '@/features/auth/useAuth'
 import { useRealtimeEvents } from '@/features/realtime/useRealtime'
 import {
   CHANNEL_LABELS,
-  SEVERITY_LABELS,
+  
   UPDATE_KIND_LABELS,
   type CaseRecord,
   type CaseUpdateKind,
@@ -182,7 +183,11 @@ function CaseDetail({ caseId }: { caseId: string }) {
         <Field label="Category">{record.category}</Field>
 
         <Field label="Suggested severity">
-          {record.severity ? SEVERITY_LABELS[record.severity] : 'Not set'}
+                    {record.severity ? (
+            <SeverityBadge severity={record.severity} />
+          ) : (
+            'Not set'
+          )}
         </Field>
 
         <Field label="Incident start time">
