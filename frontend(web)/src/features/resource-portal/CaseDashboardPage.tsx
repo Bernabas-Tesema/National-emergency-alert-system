@@ -6,6 +6,7 @@ import DataTable, { type Column } from '@/components/DataTable'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { fetchCases } from '@/api/mockCases'
+import { useRealtimeEvents } from '@/features/realtime/useRealtime'
 import type { Case } from '@/types/case'
 
 const columns: Column<Case>[] = [
@@ -54,12 +55,20 @@ export default function CaseDashboardPage() {
     }
   }, [])
 
+  // When any case changes on the server, reload the list.
+  useRealtimeEvents((event) => {
+    if (event.type === 'case_changed') {
+      void fetchCases().then(setCases)
+    }
+  })
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900">
           Resource Organization Dashboard
         </h1>
+
         <Button onClick={() => navigate('/resource/cases/new')}>
           New case
         </Button>

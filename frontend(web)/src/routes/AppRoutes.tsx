@@ -15,6 +15,8 @@ import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
 import CaseEditPage from '@/features/resource-portal/CaseEditPage'
 import OrgAdminPage from '@/features/resource-portal/OrgAdminPage'
 
+import RealtimeProvider from '@/features/realtime/RealtimeProvider'
+
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
 
@@ -34,9 +36,16 @@ export default function AppRoutes() {
       <Route path="/" element={<HomeRedirect />} />
 
       {/* Outer guard: must be signed in with a staff role.
+          RealtimeProvider supplies live-update functionality.
           AppShell draws the sidebar and header for everything inside. */}
       <Route element={<ProtectedRoute allowedRoles={WEB_ROLES} />}>
-        <Route element={<AppShell />}>
+        <Route
+          element={
+            <RealtimeProvider>
+              <AppShell />
+            </RealtimeProvider>
+          }
+        >
           {/* Resource portal: providers and organization admins. */}
           <Route
             element={

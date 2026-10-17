@@ -1,3 +1,4 @@
+
 import { getRegion } from '@/lib/regions'
 import { isAreaSelected } from '@/lib/area'
 import type { AreaSelection } from '@/types/area'
@@ -16,8 +17,11 @@ import {
 } from '@/types/case'
 import type { Message } from '@/types/message'
 import type { User } from '@/types/user'
+import { emitMockEvent } from './mockRealtimeBus'
 
-const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
+const delay = (ms = 400) =>
+  new Promise((resolve) => setTimeout(resolve, ms))
+
 const today = () => new Date().toISOString().slice(0, 10)
 
 // --- Sample data (all invented, including names and numbers) ------------
@@ -72,7 +76,8 @@ const MOCK_CASES: CaseRecord[] = (
       updatedAt: '2026-10-14',
       startTime: '2026-10-14T06:30',
       description: 'River level rising quickly after heavy overnight rain.',
-      recommendedAction: 'Move away from riverbanks and low-lying areas.',
+      recommendedAction:
+        'Move away from riverbanks and low-lying areas.',
       decision: {
         outcome: 'approved',
         decidedBy: 'Hanna Bekele',
@@ -158,7 +163,8 @@ const MOCK_CASES: CaseRecord[] = (
       status: 'rejected',
       updatedAt: '2026-10-12',
       startTime: '2026-10-12T10:00',
-      description: 'Social media reports with no confirmation from authorities.',
+      description:
+        'Social media reports with no confirmation from authorities.',
       recommendedAction: '',
       decision: {
         outcome: 'rejected',
@@ -170,6 +176,96 @@ const MOCK_CASES: CaseRecord[] = (
   ] satisfies Seed[]
 ).map(fromSeed)
 
+// --- SIMULATION ONLY ------------------------------------------------------
+// Pretends INSA reviews a case after it is submitted, so we can see live
+// updates. Remove when the real backend and WebSocket exist.
+
+const after = (seconds: number, action: () => void) =>
+  setTimeout(action, seconds * 1000)
+
+function changeStatus(found: CaseRecord, status: CaseStatus) {
+  found.status = status
+  found.updatedAt = today()
+  emitMockEvent({
+    type: 'case_changed',
+    caseId: found.id,
+    status,
+  })
+}
+
+// 'ask': INSA starts reviewing, then asks a question.
+// 'approve': INSA reviews, approves, and the alert is broadcast.
+function simulateInsaReview(
+  caseId: string,
+  outcome: 'ask' | 'approve',
+) {
+  // Only act if the case is still in the state we expect.
+  const inState = (expected: CaseStatus) => {
+    const found = MOCK_CASES.find((c) => c.id === caseId)
+    return found && found.status === expected ? found : null
+  }
+
+  after(5, () => {
+    const found = inState('submitted')
+    if (found) changeStatus(found, 'under_review')
+  })
+
+  if (outcome === 'ask') {
+    after(12, () => {
+      const found = inState('under_review')
+      if (!found) return
+
+      const message: Message = {
+        id: crypto.randomUUID(),
+        authorId: 'u-006',
+        authorName: 'Marta Haile',
+        authorRole: 'system_admin',
+        text:
+          'Please confirm how many people are affected and whether emergency services are on site.',
+        sentAt: new Date().toISOString(),
+      }
+
+      found.messages.push(message)
+
+      emitMockEvent({
+        type: 'case_message',
+        caseId,
+        authorId: message.authorId,
+        authorName: message.authorName,
+      })
+
+      changeStatus(found, 'needs_clarification')
+    })
+  } else {
+    after(10, () => {
+      const found = inState('under_review')
+      if (!found) return
+
+      found.decision = {
+        outcome: 'approved',
+        decidedBy: 'Hanna Bekele',
+        decidedAt: new Date().toISOString(),
+        comment: 'Information confirmed. Approved for broadcast.',
+      }
+
+      changeStatus(found, 'approved')
+    })
+
+    after(16, () => {
+      const found = inState('approved')
+      if (!found) return
+
+      found.delivery = [
+        { channel: 'PUSH', sent: 8000, delivered: 7600, failed: 400 },
+        { channel: 'SMS', sent: 10000, delivered: 9500, failed: 500 },
+        { channel: 'VOICE', sent: 1500, delivered: 1250, failed: 250 },
+      ]
+
+      changeStatus(found, 'broadcast')
+    })
+  }
+}
+
 // --- Functions the screens call ----------------------------------------
 // Later each of these becomes a real request to the backend.
 
@@ -179,11 +275,19 @@ export async function fetchCases(): Promise<Case[]> {
 }
 
 // Returns null when the id does not exist.
-export async function fetchCase(id: string): Promise<CaseRecord | null> {
+export async function fetchCase(
+  id: string,
+): Promise<CaseRecord | null> {
   await delay()
+
   const found = MOCK_CASES.find((c) => c.id === id)
+
   return found
-    ? { ...found, messages: [...found.messages], updates: [...found.updates] }
+    ? {
+        ...found,
+        messages: [...found.messages],
+        updates: [...found.updates],
+      }
     : null
 }
 
@@ -191,13 +295,21 @@ let nextCaseNumber = 1007
 
 function describeArea(area: AreaSelection): string {
   if (!isAreaSelected(area)) return 'Not set'
+
   const region = getRegion(area.regionId)
-  if (region && area.points.length >= 3) return `${region.name} + drawn area`
+
+  if (region && area.points.length >= 3) {
+    return `${region.name} + drawn area`
+  }
+
   if (region) return region.name
+
   return 'Drawn area'
 }
 
-function categoryLabel(category: CaseFormValues['category']): string {
+function categoryLabel(
+  category: CaseFormValues['category'],
+): string {
   return category ? CATEGORY_LABELS[category] : 'Uncategorised'
 }
 
@@ -209,6 +321,7 @@ export async function saveCase(
   status: Extract<CaseStatus, 'draft' | 'submitted'>,
 ): Promise<Case> {
   await delay()
+
   const saved: CaseRecord = {
     id: `CASE-${nextCaseNumber++}`,
     title: values.title.trim(),
@@ -228,7 +341,13 @@ export async function saveCase(
     delivery: null,
     updates: [],
   }
+
   MOCK_CASES.unshift(saved)
+
+  if (status === 'submitted') {
+    simulateInsaReview(saved.id, 'ask')
+  }
+
   return saved
 }
 
@@ -240,9 +359,13 @@ export async function updateDraft(
   status: Extract<CaseStatus, 'draft' | 'submitted'>,
 ): Promise<void> {
   await delay()
+
   const found = MOCK_CASES.find((c) => c.id === id)
+
   if (!found) throw new Error('Case not found')
-  if (found.status !== 'draft') throw new Error('Only drafts can be edited')
+  if (found.status !== 'draft') {
+    throw new Error('Only drafts can be edited')
+  }
 
   found.title = values.title.trim()
   found.category = categoryLabel(values.category)
@@ -257,20 +380,35 @@ export async function updateDraft(
     ...found.attachmentNames,
     ...values.files.map((f) => f.name),
   ]
+
   found.status = status
   found.updatedAt = today()
+
+  if (status === 'submitted') {
+    simulateInsaReview(found.id, 'ask')
+  }
 }
 
 // After answering INSA's question, the officer sends the case back for review.
-export async function resubmitCase(caseId: string): Promise<void> {
+export async function resubmitCase(
+  caseId: string,
+): Promise<void> {
   await delay(250)
+
   const found = MOCK_CASES.find((c) => c.id === caseId)
+
   if (!found) throw new Error('Case not found')
+
   if (found.status !== 'needs_clarification') {
-    throw new Error('Only cases that need clarification can be resubmitted')
+    throw new Error(
+      'Only cases that need clarification can be resubmitted',
+    )
   }
+
   found.status = 'submitted'
   found.updatedAt = today()
+
+  simulateInsaReview(found.id, 'approve')
 }
 
 // The author and time are filled in here, the way a real server would do it,
@@ -281,8 +419,11 @@ export async function sendCaseMessage(
   text: string,
 ): Promise<Message> {
   await delay(250)
+
   const found = MOCK_CASES.find((c) => c.id === caseId)
+
   if (!found) throw new Error('Case not found')
+
   const message: Message = {
     id: crypto.randomUUID(),
     authorId: author.id,
@@ -291,7 +432,9 @@ export async function sendCaseMessage(
     text,
     sentAt: new Date().toISOString(),
   }
+
   found.messages.push(message)
+
   return message
 }
 
@@ -304,11 +447,17 @@ export async function requestCaseUpdate(
   author: User,
 ): Promise<CaseUpdate> {
   await delay(250)
+
   const found = MOCK_CASES.find((c) => c.id === caseId)
+
   if (!found) throw new Error('Case not found')
+
   if (found.status !== 'broadcast') {
-    throw new Error('Updates can only be requested for broadcast cases')
+    throw new Error(
+      'Updates can only be requested for broadcast cases',
+    )
   }
+
   const update: CaseUpdate = {
     id: crypto.randomUUID(),
     kind,
@@ -316,6 +465,8 @@ export async function requestCaseUpdate(
     requestedBy: author.fullName,
     requestedAt: new Date().toISOString(),
   }
+
   found.updates.push(update)
+
   return update
 }

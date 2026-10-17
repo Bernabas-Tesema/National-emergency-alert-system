@@ -1,5 +1,8 @@
+
 import { NavLink, Outlet, useNavigate } from 'react-router'
+
 import { Button } from '@/components/ui/button'
+import ConnectionIndicator from '@/components/ConnectionIndicator'
 import { useAuth } from '@/features/auth/useAuth'
 import { NAV_ITEMS } from '@/routes/navigation'
 import { ROLE_LABELS } from '@/types/role'
@@ -27,6 +30,7 @@ export default function AppShell() {
           </p>
           <p className="text-lg font-semibold">Alert System</p>
         </div>
+
         <nav className="flex-1 space-y-1 p-3">
           {items.map((item) => (
             <NavLink
@@ -48,7 +52,11 @@ export default function AppShell() {
 
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b bg-white px-6 py-3">
-          <p className="text-sm text-slate-600">{user.organization}</p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-slate-600">{user.organization}</p>
+            <ConnectionIndicator />
+          </div>
+
           <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium text-slate-900">
@@ -58,6 +66,7 @@ export default function AppShell() {
                 {ROLE_LABELS[user.role]}
               </p>
             </div>
+
             <Button variant="outline" size="sm" onClick={handleLogout}>
               Sign out
             </Button>
