@@ -40,4 +40,14 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/insa/audit',
     roles: ['auditor', 'system_admin'],
   },
+    {
+    label: 'Organizations',
+    path: '/insa/organizations',
+    roles: ['system_admin'],
+  },
+  {
+    label: 'Staff accounts',
+    path: '/insa/staff',
+    roles: ['system_admin'],
+  },
 ]
