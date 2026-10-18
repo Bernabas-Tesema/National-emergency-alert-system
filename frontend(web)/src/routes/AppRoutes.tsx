@@ -67,14 +67,14 @@ export default function AppRoutes() {
             <Route path="/insa/staff" element={<StaffPage />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['dispatcher', 'system_admin']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['dispatcher', 'higher_officer', 'auditor', 'system_admin']} />}>
             <Route
               path="/insa/sos"
               element={<PlaceholderPage title="SOS Operations" />}
             />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={['higher_officer', 'system_admin']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['higher_officer']} />}>
             <Route
               path="/insa/approvals"
               element={<PlaceholderPage title="Tier 2 Approval Queue" />}

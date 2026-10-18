@@ -56,6 +56,7 @@ const BLOCKED: [Role, string][] = [
   ['dispatcher', '/insa/settings'],
   ['higher_officer', '/insa/settings'],
   ['auditor', '/insa/settings'],
+    ['system_admin', '/insa/approvals'],
 ]
 
 describe('who can open which page', () => {
@@ -105,4 +106,13 @@ describe('who can open which page', () => {
       await screen.findByRole('heading', { name: 'Settings' }, WAIT),
     ).toBeInTheDocument()
   })
+    it.each(['higher_officer', 'auditor'] as Role[])(
+    'lets %s view SOS tickets',
+    async (role) => {
+      renderAt('/insa/sos', role)
+      expect(
+        await screen.findByRole('heading', { name: 'SOS Operations' }, WAIT),
+      ).toBeInTheDocument()
+    },
+  )
 })

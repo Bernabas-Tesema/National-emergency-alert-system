@@ -47,8 +47,8 @@ Every page sits in exactly one guarded group in `src/routes/AppRoutes.tsx`. Test
 | /resource/cases/:caseId/edit | Edit a draft | provider, org_admin |
 | /resource/org-admin | Officers and organization activity | org_admin |
 | /insa/dashboard | Command dashboard (placeholder, Web Dev 2) | system_admin |
-| /insa/sos | SOS operations (placeholder, Web Dev 2) | dispatcher, system_admin |
-| /insa/approvals | Tier 2 approval queue (placeholder, Web Dev 2) | higher_officer, system_admin |
+| /insa/sos | SOS operations (placeholder, Web Dev 2). Higher officer and auditor are read-only. | dispatcher, higher_officer, auditor, system_admin |
+| /insa/approvals | Tier 2 approval queue (placeholder, Web Dev 2) | higher_officer |
 | /insa/audit | Read-only audit log with filters, paging and CSV export | auditor, system_admin |
 | /insa/organizations | Register, suspend and reactivate organizations | system_admin |
 | /insa/staff | Staff accounts: add, change role, suspend, reset | system_admin |

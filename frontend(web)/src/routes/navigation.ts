@@ -28,12 +28,12 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'SOS Operations',
     path: '/insa/sos',
-    roles: ['dispatcher', 'system_admin'],
+    roles: ['dispatcher', 'higher_officer', 'auditor', 'system_admin'],
   },
   {
     label: 'Approvals',
     path: '/insa/approvals',
-    roles: ['higher_officer', 'system_admin'],
+    roles: ['higher_officer'],
   },
   {
     label: 'Audit Log',
