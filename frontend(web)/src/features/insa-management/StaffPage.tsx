@@ -158,7 +158,7 @@ export default function StaffPage() {
         return (
           <select
             aria-label={`Role for ${s.fullName}`}
-            className="h-8 rounded-md border bg-white px-2 text-sm disabled:opacity-60"
+            className="h-8 rounded-md border border-[#1b2e34] bg-[#0c1417] px-2 text-xs text-slate-200 disabled:opacity-50 focus:outline-none focus:border-teal-500"
             value={s.role}
             disabled={s.id === myId}
             onChange={(e) => requestRoleChange(s, e.target.value as Role)}
@@ -208,14 +208,20 @@ export default function StaffPage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Staff accounts</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1b2e34] pb-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-white">Staff accounts</h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Manage INSA control centre operators and partner organization emergency officers.
+          </p>
+        </div>
         {!showForm && (
           <Button
             onClick={() => {
               setNotice('')
               setShowForm(true)
             }}
+            className="bg-teal-600 hover:bg-teal-500 text-white font-medium shadow-sm text-xs"
           >
             Add staff account
           </Button>
@@ -223,12 +229,12 @@ export default function StaffPage() {
       </div>
 
       {notice && (
-        <p className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-900">
+        <p className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-4 py-3 text-xs text-emerald-300 font-medium">
           {notice}
         </p>
       )}
       {actionError && (
-        <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="rounded-lg border border-red-800 bg-red-950/60 px-4 py-3 text-xs text-red-300 font-medium">
           {actionError}
         </p>
       )}

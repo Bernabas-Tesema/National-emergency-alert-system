@@ -77,15 +77,15 @@ export default function FileUploader({ files, onChange }: FileUploaderProps) {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {files.length > 0 && (
-        <ul className="divide-y rounded-lg border bg-white">
+        <ul className="divide-y divide-[#1b2e34] rounded-lg border border-[#1b2e34] bg-[#111d21]">
           {files.map((file, index) => (
             <li
               key={`${file.name}-${file.size}`}
-              className="flex items-center justify-between px-3 py-2 text-sm"
+              className="flex items-center justify-between px-3 py-2 text-xs"
             >
-              <span className="truncate text-slate-800">
+              <span className="truncate text-slate-200 font-medium">
                 {file.name}{' '}
-                <span className="text-slate-500">({formatSize(file.size)})</span>
+                <span className="text-slate-400">({formatSize(file.size)})</span>
               </span>
               <Button
                 type="button"

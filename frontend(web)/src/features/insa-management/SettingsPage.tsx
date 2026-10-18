@@ -8,16 +8,16 @@ import TemplatesTab from './settings/TemplatesTab'
 export default function SettingsPage() {
   return (
     <div className="max-w-5xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="mt-1 text-sm text-slate-600">
+      <div className="border-b border-[#1b2e34] pb-4">
+        <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
+        <p className="mt-1 text-xs text-slate-400">
           Rules and options that apply to the whole system. Unsaved changes are
           lost when you switch tabs, so save first.
         </p>
       </div>
 
       <Tabs defaultValue="languages">
-        <TabsList className="h-auto flex-wrap">
+        <TabsList className="h-auto flex-wrap bg-[#111d21] border border-[#1b2e34] p-1 rounded-lg">
           <TabsTrigger value="languages">Languages</TabsTrigger>
           <TabsTrigger value="severity">Severity rules</TabsTrigger>
           <TabsTrigger value="areas">Regions</TabsTrigger>

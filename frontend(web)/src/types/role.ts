@@ -1,4 +1,13 @@
-// The 7 roles from the permission matrix.
+import {
+  STAFF_ROLES,
+  hasWebAccess as matrixHasWebAccess,
+  canonicalRole,
+  type StaffRole,
+} from '@/packages/core/permissions/matrix'
+
+export { STAFF_ROLES, type StaffRole, canonicalRole }
+
+// Supported role identifiers (including legacy lowercase aliases)
 export const ROLES = [
   'citizen',
   'provider',
@@ -7,23 +16,34 @@ export const ROLES = [
   'higher_officer',
   'auditor',
   'system_admin',
+  'SUPER_ADMIN',
+  'ADMINISTRATOR',
+  'HIGHER_OFFICER',
+  'DISPATCHER',
+  'AUDITOR',
+  'ORG_ADMIN',
+  'ORG_OFFICER',
 ] as const
 
-// A Role can only be one of the strings above.
 export type Role = (typeof ROLES)[number]
 
-// Human-readable names for menus and headers.
 export const ROLE_LABELS: Record<Role, string> = {
   citizen: 'Citizen',
-  provider: 'Provider / Resource Organization',
+  provider: 'Provider / Organization Officer',
   org_admin: 'Organization Administrator',
-  dispatcher: 'Dispatcher',
+  dispatcher: 'Emergency Dispatcher',
   higher_officer: 'Higher Officer',
   auditor: 'Auditor',
   system_admin: 'System Administrator',
+  SUPER_ADMIN: 'Super Administrator (INSA)',
+  ADMINISTRATOR: 'Administrator (INSA)',
+  HIGHER_OFFICER: 'Higher Officer',
+  DISPATCHER: 'Emergency Dispatcher',
+  AUDITOR: 'Auditor',
+  ORG_ADMIN: 'Organization Administrator',
+  ORG_OFFICER: 'Organization Officer',
 }
 
-// Where each role lands after login. Citizens have no web screens.
 export const ROLE_HOME_PATH: Record<Role, string | null> = {
   citizen: null,
   provider: '/resource/dashboard',
@@ -32,8 +52,15 @@ export const ROLE_HOME_PATH: Record<Role, string | null> = {
   higher_officer: '/insa/approvals',
   auditor: '/insa/audit',
   system_admin: '/insa/dashboard',
+  SUPER_ADMIN: '/insa/dashboard',
+  ADMINISTRATOR: '/insa/dashboard',
+  HIGHER_OFFICER: '/insa/approvals',
+  DISPATCHER: '/insa/sos',
+  AUDITOR: '/insa/audit',
+  ORG_ADMIN: '/resource/dashboard',
+  ORG_OFFICER: '/resource/dashboard',
 }
 
-export function hasWebAccess(role: Role): boolean {
-  return role !== 'citizen'
+export function hasWebAccess(role: Role | string): boolean {
+  return matrixHasWebAccess(role)
 }

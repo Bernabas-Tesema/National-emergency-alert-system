@@ -45,38 +45,41 @@ export default function OfficerForm({ onSubmit, onCancel }: OfficerFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl space-y-4 rounded-xl bg-white p-6 shadow"
+      className="max-w-xl space-y-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm"
     >
-      <h3 className="text-base font-semibold text-slate-900">Add officer</h3>
+      <h3 className="text-base font-bold text-white">Add officer</h3>
       <div className="space-y-2">
-        <Label htmlFor="officer-name">Full name</Label>
+        <Label htmlFor="officer-name" className="text-xs text-slate-300">Full name</Label>
         <Input
           id="officer-name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="officer-username">Username</Label>
+        <Label htmlFor="officer-username" className="text-xs text-slate-300">Username</Label>
         <Input
           id="officer-username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="off"
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100 font-mono text-xs"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="officer-phone">Mobile phone</Label>
+        <Label htmlFor="officer-phone" className="text-xs text-slate-300">Mobile phone</Label>
         <Input
           id="officer-phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           inputMode="tel"
           placeholder="+251911000001"
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100 font-mono text-xs"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <p className="text-xs text-slate-500">
+      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      <p className="text-xs text-slate-400">
         The officer receives an invitation by SMS to set their own password.
       </p>
       <div className="flex gap-3">

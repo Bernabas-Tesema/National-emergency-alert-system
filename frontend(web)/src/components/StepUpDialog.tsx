@@ -68,7 +68,7 @@ export default function StepUpDialog({
             <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="stepup-code">Verification code</Label>
+            <Label htmlFor="stepup-code" className="text-xs text-slate-300">Verification code</Label>
             <Input
               id="stepup-code"
               value={code}
@@ -77,19 +77,21 @@ export default function StepUpDialog({
               maxLength={6}
               autoComplete="one-time-code"
               autoFocus
+              className="border-[#1b2e34] bg-[#0c1417] text-white font-mono tracking-widest text-center text-lg"
             />
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               disabled={busy}
               onClick={onCancel}
+              className="border-[#1b2e34] text-slate-300 hover:text-white"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white">
               {busy ? 'Checking...' : confirmLabel}
             </Button>
           </DialogFooter>

@@ -118,8 +118,8 @@ export default function AuditLogPage() {
     <div className="max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Audit log</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <h1 className="text-2xl font-bold tracking-tight text-white">Audit log</h1>
+          <p className="mt-1 text-xs text-slate-400">
             A read-only record of administrative actions. Entries cannot be
             changed or deleted here.
           </p>
@@ -128,28 +128,29 @@ export default function AuditLogPage() {
           variant="outline"
           disabled={loading || total === 0}
           onClick={() => setConfirmingExport(true)}
+          className="border-[#1b2e34] text-slate-200 hover:text-white text-xs"
         >
           Export CSV
         </Button>
       </div>
 
       {notice && (
-        <p className="rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-900">
+        <p className="rounded-lg border border-emerald-800 bg-emerald-950/60 px-4 py-3 text-xs text-emerald-300 font-medium">
           {notice}
         </p>
       )}
       {error && (
-        <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <p className="rounded-lg border border-red-800 bg-red-950/60 px-4 py-3 text-xs text-red-300 font-medium">
           {error}
         </p>
       )}
 
-      <div className="grid gap-4 rounded-xl bg-white p-4 shadow sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
-          <Label htmlFor="audit-action">Action</Label>
+          <Label htmlFor="audit-action" className="text-xs text-slate-300">Action</Label>
           <select
             id="audit-action"
-            className="h-9 w-full rounded-md border bg-white px-3 text-sm"
+            className="h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
             value={query.action}
             onChange={(e) =>
               changeFilters({ action: e.target.value as AuditQuery['action'] })
@@ -164,30 +165,33 @@ export default function AuditLogPage() {
           </select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="audit-search">User or target</Label>
+          <Label htmlFor="audit-search" className="text-xs text-slate-300">User or target</Label>
           <Input
             id="audit-search"
             value={query.search}
             onChange={(e) => changeFilters({ search: e.target.value })}
             placeholder="Search..."
+            className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="audit-from">From</Label>
+          <Label htmlFor="audit-from" className="text-xs text-slate-300">From</Label>
           <Input
             id="audit-from"
             type="date"
             value={query.from}
             onChange={(e) => changeFilters({ from: e.target.value })}
+            className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="audit-to">To</Label>
+          <Label htmlFor="audit-to" className="text-xs text-slate-300">To</Label>
           <Input
             id="audit-to"
             type="date"
             value={query.to}
             onChange={(e) => changeFilters({ to: e.target.value })}
+            className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
           />
         </div>
       </div>

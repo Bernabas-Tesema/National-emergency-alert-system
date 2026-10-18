@@ -1,8 +1,15 @@
 import type { OrganizationKind } from '@/types/admin'
-import { ROLES, hasWebAccess, type Role } from '@/types/role'
+import { hasWebAccess, type Role } from '@/types/role'
 
 // Roles an admin can give to a person: every role that uses the web app.
-export const ASSIGNABLE_ROLES: Role[] = ROLES.filter(hasWebAccess)
+export const ASSIGNABLE_ROLES: Role[] = [
+  'provider',
+  'org_admin',
+  'dispatcher',
+  'higher_officer',
+  'auditor',
+  'system_admin',
+]
 
 const EXTERNAL_ROLES: Role[] = ['provider', 'org_admin']
 

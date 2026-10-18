@@ -1,17 +1,15 @@
-import { Badge } from '@/components/ui/badge'
 import type { AccountStatus } from '@/types/admin'
 
 export default function AccountStatusBadge({ status }: { status: AccountStatus }) {
   return (
-    <Badge
-      variant="outline"
-      className={
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
         status === 'active'
-          ? 'border-green-300 bg-green-50 text-green-800'
-          : 'border-red-300 bg-red-50 text-red-800'
-      }
+          ? 'border-emerald-800 bg-emerald-950/80 text-emerald-300'
+          : 'border-red-800 bg-red-950/80 text-red-300'
+      }`}
     >
       {status === 'active' ? 'Active' : 'Suspended'}
-    </Badge>
+    </span>
   )
 }

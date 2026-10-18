@@ -74,7 +74,7 @@ export default function MapAreaPicker({
       {!readOnly && (
         <div className="flex flex-wrap items-center gap-3">
           <select
-            className="h-9 rounded-md border bg-white px-3 text-sm"
+            className="h-9 rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
             value={value.regionId ?? ''}
             onChange={(e) =>
               onChange({ ...value, regionId: e.target.value || null })

@@ -11,7 +11,8 @@ import {
 import { messageFrom } from './helpers'
 
 const KINDS: AreaKind[] = ['region', 'zone', 'subcity']
-const selectClass = 'h-9 w-full rounded-md border bg-white px-3 text-sm'
+const selectClass =
+  'h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500'
 
 interface AreaFormProps {
   regions: Area[] // only turned-on regions are offered as parents
@@ -56,15 +57,16 @@ export default function AreaForm({ regions, onSubmit, onCancel }: AreaFormProps)
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl space-y-4 rounded-xl bg-white p-6 shadow"
+      className="max-w-xl space-y-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm"
     >
-      <h3 className="text-base font-semibold text-slate-900">Add area</h3>
+      <h3 className="text-base font-bold text-white">Add area</h3>
       <div className="space-y-2">
-        <Label htmlFor="area-name">Name</Label>
+        <Label htmlFor="area-name" className="text-xs text-slate-300">Name</Label>
         <Input
           id="area-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
         />
       </div>
       <div className="space-y-2">

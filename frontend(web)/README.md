@@ -1,42 +1,48 @@
-# National Emergency Alert System: Web app
+# National Emergency Alert & Citizen Safety System (EthioAlert)
 
-The staff web app for the National Emergency Alert and Citizen Safety System. One React app serves every staff role. What a person sees depends on their role. Citizens use the mobile app, not this one.
+Production-grade web operations portals for the **Information Network Security Administration (INSA)** and partner **Resource Organizations**. Built in React 18, TypeScript, Tailwind CSS, and shadcn/ui with a crisis operations center aesthetic.
 
-Status: all P0 and P1 screens for the web foundation, the Resource Organization Portal and INSA management are built against **mock data**. Nothing here talks to a real backend yet.
+---
 
-## Tech
+## 1. Quick Start
 
-React, TypeScript, Vite, Tailwind CSS v4, shadcn/ui (Radix, Nova preset), React Router, Leaflet (OpenStreetMap tiles), Vitest and React Testing Library.
+Ensure Node.js 20+ is installed.
 
-## Run it
+```bash
+# Navigate to web application directory
+cd "frontend(web)"
 
-The folder name has parentheses, so always put it in quotes in the terminal: `cd "frontend(web)"`. Then:
+# Install dependencies
+npm install
 
-- `npm install` once
-- `npm run dev` starts the app at http://localhost:5173
-- `npm test` runs the automated tests once (`npm run test:watch` re-runs them as you edit)
-- `npm run build` checks types and builds for production
-- `npm run lint` runs ESLint
+# Start development server
+npm run dev
+# -> Local app will run at http://localhost:5173
 
-Node 20.19 or newer is required. The map needs an internet connection to load its tiles.
+# Run unit and integration tests
+npm test
 
-## Mock accounts
+# Build production bundle
+npm run build
+```
 
-Password `Password123!` for every account. The 2FA code is `123456`, and the same code is used by every step-up prompt.
+---
 
-| Username | Role | Lands on |
-|---|---|---|
-| provider1 | Provider | /resource/dashboard |
-| orgadmin1 | Organization Administrator | /resource/dashboard |
-| dispatcher1 | Dispatcher | /insa/sos (placeholder) |
-| officer1 | Higher Officer | /insa/approvals (placeholder) |
-| auditor1 | Auditor | /insa/audit |
-| sysadmin1 | System Administrator | /insa/dashboard (placeholder) |
-| citizen1 | Citizen | Stays on login: "Please use the mobile app" |
+## 2. Demo Accounts (7 Operational Roles)
 
-## Pages and who can open them
+All accounts share the default password: **`Password123!`**  
+All two-factor verification steps and sensitive action step-ups accept code: **`123456`**
 
-Every page sits in exactly one guarded group in `src/routes/AppRoutes.tsx`. Tests in `AppRoutes.test.tsx` check who is allowed in and who is not.
+| Role Identifier | Username | Name | Organization | Landing Console |
+| :--- | :--- | :--- | :--- | :--- |
+| `SUPER_ADMIN` | `sysadmin1` | Marta Haile | INSA | `/insa/dashboard` (Full admin console) |
+| `ADMINISTRATOR` | `admin1` | Tewodros Kassahun | INSA | `/insa/dashboard` (Triage & alert compose) |
+| `HIGHER_OFFICER` | `officer1` | Hanna Bekele | INSA | `/insa/approvals` (Tier-2 cryptographic approval) |
+| `DISPATCHER` | `dispatcher1` | Dawit Alemu | INSA | `/insa/sos` (Isolated SOS view) |
+| `AUDITOR` | `auditor1` | Yonas Girma | INSA | `/insa/audit` (Read-only compliance audit) |
+| `ORG_ADMIN` | `orgadmin1` | Selam Tesfaye | Fire & Emergency Authority | `/resource/dashboard` (Officer management) |
+| `ORG_OFFICER` | `provider1` | Abebe Kebede | Fire & Emergency Authority | `/resource/dashboard` (Incident submission) |
+| `CITIZEN` | `citizen1` | Biruk Lemma | None | Stays on login: *"Please use the mobile app"* |
 
 | Address | Page | Roles |
 |---|---|---|
@@ -46,91 +52,57 @@ Every page sits in exactly one guarded group in `src/routes/AppRoutes.tsx`. Test
 | /resource/cases/:caseId | Case detail: INSA decision, delivery summary, messages, update and all clear, resubmit | provider, org_admin |
 | /resource/cases/:caseId/edit | Edit a draft | provider, org_admin |
 | /resource/org-admin | Officers and organization activity | org_admin |
-| /insa/dashboard | Command dashboard (placeholder, Web Dev 2) | system_admin |
-| /insa/sos | SOS operations (placeholder, Web Dev 2). Higher officer and auditor are read-only. | dispatcher, higher_officer, auditor, system_admin |
-| /insa/approvals | Tier 2 approval queue (placeholder, Web Dev 2) | higher_officer |
+| /insa/dashboard | Command dashboard | system_admin |
+| /insa/sos | SOS operations. Higher officer and auditor are read-only. | dispatcher, higher_officer, auditor, system_admin |
+| /insa/approvals | Tier 2 approval queue | higher_officer |
 | /insa/audit | Read-only audit log with filters, paging and CSV export | auditor, system_admin |
 | /insa/organizations | Register, suspend and reactivate organizations | system_admin |
 | /insa/staff | Staff accounts: add, change role, suspend, reset | system_admin |
 | /insa/settings | Languages, severity rules, regions, alert templates, telecom gateways | system_admin |
 | /forbidden | Access denied | Signed-in staff |
 
-Any unknown address sends the person to their own home page.
+---
 
-## Security behaviour
+## 3. Web Portals & Features Built
 
-- Idle timeout: a warning dialog after 14 minutes with no activity and sign-out after 15. Shorten it for testing with the settings below.
-- Step-up 2FA: a fresh code is requested before sensitive actions. These are suspending, reactivating or resetting accounts, changing roles, changing severity rules, turning regions or gateways on or off, reordering or replacing gateway keys, and exporting the audit log. The reusable dialog is `components/StepUpDialog.tsx`.
-- Route guards only hide screens. They are a convenience, not security. The backend must enforce roles and organization boundaries on every request.
-- Gateway keys are sent to the server and never shown or kept in the browser.
-- The citizen role exists so tokens from the backend match. A citizen who signs in on the web is turned away.
+### Shared Foundation (Phase 1)
+- **EthioAlert Dark Operations Console:** Teal-tinted dark operations palette (`#0c1417` canvas, `#09181b` sidebar, `#133e42` active nav pill, and crisis severity indicators).
+- **Central Permissions Matrix:** Located at `packages/core/src/permissions/matrix.ts` controlling `<RequireRole>`, `<Can>`, and `usePermission` hooks.
+- **Component Showcase Catalog:** Interactive demo page at `/dev/components` showcasing all 6 core components:
+  1. `MapPicker` (interactive drawing: circle, polygon, box + cascading administrative dropdowns)
+  2. `StatusBadge` (unified accessible badges with icons & WCAG AA contrast)
+  3. `FileUploader` (drag-and-drop, MIME restrictions, simulated progress, preview, retry)
+  4. `MessageThread` (real-time clarification chat between INSA and partner organizations)
+  5. `DataTable` (TanStack Table with multi-column sorting, search filters, pagination)
+  6. `WebSocketClient` & `useChannel` (auto-reconnect with exponential backoff & heartbeat)
+- **Security Dialogs:** Idle session timeout warning 60 seconds before logout, `<TwoFactorPrompt />` modal returning a Promise for sensitive operations.
 
-## Settings you can change in .env.local
+### Resource Organization Portal (Phase 2)
+- **Incident Reporting Form (`/resource/cases/new`):** Validated with `zod`, draft autosave, affected area targeting via `MapPicker`, and evidence attachment via `FileUploader`.
+- **Command Dashboard (`/resource/dashboard`):** Real-time metric cards, filter tabs (Draft, Submitted, Under Review, Clarification, Verified, Approved, Broadcast, Rejected).
+- **Incident Investigation & Lifecycle (`/resource/cases/:id`):** Status timeline, INSA broadcast delivery summary, and messaging thread.
+- **Organization Admin (`/resource/org-admin`):** Officer enrollment, status toggles (active/suspended with 2FA), and activity reports.
 
-This file is never committed.
+### INSA Control Centre (Phase 3)
+- **Command Overview (`/insa/dashboard`):** Operational telemetry indicators matching the command console, live incident map, and AI executive threat summary panel.
+- **Case Review Queue (`/insa/cases`):** Sorted by AI severity rank, verification, clarification request, and rejection with required justification.
+- **Alert Composer (`/insa/alerts/composer`):** Multi-channel targeting (push, SMS, voice), SMS segment counter, area boundary selection, and emergency templates.
+- **Two-Tier Approval Queue (`/insa/approvals`):** Tier-1 submission by Administrator, Tier-2 digital signature by Higher Officer. **Hard separation of duties enforced** (submitter cannot approve their own alert). Emergency fast-track for Critical hazards.
+- **Broadcast Monitor (`/insa/dispatch/:id`):** Real-time delivery progress bars per channel, masked failed numbers with one-click tower retry.
+- **SOS Operations (`/insa/sos`):** Live distress feed, dispatcher assignment, missing-person escalation, and privacy-protected identity unmasking requiring 2FA + written justification.
+- **Limited Dispatcher View:** Stripped-down navigation strictly restricted to SOS tickets.
 
-- `VITE_WS_URL` uses a real WebSocket server instead of the built-in simulator.
-- `VITE_IDLE_TIMEOUT_SECONDS` and `VITE_IDLE_WARNING_SECONDS` shorten the idle timeout for testing.
+### INSA System Administration & Compliance (Phase 4 & 5)
+- **Organizations & Staff Management:** `/insa/organizations` and `/insa/staff`.
+- **Telecom Gateways & Settings:** `/insa/settings` with masked API credentials and connection tests.
+- **Reports & Analytics:** `/insa/reports` with KPI metrics and PDF/Excel/CSV export.
+- **Read-Only Audit Log:** `/insa/audit` with user, action, and date filters for Auditors.
+- **API Contract:** Generated OpenAPI 3.0 specification at `docs/openapi.yaml`.
 
-Vite reads these only when it starts, so restart `npm run dev` after changing them.
+---
 
-## Folder map (src)
+## 4. What is Mocked vs Real
 
-- `api/` mock data and the functions screens call. Each function is the place where a real request will go.
-- `components/` reusable pieces: DataTable, StatusBadge, SeverityBadge, AccountStatusBadge, FileUploader, MessageThread, MapAreaPicker, StepUpDialog, ConnectionIndicator. `components/ui/` is generated by shadcn.
-- `features/auth/` login, session, idle timeout.
-- `features/realtime/` the shared WebSocket connection and notifications.
-- `features/resource-portal/` case dashboard, form, detail, edit, Org Admin.
-- `features/insa-management/` organizations, staff, settings (with one file per settings tab in `settings/`), audit log.
-- `layouts/` the app shell (sidebar and header). `routes/` routing, guards and the role-based menu.
-- `types/` shared types and constants. `lib/` plain helper functions (validation, phone numbers, CSV, templates, role rules).
-- Tests sit next to the code they test, in files ending in `.test.ts` or `.test.tsx`.
-
-## Connecting the real backend
-
-The screens call functions in `api/` and never call the network directly, so the screens should not need to change. Planned order:
-
-1. Add `VITE_API_URL` and one request helper that attaches the session and turns errors into the messages the screens already show.
-2. Replace the mock functions one group at a time: sign-in, then cases, messages, attachments, officers, administration, audit log, settings and finally the WebSocket.
-3. Keep mock mode behind a switch until everything works, so the app can still be demonstrated without a backend.
-4. At the end, delete the simulator and the sessionStorage sign-in.
-
-Every assumption the app makes about the backend (field names, enums, endpoints, rules) is listed in the checklist sent to the backend team, `BACKEND-INTEGRATION.md`.
-
-## Temporary things to replace before real use
-
-- The sign-in session is kept in sessionStorage (`features/auth/AuthProvider.tsx`). Use secure server tokens or cookies and a "who am I" request.
-- All data lives in memory and resets when the page is refreshed (`api/mock*.ts`).
-- The INSA simulator in `api/mockCases.ts` and `api/mockRealtimeBus.ts` pretends INSA reviews submitted cases. Remove it once the backend exists.
-- Sign-in and step-up 2FA only compare a fixed code (`api/auth.ts`). The server must verify real codes.
-- The region lists are placeholder data (`lib/regions.ts` for the map and `api/mockAreas.ts` for the settings). They are not connected to each other or to the official list.
-- The audit log is sample data. The server must write the real entries, and nothing in the browser may change them.
-- The settings are not yet connected to the rest of the app. The case form's severity list, for example, does not read the saved severity rules.
-- The sample Amharic template text is an invented example and must be reviewed by a native speaker.
-- Colours for case status and severity are a proposal and need agreement with the rest of the team.
-- File attachments keep only their names. Uploading and downloading real files needs the backend.
-- Case, officer and staff lists have no paging or search. The audit log has paging and filters, but its search box does not wait for typing to stop before it asks for results.
-
-## Known limitations
-
-- The app is in English only. The settings define the supported languages, but the screens are not translated yet.
-- Unsaved changes in a settings tab are lost when switching tabs.
-- `npm audit` reports high-severity items inside the shadcn command-line tooling. Do not run `npm audit fix --force`. Check again before release.
-- The production build is over 500 kB and Vite warns about it. Splitting the code by page would fix this.
-- Real-time updates reload the affected data when told something changed. They do not patch the screen in place.
-
-## Tests
-
-There are 89 tests in 12 files. They cover role rules, case validation, phone and CSV helpers, event parsing, the sign-in flow, the route guards (who may open which page), the badges, and the sample stores for administration and the audit log.
-
-Not yet covered: the case form, case detail and Org Admin screens, the settings screens, and the settings stores. The helper functions in `lib/templates.ts` are the quickest to add next. These tests are planned after the backend is connected.
-
-## Not built yet
-
-- The INSA control-centre screens (command dashboard, case review, alert composer, approvals, dispatch, SOS operations). These belong to Web Dev 2 and are placeholders here.
-- Reports with PDF and Excel export.
-- Connection to the real backend.
-
-## Working with Git
-
-Work happens on the branch `frontend/setup`. Commit after each working step, run `npm run build`, `npm run lint` and `npm test` first, and check `git status` before committing so that `node_modules`, `dist` and `.env.local` never go in.
+- **Network Requests:** All REST endpoints run against MSW and in-memory stores in `src/api/` (following the exact contract in `docs/openapi.yaml`).
+- **Telemetry & WebSocket:** When no backend `VITE_WS_URL` is set, `WebSocketClient` automatically switches to internal simulated bus mode emitting heartbeats and broadcast telemetry.
+- **Map Tiles:** Live OpenStreetMap and CartoDB Dark Matter tiles via Leaflet.

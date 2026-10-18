@@ -13,7 +13,8 @@ interface StaffFormProps {
   onCancel: () => void
 }
 
-const selectClass = 'h-9 w-full rounded-md border bg-white px-3 text-sm'
+const selectClass =
+  'h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500'
 
 export default function StaffForm({
   organizations,
@@ -69,40 +70,43 @@ export default function StaffForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl space-y-4 rounded-xl bg-white p-6 shadow"
+      className="max-w-xl space-y-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm"
     >
-      <h3 className="text-base font-semibold text-slate-900">
+      <h3 className="text-base font-bold text-white">
         Add staff account
       </h3>
       <div className="space-y-2">
-        <Label htmlFor="staff-name">Full name</Label>
+        <Label htmlFor="staff-name" className="text-xs text-slate-300">Full name</Label>
         <Input
           id="staff-name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="staff-username">Username</Label>
+        <Label htmlFor="staff-username" className="text-xs text-slate-300">Username</Label>
         <Input
           id="staff-username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="off"
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100 font-mono text-xs"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="staff-phone">Mobile phone</Label>
+        <Label htmlFor="staff-phone" className="text-xs text-slate-300">Mobile phone</Label>
         <Input
           id="staff-phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           inputMode="tel"
           placeholder="+251911000001"
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100 font-mono text-xs"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="staff-role">Role</Label>
+        <Label htmlFor="staff-role" className="text-xs text-slate-300">Role</Label>
         <select
           id="staff-role"
           className={selectClass}
@@ -121,7 +125,7 @@ export default function StaffForm({
         </select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="staff-org">Organization</Label>
+        <Label htmlFor="staff-org" className="text-xs text-slate-300">Organization</Label>
         <select
           id="staff-org"
           className={selectClass}
@@ -139,15 +143,15 @@ export default function StaffForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <p className="text-xs text-slate-500">
+      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      <p className="text-xs text-slate-400">
         The person receives an invitation by SMS to set their own password.
       </p>
-      <div className="flex gap-3">
-        <Button type="submit" disabled={busy}>
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white text-xs">
           {busy ? 'Adding...' : 'Add account'}
         </Button>
-        <Button type="button" variant="ghost" disabled={busy} onClick={onCancel}>
+        <Button type="button" variant="outline" disabled={busy} onClick={onCancel} className="text-xs border-[#1b2e34] text-slate-300 hover:text-white">
           Cancel
         </Button>
       </div>

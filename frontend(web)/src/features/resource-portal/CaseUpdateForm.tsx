@@ -34,12 +34,12 @@ export default function CaseUpdateForm({ onSubmit }: CaseUpdateFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl bg-white p-6 shadow">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm">
       <div className="space-y-2">
-        <Label htmlFor="update-kind">Request type</Label>
+        <Label htmlFor="update-kind" className="text-xs text-slate-300">Request type</Label>
         <select
           id="update-kind"
-          className="h-9 w-full rounded-md border bg-white px-3 text-sm sm:w-60"
+          className="h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500 sm:w-60"
           value={kind}
           onChange={(e) => setKind(e.target.value as CaseUpdateKind)}
         >
@@ -48,16 +48,17 @@ export default function CaseUpdateForm({ onSubmit }: CaseUpdateFormProps) {
         </select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="update-text">Message for the public</Label>
+        <Label htmlFor="update-text" className="text-xs text-slate-300">Message for the public</Label>
         <Textarea
           id="update-text"
           rows={3}
           value={text}
           onChange={(e) => setText(e.target.value)}
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
         />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <Button type="submit" disabled={busy}>
+      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white text-xs">
         {busy ? 'Sending...' : 'Send to INSA'}
       </Button>
     </form>

@@ -68,26 +68,27 @@ export default function TemplateForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-2xl space-y-4 rounded-xl bg-white p-6 shadow"
+      className="max-w-2xl space-y-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm"
     >
-      <h3 className="text-base font-semibold text-slate-900">
+      <h3 className="text-base font-bold text-white">
         {initial ? 'Edit template' : 'New template'}
       </h3>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="tpl-name">Name</Label>
+          <Label htmlFor="tpl-name" className="text-xs text-slate-300">Name</Label>
           <Input
             id="tpl-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="tpl-language">Language</Label>
+          <Label htmlFor="tpl-language" className="text-xs text-slate-300">Language</Label>
           <select
             id="tpl-language"
-            className="h-9 w-full rounded-md border bg-white px-3 text-sm"
+            className="h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
             value={language}
             onChange={(e) => setLanguage(e.target.value as LanguageCode)}
           >

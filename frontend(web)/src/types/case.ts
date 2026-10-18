@@ -35,6 +35,7 @@ export interface Case {
   area: string
   status: CaseStatus
   updatedAt: string
+  severity?: Severity | ''
 }
 
 export const CASE_CATEGORIES = [

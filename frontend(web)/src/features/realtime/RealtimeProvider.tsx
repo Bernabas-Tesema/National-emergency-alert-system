@@ -77,8 +77,8 @@ export default function RealtimeProvider({ children }: { children: ReactNode }) 
       {/* z-[2000] keeps notices above the map, whose controls sit at z-index 1000. */}
       <div className="fixed bottom-4 right-4 z-[2000] w-80 space-y-2">
         {notices.map((n) => (
-          <div key={n.id} className="rounded-lg border bg-white p-4 shadow-lg">
-            <p className="text-sm text-slate-900">{n.text}</p>
+          <div key={n.id} className="rounded-xl border border-teal-800 bg-[#111d21] p-4 shadow-xl">
+            <p className="text-xs text-slate-100 font-medium">{n.text}</p>
             <div className="mt-2 flex gap-2">
               <Button
                 size="sm"

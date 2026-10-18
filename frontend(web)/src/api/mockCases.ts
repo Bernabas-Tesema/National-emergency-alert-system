@@ -470,3 +470,45 @@ export async function requestCaseUpdate(
 
   return update
 }
+
+export async function verifyCase(caseId: string, _author: User): Promise<void> {
+  await delay(250)
+  const found = MOCK_CASES.find((c) => c.id === caseId)
+  if (!found) throw new Error('Case not found')
+  found.status = 'verified'
+  found.updatedAt = today()
+  emitMockEvent({ type: 'case_changed', caseId, status: 'verified' })
+}
+
+export async function rejectCase(caseId: string, author: User, reason: string): Promise<void> {
+  await delay(250)
+  const found = MOCK_CASES.find((c) => c.id === caseId)
+  if (!found) throw new Error('Case not found')
+  found.status = 'rejected'
+  found.updatedAt = today()
+  found.decision = {
+    outcome: 'rejected',
+    decidedBy: author.fullName,
+    decidedAt: new Date().toISOString(),
+    comment: reason,
+  }
+  emitMockEvent({ type: 'case_changed', caseId, status: 'rejected' })
+}
+
+export async function requestCaseClarification(caseId: string, author: User, question: string): Promise<void> {
+  await delay(250)
+  const found = MOCK_CASES.find((c) => c.id === caseId)
+  if (!found) throw new Error('Case not found')
+  found.status = 'needs_clarification'
+  found.updatedAt = today()
+  found.messages.push({
+    id: crypto.randomUUID(),
+    authorId: author.id,
+    authorName: author.fullName,
+    authorRole: author.role,
+    text: question,
+    sentAt: new Date().toISOString(),
+  })
+  emitMockEvent({ type: 'case_changed', caseId, status: 'needs_clarification' })
+}
+

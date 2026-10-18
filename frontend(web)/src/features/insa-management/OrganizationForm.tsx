@@ -50,24 +50,25 @@ export default function OrganizationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="max-w-xl space-y-4 rounded-xl bg-white p-6 shadow"
+      className="max-w-xl space-y-4 rounded-xl border border-[#1b2e34] bg-[#111d21] p-6 shadow-sm"
     >
-      <h3 className="text-base font-semibold text-slate-900">
+      <h3 className="text-base font-bold text-white">
         Register organization
       </h3>
       <div className="space-y-2">
-        <Label htmlFor="org-name">Name</Label>
+        <Label htmlFor="org-name" className="text-xs text-slate-300">Name</Label>
         <Input
           id="org-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100"
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="org-kind">Type</Label>
+        <Label htmlFor="org-kind" className="text-xs text-slate-300">Type</Label>
         <select
           id="org-kind"
-          className="h-9 w-full rounded-md border bg-white px-3 text-sm"
+          className="h-9 w-full rounded-md border border-[#1b2e34] bg-[#0c1417] px-3 text-xs text-slate-200 focus:outline-none focus:border-teal-500"
           value={kind}
           onChange={(e) => setKind(e.target.value as ExternalKind | '')}
         >
@@ -79,12 +80,12 @@ export default function OrganizationForm({
           ))}
         </select>
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex gap-3">
-        <Button type="submit" disabled={busy}>
+      {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
+      <div className="flex gap-3 pt-2">
+        <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white text-xs">
           {busy ? 'Registering...' : 'Register'}
         </Button>
-        <Button type="button" variant="ghost" disabled={busy} onClick={onCancel}>
+        <Button type="button" variant="outline" disabled={busy} onClick={onCancel} className="text-xs border-[#1b2e34] text-slate-300 hover:text-white">
           Cancel
         </Button>
       </div>
