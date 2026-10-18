@@ -50,4 +50,9 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/insa/staff',
     roles: ['system_admin'],
   },
+    {
+    label: 'Settings',
+    path: '/insa/settings',
+    roles: ['system_admin'],
+  },
 ]

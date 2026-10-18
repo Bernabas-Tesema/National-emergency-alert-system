@@ -51,6 +51,11 @@ const BLOCKED: [Role, string][] = [
   ['org_admin', '/insa/audit'],
   ['dispatcher', '/insa/audit'],
   ['higher_officer', '/insa/audit'],
+    ['provider', '/insa/settings'],
+  ['org_admin', '/insa/settings'],
+  ['dispatcher', '/insa/settings'],
+  ['higher_officer', '/insa/settings'],
+  ['auditor', '/insa/settings'],
 ]
 
 describe('who can open which page', () => {
@@ -92,6 +97,12 @@ describe('who can open which page', () => {
     renderAt('/insa/audit', 'system_admin')
     expect(
       await screen.findByRole('heading', { name: 'Audit log' }, WAIT),
+    ).toBeInTheDocument()
+  })
+    it('lets a system admin open the settings page', async () => {
+    renderAt('/insa/settings', 'system_admin')
+    expect(
+      await screen.findByRole('heading', { name: 'Settings' }, WAIT),
     ).toBeInTheDocument()
   })
 })

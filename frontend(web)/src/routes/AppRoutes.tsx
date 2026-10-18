@@ -14,6 +14,7 @@ import StaffPage from '@/features/insa-management/StaffPage'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES, ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
 import AuditLogPage from '@/features/insa-management/AuditLogPage'
+import SettingsPage from '@/features/insa-management/SettingsPage'
 
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
@@ -62,6 +63,7 @@ export default function AppRoutes() {
               element={<PlaceholderPage title="INSA Command Dashboard" />}
             />
             <Route path="/insa/organizations" element={<OrganizationsPage />} />
+                        <Route path="/insa/settings" element={<SettingsPage />} />
             <Route path="/insa/staff" element={<StaffPage />} />
           </Route>
 
