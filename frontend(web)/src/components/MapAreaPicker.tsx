@@ -1,4 +1,6 @@
+
 import { useEffect } from 'react'
+
 import {
   CircleMarker,
   MapContainer,
@@ -8,28 +10,43 @@ import {
   useMap,
   useMapEvents,
 } from 'react-leaflet'
+
 import 'leaflet/dist/leaflet.css'
+
 import { Button } from '@/components/ui/button'
 import { DEFAULT_CENTER, REGIONS, getRegion } from '@/lib/regions'
 import type { AreaSelection, LatLngTuple } from '@/types/area'
 
 // Adds a corner each time the user clicks on the map.
-function ClickToAddPoints({ onAdd }: { onAdd: (point: LatLngTuple) => void }) {
+function ClickToAddPoints({
+  onAdd,
+}: {
+  onAdd: (point: LatLngTuple) => void
+}) {
   useMapEvents({
     click(e) {
       onAdd([e.latlng.lat, e.latlng.lng])
     },
   })
+
   return null
 }
 
 // Moves the map when the selected sub-city changes.
-function FlyTo({ center, zoom }: { center: LatLngTuple; zoom: number }) {
+function FlyTo({
+  center,
+  zoom,
+}: {
+  center: LatLngTuple
+  zoom: number
+}) {
   const map = useMap()
   const [lat, lng] = center
+
   useEffect(() => {
     map.flyTo([lat, lng], zoom)
   }, [map, lat, lng, zoom])
+
   return null
 }
 
@@ -70,6 +87,7 @@ export default function MapAreaPicker({
               </option>
             ))}
           </select>
+
           <Button
             type="button"
             variant="outline"
@@ -81,6 +99,7 @@ export default function MapAreaPicker({
           >
             Undo last point
           </Button>
+
           <Button
             type="button"
             variant="outline"
@@ -93,7 +112,7 @@ export default function MapAreaPicker({
         </div>
       )}
 
-      <div className="h-96 overflow-hidden rounded-lg border">
+      <div className="isolate h-96 overflow-hidden rounded-lg border">
         <MapContainer
           center={DEFAULT_CENTER}
           zoom={11}
@@ -103,11 +122,19 @@ export default function MapAreaPicker({
             attribution="&copy; OpenStreetMap contributors"
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
+
           <FlyTo center={center} zoom={zoom} />
+
           {!readOnly && <ClickToAddPoints onAdd={addPoint} />}
 
-          {value.points.length >= 3 && <Polygon positions={value.points} />}
-          {value.points.length === 2 && <Polyline positions={value.points} />}
+          {value.points.length >= 3 && (
+            <Polygon positions={value.points} />
+          )}
+
+          {value.points.length === 2 && (
+            <Polyline positions={value.points} />
+          )}
+
           {value.points.map((p, i) => (
             <CircleMarker key={i} center={p} radius={5} />
           ))}
@@ -118,9 +145,10 @@ export default function MapAreaPicker({
         <p className="text-xs text-slate-500">
           {value.points.length === 0 &&
             'Click on the map to draw the affected area, one corner per click.'}
-          {value.points.length > 0 &&
-            value.points.length < 3 &&
+
+          {value.points.length > 0 && value.points.length < 3 &&
             `${value.points.length} point(s). Add at least 3 corners to form an area.`}
+
           {value.points.length >= 3 &&
             `Area drawn with ${value.points.length} corners.`}
         </p>

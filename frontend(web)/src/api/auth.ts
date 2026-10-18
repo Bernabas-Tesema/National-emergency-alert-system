@@ -50,3 +50,10 @@ export async function submitTwoFactor(
   pendingLogins.delete(challengeId)
   return { token: `mock-token-${account.id}`, user: toUser(account) }
 }
+// Step-up check before a sensitive action. MOCK: only compares the fixed code.
+// Real version: the server verifies a fresh 2FA code and ties the approval to
+// the specific action, so the browser cannot skip it by editing this function.
+export async function verifyStepUp(code: string): Promise<void> {
+  await delay(300)
+  if (code !== MOCK_2FA_CODE) throw new AuthError('Incorrect verification code')
+}

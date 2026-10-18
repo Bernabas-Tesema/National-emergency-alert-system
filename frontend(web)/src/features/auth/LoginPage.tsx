@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +19,9 @@ type Step = 'credentials' | 'twofactor' | 'mobile-only'
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+    const location = useLocation()
+  const timedOut =
+    (location.state as { reason?: string } | null)?.reason === 'timeout'
 
   const [step, setStep] = useState<Step>('credentials')
   const [username, setUsername] = useState('')
@@ -92,6 +95,11 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
+                    {step === 'credentials' && timedOut && (
+            <p className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              You were signed out because of inactivity. Please sign in again.
+            </p>
+          )}
           {step === 'credentials' && (
             <form onSubmit={handleCredentials} className="space-y-4">
               <div className="space-y-2">

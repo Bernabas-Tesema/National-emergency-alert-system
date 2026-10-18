@@ -3,6 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
 import ConnectionIndicator from '@/components/ConnectionIndicator'
+import SessionTimeout from '@/features/auth/SessionTimeout'
 import { useAuth } from '@/features/auth/useAuth'
 import { NAV_ITEMS } from '@/routes/navigation'
 import { ROLE_LABELS } from '@/types/role'
@@ -14,7 +15,9 @@ export default function AppShell() {
   // The route guard makes sure a user exists before this renders.
   if (!user) return null
 
-  const items = NAV_ITEMS.filter((item) => item.roles.includes(user.role))
+  const items = NAV_ITEMS.filter((item) =>
+    item.roles.includes(user.role),
+  )
 
   function handleLogout() {
     logout()
@@ -53,7 +56,9 @@ export default function AppShell() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between border-b bg-white px-6 py-3">
           <div className="flex items-center gap-4">
-            <p className="text-sm text-slate-600">{user.organization}</p>
+            <p className="text-sm text-slate-600">
+              {user.organization}
+            </p>
             <ConnectionIndicator />
           </div>
 
@@ -67,7 +72,11 @@ export default function AppShell() {
               </p>
             </div>
 
-            <Button variant="outline" size="sm" onClick={handleLogout}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+            >
               Sign out
             </Button>
           </div>
@@ -77,6 +86,8 @@ export default function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      <SessionTimeout />
     </div>
   )
 }
