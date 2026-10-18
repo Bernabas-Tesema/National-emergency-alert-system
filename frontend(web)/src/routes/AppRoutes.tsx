@@ -13,6 +13,7 @@ import OrganizationsPage from '@/features/insa-management/OrganizationsPage'
 import StaffPage from '@/features/insa-management/StaffPage'
 import ProtectedRoute from './ProtectedRoute'
 import { ROLES, ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
+import AuditLogPage from '@/features/insa-management/AuditLogPage'
 
 // Every role that may use the web app (everyone except citizens).
 const WEB_ROLES = ROLES.filter(hasWebAccess)
@@ -79,10 +80,7 @@ export default function AppRoutes() {
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['auditor', 'system_admin']} />}>
-            <Route
-              path="/insa/audit"
-              element={<PlaceholderPage title="Audit Log" />}
-            />
+                        <Route path="/insa/audit" element={<AuditLogPage />} />
           </Route>
 
           <Route
