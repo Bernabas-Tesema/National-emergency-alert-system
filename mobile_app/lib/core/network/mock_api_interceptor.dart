@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'mock_alerts.dart';
 
 /// Fake backend for development. Every shape here is an ASSUMPTION
 /// until the backend team confirms the real contract.
@@ -27,7 +28,17 @@ class MockApiInterceptor extends Interceptor {
         return _ok(options, handler, _tokens());
             case '/devices':
         return _ok(options, handler, {'registered': true});
+            case '/alerts/mine':
+        return _ok(options, handler, {'alerts': mockAlertsJson()});
       default:
+        if (options.path.startsWith('/alerts/')) {
+          final id = options.path.substring('/alerts/'.length);
+          final matches = mockAlertsJson().where((a) => a['id'] == id);
+          if (matches.isNotEmpty) {
+            return _ok(options, handler, matches.first);
+          }
+          return _fail(options, handler, 404, 'NOT_FOUND', 'Alert not found.');
+        }
         return _fail(options, handler, 404, 'NOT_FOUND', 'Mock: no such endpoint');
     }
   }

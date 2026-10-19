@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/alerts/presentation/alert_detail_screen.dart';
+import '../../features/alerts/presentation/alert_history_screen.dart';
 
 import '../../features/alerts/presentation/home_screen.dart';
 import '../../features/auth/application/auth_controller.dart';
@@ -51,6 +53,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/not-linked', builder: (_, _) => const NotLinkedScreen()),
       GoRoute(path: '/lock', builder: (_, _) => const LockScreen()),
       GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+            GoRoute(
+        path: '/history',
+        builder: (_, _) => const AlertHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/alerts/:id',
+        builder: (_, state) =>
+            AlertDetailScreen(alertId: state.pathParameters['id']!),
+      ),
     ],
   );
   ref.onDispose(router.dispose);

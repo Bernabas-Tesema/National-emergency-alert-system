@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
-import '../../../core/push/push_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../core/theme/severity.dart';
-import '../../../shared/widgets/severity_badge.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/push/push_service.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/alert_card.dart';
+import '../../../shared/widgets/state_views.dart';
 import '../../auth/application/auth_controller.dart';
+import '../application/alert_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +19,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-    @override
+  @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -57,13 +61,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  String _area(String id) =>
+      id.isEmpty ? '' : '${id[0].toUpperCase()}${id.substring(1)}';
+
   @override
   Widget build(BuildContext context) {
     final citizen = ref.watch(authControllerProvider).citizen;
+    final alerts = ref.watch(alertsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alerts'),
         actions: [
+          IconButton(
+            tooltip: 'Alert history',
+            icon: const Icon(Icons.history),
+            onPressed: () => context.push('/history'),
+          ),
           TextButton(
             onPressed: () =>
                 ref.read(authControllerProvider.notifier).signOut(),
@@ -71,25 +85,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Signed in as ${citizen?.phone ?? ''}'),
-            Text('Registered area: ${citizen?.registeredRegion ?? ''}'),
-            const SizedBox(height: 24),
-            const Text('Active alerts will appear here (Step 7).'),
-            const SizedBox(height: 24),
-            for (final s in Severity.values) ...[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: SeverityBadge(severity: s),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ],
+      body: alerts.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ErrorView(
+          message:
+              e is ApiException ? e.message : 'Could not load your alerts.',
+          onRetry: () => ref.invalidate(alertsProvider),
         ),
+        data: (all) {
+          final active = all.where((a) => a.isActive).toList();
+          return RefreshIndicator(
+            onRefresh: () async {
+  ref.invalidate(alertsProvider);
+  await ref.read(alertsProvider.future);
+},
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (citizen != null && citizen.registeredRegion.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Your area: ${_area(citizen.registeredRegion)}',
+                      style: const TextStyle(color: AppColors.textMuted),
+                    ),
+                  ),
+                if (active.isEmpty)
+                  const EmptyView(
+                    icon: Icons.check_circle_outline,
+                    message: 'No active alerts in your area.',
+                  )
+                else
+                  for (final a in active)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: AlertCard(
+                        alert: a,
+                        onTap: () => context.push('/alerts/${a.id}'),
+                      ),
+                    ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
