@@ -81,6 +81,13 @@ class _PhoneEntryScreenState extends ConsumerState<PhoneEntryScreen> {
                     style: TextStyle(color: AppColors.textMuted),
                   ),
                   const SizedBox(height: 24),
+                  if (ref.watch(authControllerProvider).notice != null) ...[
+  Text(
+    ref.watch(authControllerProvider).notice!,
+    style: const TextStyle(color: AppColors.warning),
+  ),
+  const SizedBox(height: 16),
+],
                   TextField(
                     controller: _controller,
                     keyboardType: TextInputType.phone,

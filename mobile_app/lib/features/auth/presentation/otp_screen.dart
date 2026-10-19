@@ -69,7 +69,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
           .confirmOtp(challengeId: challenge.challengeId, code: code);
       ref.read(loginFlowProvider.notifier).clear();
       // The router notices the new state and opens Home by itself.
-      ref.read(authControllerProvider.notifier).markSignedIn(citizen);
+      await ref.read(authControllerProvider.notifier).markSignedIn(citizen);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {

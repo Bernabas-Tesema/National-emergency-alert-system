@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../../core/device/device_binding.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/storage/token_storage.dart';
 import '../domain/citizen.dart';
@@ -25,15 +26,19 @@ class LoginChallenge {
 }
 
 class AuthRepository {
-  AuthRepository(this._dio, this._storage);
+  AuthRepository(this._dio, this._storage, this._device);
 
   final Dio _dio;
   final TokenStorage _storage;
+  final DeviceBinding _device;
 
   /// ASSUMPTION: request and response shapes are not confirmed by the backend.
   Future<LoginChallenge> requestOtp(String phone) async {
     try {
-      final res = await _dio.post('/auth/phone/verify', data: {'phone': phone});
+      final res = await _dio.post('/auth/phone/verify', data: {
+        'phone': phone,
+        'deviceId': await _device.deviceId(),
+      });
       return LoginChallenge.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
@@ -45,8 +50,11 @@ class AuthRepository {
     required String code,
   }) async {
     try {
-      final res = await _dio.post('/auth/phone/confirm',
-          data: {'challengeId': challengeId, 'code': code});
+      final res = await _dio.post('/auth/phone/confirm', data: {
+        'challengeId': challengeId,
+        'code': code,
+        'deviceId': await _device.deviceId(),
+      });
       final data = res.data as Map<String, dynamic>;
       final citizen = Citizen.fromJson(data['citizen'] as Map<String, dynamic>);
       await _storage.save(TokenPair(

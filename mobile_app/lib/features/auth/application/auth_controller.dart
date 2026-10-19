@@ -1,21 +1,34 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/device/device_binding.dart';
 import '../../../core/network/api_client.dart';
 import '../data/auth_repository.dart';
+import '../data/biometric_service.dart';
 import '../domain/citizen.dart';
 
-enum AuthStatus { unknown, signedOut, signedIn }
+enum AuthStatus { unknown, signedOut, locked, signedIn }
 
 class AuthState {
-  const AuthState(this.status, [this.citizen]);
+  const AuthState(this.status, [this.citizen, this.notice]);
   final AuthStatus status;
   final Citizen? citizen;
+
+  /// A message for the login screen, e.g. "new device, verify again".
+  final String? notice;
 }
+
+final deviceBindingProvider = Provider<DeviceBinding>(
+  (ref) => DeviceBinding(ref.watch(tokenStorageProvider)),
+);
+
+final biometricServiceProvider =
+    Provider<BiometricService>((ref) => BiometricService());
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
     ref.watch(dioProvider),
     ref.watch(tokenStorageProvider),
+    ref.watch(deviceBindingProvider),
   ),
 );
 
@@ -32,15 +45,56 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _restore() async {
-    final citizen = await ref.read(authRepositoryProvider).restore();
+    final repo = ref.read(authRepositoryProvider);
+    final binding = ref.read(deviceBindingProvider);
+    final storage = ref.read(tokenStorageProvider);
+
+    final citizen = await repo.restore();
     await Future<void>.delayed(const Duration(milliseconds: 900)); // splash
-    state = citizen == null
-        ? const AuthState(AuthStatus.signedOut)
+
+    if (citizen == null) {
+      state = const AuthState(AuthStatus.signedOut);
+      return;
+    }
+    if (await binding.hasChanged()) {
+      await repo.signOut();
+      await binding.rememberCurrent();
+      state = const AuthState(
+        AuthStatus.signedOut,
+        null,
+        'This looks like a new device. Please verify your number again.',
+      );
+      return;
+    }
+    state = await storage.readBiometricEnabled()
+        ? AuthState(AuthStatus.locked, citizen)
         : AuthState(AuthStatus.signedIn, citizen);
   }
 
-  void markSignedIn(Citizen citizen) =>
-      state = AuthState(AuthStatus.signedIn, citizen);
+  Future<void> markSignedIn(Citizen citizen) async {
+    await ref.read(deviceBindingProvider).rememberCurrent();
+    state = AuthState(AuthStatus.signedIn, citizen);
+  }
+
+  /// Shows the system prompt. On success the app opens.
+  Future<bool> unlock() async {
+    final ok = await ref
+        .read(biometricServiceProvider)
+        .authenticate('Unlock National Emergency Alert');
+    if (ok && state.status == AuthStatus.locked) {
+      state = AuthState(AuthStatus.signedIn, state.citizen);
+    }
+    return ok;
+  }
+
+  /// Confirms with the system prompt first, then turns unlock on.
+  Future<bool> enableBiometric() async {
+    final ok = await ref
+        .read(biometricServiceProvider)
+        .authenticate('Confirm to turn on quick unlock');
+    if (ok) await ref.read(tokenStorageProvider).saveBiometricEnabled(true);
+    return ok;
+  }
 
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider).signOut();
@@ -48,7 +102,10 @@ class AuthController extends Notifier<AuthState> {
   }
 
   void _onExpired() {
-    if (state.status == AuthStatus.signedIn) signOut();
+    if (state.status == AuthStatus.signedIn ||
+        state.status == AuthStatus.locked) {
+      signOut();
+    }
   }
 }
 

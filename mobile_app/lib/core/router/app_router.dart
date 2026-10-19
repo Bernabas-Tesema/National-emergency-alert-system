@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/alerts/presentation/home_screen.dart';
 import '../../features/auth/application/auth_controller.dart';
+import '../../features/auth/presentation/lock_screen.dart';
 import '../../features/auth/presentation/not_linked_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_entry_screen.dart';
@@ -24,26 +25,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
       final location = state.matchedLocation;
 
-      if (auth.status == AuthStatus.unknown) {
-        return location == '/splash' ? null : '/splash';
+      switch (auth.status) {
+        case AuthStatus.unknown:
+          return location == '/splash' ? null : '/splash';
+        case AuthStatus.locked:
+          return location == '/lock' ? null : '/lock';
+        case AuthStatus.signedIn:
+          final isEntry = location == '/splash' ||
+              location == '/lock' ||
+              _loginRoutes.contains(location);
+          return isEntry ? '/home' : null;
+        case AuthStatus.signedOut:
+          if (!_loginRoutes.contains(location)) return '/phone';
+          if (location == '/otp' &&
+              ref.read(loginFlowProvider)?.challenge == null) {
+            return '/phone';
+          }
+          return null;
       }
-      if (auth.status == AuthStatus.signedIn) {
-        final isEntry = location == '/splash' || _loginRoutes.contains(location);
-        return isEntry ? '/home' : null;
-      }
-      // Signed out: only the login screens are allowed.
-      if (!_loginRoutes.contains(location)) return '/phone';
-      if (location == '/otp' &&
-          ref.read(loginFlowProvider)?.challenge == null) {
-        return '/phone';
-      }
-      return null;
     },
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/phone', builder: (_, _) => const PhoneEntryScreen()),
       GoRoute(path: '/otp', builder: (_, _) => const OtpScreen()),
       GoRoute(path: '/not-linked', builder: (_, _) => const NotLinkedScreen()),
+      GoRoute(path: '/lock', builder: (_, _) => const LockScreen()),
       GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
     ],
   );
