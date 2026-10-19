@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/push/push_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_client.dart';
@@ -14,10 +15,14 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  @override
+    @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _offerQuickUnlock());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Notification permission first, then the quick-unlock offer.
+      await ref.read(pushServiceProvider).start();
+      if (mounted) await _offerQuickUnlock();
+    });
   }
 
   Future<void> _offerQuickUnlock() async {

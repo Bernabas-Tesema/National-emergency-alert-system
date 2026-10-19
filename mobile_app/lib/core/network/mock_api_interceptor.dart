@@ -25,6 +25,8 @@ class MockApiInterceptor extends Interceptor {
         return _confirm(options, handler, body);
       case '/auth/refresh':
         return _ok(options, handler, _tokens());
+            case '/devices':
+        return _ok(options, handler, {'registered': true});
       default:
         return _fail(options, handler, 404, 'NOT_FOUND', 'Mock: no such endpoint');
     }
