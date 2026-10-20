@@ -148,6 +148,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                       LengthLimitingTextInputFormatter(6),
                     ],
                     decoration: InputDecoration(
+                      labelText: 'Verification code', 
                       border: const OutlineInputBorder(),
                       errorText: _error,
                     ),

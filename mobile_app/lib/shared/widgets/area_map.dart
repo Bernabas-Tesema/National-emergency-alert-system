@@ -10,47 +10,60 @@ import '../../core/theme/severity.dart';
 /// Tiles: the OpenStreetMap public server is fine for development only.
 /// The backend team must say which tile source is allowed in production.
 class AreaMap extends StatelessWidget {
-  const AreaMap({super.key, required this.polygon, required this.severity});
+  const AreaMap({
+    super.key,
+    required this.polygon,
+    required this.severity,
+    required this.areaName,
+  });
 
   final List<LatLng> polygon;
   final Severity severity;
+  final String areaName;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 220,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCameraFit: CameraFit.bounds(
-              bounds: LatLngBounds.fromPoints(polygon),
-              padding: const EdgeInsets.all(32),
+    return Semantics(
+      image: true,
+      label: areaName.isEmpty
+          ? 'Map of the affected area'
+          : 'Map of the affected area: $areaName',
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 220,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: FlutterMap(
+            options: MapOptions(
+              initialCameraFit: CameraFit.bounds(
+                bounds: LatLngBounds.fromPoints(polygon),
+                padding: const EdgeInsets.all(32),
+              ),
+              interactionOptions:
+                  const InteractionOptions(flags: InteractiveFlag.none),
             ),
-            interactionOptions:
-                const InteractionOptions(flags: InteractiveFlag.none),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'et.gov.nea.nea_citizen',
+              ),
+              PolygonLayer(
+                polygons: [
+                  Polygon(
+                    points: polygon,
+                    color: severity.color.withValues(alpha: 0.25),
+                    borderColor: severity.color,
+                    borderStrokeWidth: 3,
+                  ),
+                ],
+              ),
+              const RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution('© OpenStreetMap contributors'),
+                ],
+              ),
+            ],
           ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'et.gov.nea.nea_citizen',
-            ),
-            PolygonLayer(
-              polygons: [
-                Polygon(
-                  points: polygon,
-                  color: severity.color.withValues(alpha: 0.25),
-                  borderColor: severity.color,
-                  borderStrokeWidth: 3,
-                ),
-              ],
-            ),
-            const RichAttributionWidget(
-              attributions: [
-                TextSourceAttribution('© OpenStreetMap contributors'),
-              ],
-            ),
-          ],
         ),
       ),
     );

@@ -11,56 +11,76 @@ class AlertCard extends StatelessWidget {
   final Alert alert;
   final VoidCallback onTap;
 
+  /// What a screen reader says for the whole card.
+  String get _spoken => [
+        switch (alert.status) {
+          AlertStatus.allClear => 'All clear',
+          AlertStatus.cancelled => 'Cancelled alert',
+          AlertStatus.updated => '${alert.severity.label} alert, updated',
+          AlertStatus.active => '${alert.severity.label} alert',
+        },
+        alert.title,
+        if (alert.area.name.isNotEmpty) alert.area.name,
+        timeAgo(alert.issuedAt),
+      ].join('. ');
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(width: 8, color: alert.severity.color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          SeverityBadge(severity: alert.severity),
-                          if (alert.status != AlertStatus.active)
-                            _StatusChip(status: alert.status),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        alert.title,
-                        style: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        [
-                          if (alert.area.name.isNotEmpty) alert.area.name,
-                          timeAgo(alert.issuedAt),
-                        ].join(' · '),
-                        style: const TextStyle(color: AppColors.textMuted),
-                      ),
-                    ],
+    return Semantics(
+      container: true,
+      button: true,
+      label: _spoken,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(width: 8, color: alert.severity.color),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            SeverityBadge(severity: alert.severity),
+                            if (alert.status != AlertStatus.active)
+                              _StatusChip(status: alert.status),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          alert.title,
+                          style: const TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          [
+                            if (alert.area.name.isNotEmpty) alert.area.name,
+                            timeAgo(alert.issuedAt),
+                          ].join(' · '),
+                          style: const TextStyle(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(Icons.chevron_right, color: AppColors.textMuted),
-              ),
-            ],
+                const Padding(
+                  padding: EdgeInsets.only(right: 8),
+                  child: Icon(Icons.chevron_right, color: AppColors.textMuted),
+                ),
+              ],
+            ),
           ),
         ),
       ),

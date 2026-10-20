@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/area_map.dart';
 import '../../../shared/widgets/state_views.dart';
 import '../application/alert_providers.dart';
+import '../data/alert_speaker.dart';
 import '../domain/alert.dart';
 
 class AlertDetailScreen extends ConsumerWidget {
@@ -43,8 +44,17 @@ class _Body extends StatelessWidget {
       children: [
         _Banner(alert: alert),
         const SizedBox(height: 16),
-        Text(alert.title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+        Semantics(
+          header: true,
+          child: Text(alert.title,
+              style:
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _ReadAloudButton(alert: alert),
+        ),
         const SizedBox(height: 16),
         if (alert.message.isNotEmpty)
           _Section(
@@ -68,7 +78,11 @@ class _Body extends StatelessWidget {
                 Text(alert.area.name, style: const TextStyle(fontSize: 16)),
               if (alert.area.polygon.length >= 3) ...[
                 const SizedBox(height: 12),
-                AreaMap(polygon: alert.area.polygon, severity: alert.severity),
+                AreaMap(
+                  polygon: alert.area.polygon,
+                  severity: alert.severity,
+                  areaName: alert.area.name,
+                ),
               ],
             ],
           ),
@@ -103,6 +117,41 @@ class _Body extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ReadAloudButton extends ConsumerWidget {
+  const _ReadAloudButton({required this.alert});
+
+  final Alert alert;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final speaker = ref.watch(alertSpeakerProvider);
+    return ValueListenableBuilder<bool>(
+      valueListenable: speaker.speaking,
+      builder: (context, speaking, _) => FilledButton.tonalIcon(
+        onPressed: () async {
+          if (speaking) {
+            await speaker.stop();
+            return;
+          }
+          final messenger = ScaffoldMessenger.of(context);
+          final ok = await speaker.speak(alert);
+          if (!ok) {
+            messenger.showSnackBar(const SnackBar(
+              content: Text(
+                'Reading aloud is not available for this language on this phone.',
+              ),
+            ));
+          }
+        },
+        icon: Icon(speaking
+            ? Icons.stop_circle_outlined
+            : Icons.volume_up_outlined),
+        label: Text(speaking ? 'Stop reading' : 'Read this alert aloud'),
+      ),
     );
   }
 }
@@ -142,19 +191,22 @@ class _Banner extends StatelessWidget {
         ),
     };
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: TextStyle(
-                  color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
-          if (subtitle != null)
-            Text(subtitle, style: TextStyle(color: fg)),
-        ],
+    return Semantics(
+      header: true,
+      liveRegion: true, // a screen reader announces it when it changes
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration:
+            BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: TextStyle(
+                    color: fg, fontWeight: FontWeight.w800, fontSize: 16)),
+            if (subtitle != null) Text(subtitle, style: TextStyle(color: fg)),
+          ],
+        ),
       ),
     );
   }
@@ -183,11 +235,14 @@ class _Section extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title.toUpperCase(),
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textMuted)),
+              Semantics(
+                header: true,
+                child: Text(title.toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMuted)),
+              ),
               const SizedBox(height: 8),
               child,
             ],
