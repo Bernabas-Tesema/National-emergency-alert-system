@@ -1,5 +1,5 @@
 /// Mock alerts shaped like the Web Dev 1 handoff. All data is invented.
-List<Map<String, dynamic>> mockAlertsJson() {
+List<Map<String, dynamic>> _baseAlerts() {
   final now = DateTime.now().toUtc();
   String ago(Duration d) => now.subtract(d).toIso8601String();
 
@@ -76,4 +76,26 @@ List<Map<String, dynamic>> mockAlertsJson() {
       ],
     },
   ];
+}
+/// Ids of alerts the test menu has marked "all clear".
+final Set<String> mockClearedAlertIds = {};
+
+List<Map<String, dynamic>> mockAlertsJson() {
+  final alerts = _baseAlerts();
+  for (final a in alerts) {
+    if (mockClearedAlertIds.contains(a['id'])) {
+      a['status'] = 'all_clear';
+      a['updates'] = [
+        {
+          'id': 'u-clear',
+          'text': 'The situation has ended. All clear.',
+          'postedAt': DateTime.now()
+              .toUtc()
+              .subtract(const Duration(minutes: 1))
+              .toIso8601String(),
+        },
+      ];
+    }
+  }
+  return alerts;
 }

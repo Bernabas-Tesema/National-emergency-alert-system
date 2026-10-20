@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'core/push/local_notifier.dart';
+import 'core/push/notification_taps.dart';
 import 'core/push/push_background.dart';
 
 Future<void> main() async {
@@ -12,10 +13,12 @@ Future<void> main() async {
   try {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await NotificationTaps.listenToPushTaps();
   } catch (e) {
     // The app still works without push (for example, no google-services.json).
     debugPrint('Firebase not ready: $e');
   }
   await LocalNotifier.ensureInitialized();
+  await LocalNotifier.checkLaunch();
   runApp(const ProviderScope(child: NeaApp()));
 }

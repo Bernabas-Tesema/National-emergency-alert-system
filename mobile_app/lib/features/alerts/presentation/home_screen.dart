@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/network/mock_alerts.dart';
+import '../../../core/push/notification_taps.dart';
 import '../../../core/push/push_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/alert_card.dart';
@@ -18,15 +22,43 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    NotificationTaps.pending.addListener(_openPending);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _openPending(); // a notification may have started the app
       // Notification permission first, then the quick-unlock offer.
       await ref.read(pushServiceProvider).start();
       if (mounted) await _offerQuickUnlock();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    NotificationTaps.pending.removeListener(_openPending);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Back in the app: alerts may have changed while it was away.
+    if (state == AppLifecycleState.resumed) _refreshAll();
+  }
+
+  void _refreshAll() {
+    ref.invalidate(alertsProvider);
+    ref.invalidate(alertDetailProvider); // every open detail page
+  }
+
+  void _openPending() {
+    if (!mounted) return;
+    final id = NotificationTaps.take();
+    if (id != null) context.push('/alerts/$id');
   }
 
   Future<void> _offerQuickUnlock() async {
@@ -73,6 +105,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('Alerts'),
         actions: [
+          // Only in debug builds with the mock API: lets you test the
+          // all-clear flow without a backend.
+          if (AppConfig.useMock && kDebugMode)
+            PopupMenuButton<String>(
+              tooltip: 'Test tools',
+              icon: const Icon(Icons.bug_report_outlined),
+              onSelected: (value) {
+                if (value == 'clear') mockClearedAlertIds.add('ALT-2026-0892');
+                if (value == 'reset') mockClearedAlertIds.clear();
+                _refreshAll();
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'clear',
+                  child: Text('Simulate: all clear for the flood'),
+                ),
+                PopupMenuItem(
+                  value: 'reset',
+                  child: Text('Reset test alerts'),
+                ),
+              ],
+            ),
           IconButton(
             tooltip: 'Alert history',
             icon: const Icon(Icons.history),
@@ -96,9 +150,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           final active = all.where((a) => a.isActive).toList();
           return RefreshIndicator(
             onRefresh: () async {
-  ref.invalidate(alertsProvider);
-  await ref.read(alertsProvider.future);
-},
+              ref.invalidate(alertsProvider);
+              await ref.read(alertsProvider.future);
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),

@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../features/alerts/domain/push_payload.dart';
 import '../theme/severity.dart';
+import 'notification_taps.dart';
 
 /// The channel IDs are part of the contract with the backend.
 class NotificationChannels {
@@ -21,8 +22,13 @@ class NotificationChannels {
     importance: Importance.high,
   );
 
-  static AndroidNotificationChannel forSeverity(Severity s) =>
-      s == Severity.critical ? critical : standard;
+  /// New alerts and updates of CRITICAL alerts are loud. An all-clear is good
+  /// news and must never sound like an alarm, whatever the original severity.
+  /// DECISION to confirm with the team.
+  static AndroidNotificationChannel forPayload(PushPayload p) =>
+      (p.severity == Severity.critical && p.type != PushType.allClear)
+          ? critical
+          : standard;
 }
 
 /// Shows alerts on the right channel. Works in the app and in the
@@ -33,9 +39,13 @@ class LocalNotifier {
 
   static Future<void> ensureInitialized() async {
     if (_ready) return;
-    await _plugin.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-    ));
+    await _plugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+      // The citizen tapped one of our notifications while the app was alive.
+      onDidReceiveNotificationResponse: (r) => NotificationTaps.open(r.payload),
+    );
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await android?.createNotificationChannel(NotificationChannels.critical);
@@ -43,12 +53,22 @@ class LocalNotifier {
     _ready = true;
   }
 
+  /// The app was closed and a notification we drew started it.
+  static Future<void> checkLaunch() async {
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp == true) {
+      NotificationTaps.open(details!.notificationResponse?.payload);
+    }
+  }
+
   static Future<void> show(PushPayload p) async {
     await ensureInitialized();
-    final channel = NotificationChannels.forSeverity(p.severity);
-    final critical = p.severity == Severity.critical;
+    final channel = NotificationChannels.forPayload(p);
+    final loud = channel.id == NotificationChannels.critical.id;
     await _plugin.show(
-      p.alertId.hashCode, // same alert id replaces the older notification
+      // The same alert id replaces the older notification, so an all-clear
+      // takes the alarm out of the notification shade.
+      p.alertId.hashCode,
       p.title,
       p.body,
       NotificationDetails(
@@ -57,8 +77,8 @@ class LocalNotifier {
           channel.name,
           channelDescription: channel.description,
           importance: channel.importance,
-          priority: critical ? Priority.max : Priority.high,
-          category: critical
+          priority: loud ? Priority.max : Priority.high,
+          category: loud
               ? AndroidNotificationCategory.alarm
               : AndroidNotificationCategory.message,
           audioAttributesUsage: channel.audioAttributesUsage,
