@@ -6,9 +6,9 @@ and tell the backend team.
 from __future__ import annotations
 
 import re
-from typing import Annotated, Generic, Literal, TypeVar
+from typing import Annotated, Generic, Literal, TypeVar, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
 Category = Literal["flood", "fire", "disease", "security", "missing_person", "weather", "accident", "other"]
 Severity = Literal["low", "medium", "high", "critical"]  # AI's rating
@@ -26,6 +26,71 @@ SEVERITY_TO_CHANNEL: dict[str, ChannelSeverity] = {
 }
 
 
+# ───────────────────────── input tolerance ─────────────────────────
+# The backend, the web app and this service each named categories and severities their own way.
+# Hints from the sender are mapped here instead of rejected, so a naming difference never becomes
+# a 422 on demo day. Model OUTPUT is not touched: it must still match the strict lists above.
+_CATEGORY_ALIASES = {
+    "health": "disease", "health_disease": "disease", "medical": "disease", "epidemic": "disease",
+    "flood_weather": "flood", "security_conflict": "security", "conflict": "security",
+    "hazard": "other",
+}
+_SEVERITY_ALIASES = {"info": "low", "information": "low", "warning": "medium", "warn": "medium"}
+_CHANNEL_ALIASES = {"info": "information", "warn": "warning", "low": "information",
+                    "medium": "warning", "high": "warning"}
+
+
+def _key(v: object) -> str:
+    return str(v).strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _norm_category(v: object) -> object:
+    if v is None:
+        return "other"
+    k = _key(v)
+    k = _CATEGORY_ALIASES.get(k, k)
+    return k if k in get_args(Category) else "other"
+
+
+def _norm_severity(v: object) -> object:
+    """4-level rating. Accepts any letter case and the backend's 3-level words."""
+    if v is None or str(v).strip() == "":
+        return None
+    k = _key(v)
+    k = _SEVERITY_ALIASES.get(k, k)
+    return k if k in get_args(Severity) else None
+
+
+def _norm_channel(v: object) -> object:
+    """3-level alert severity. Accepts any letter case and the 4-level words."""
+    if v is None or str(v).strip() == "":
+        return None
+    k = _key(v)
+    k = _CHANNEL_ALIASES.get(k, k)
+    return k if k in get_args(ChannelSeverity) else None
+
+
+def _norm_woreda(v: object) -> object:
+    return re.sub(r"\s+", "", v).upper() if isinstance(v, str) else v
+
+
+_WOREDA_TEXT = re.compile(r"bole[\s_-]*(?:w|woreda)?[\s_-]*0?(\d{1,2})\b", re.IGNORECASE)
+
+
+def woreda_from_text(text: str | None) -> str | None:
+    """'Bole Woreda 3' / 'bole-w03' -> 'BOLE-W03'. Anything vaguer (just 'Bole') gives None on purpose."""
+    m = _WOREDA_TEXT.search(text or "")
+    if m and 1 <= int(m.group(1)) <= 14:
+        return f"BOLE-W{int(m.group(1)):02d}"
+    return None
+
+
+CategoryIn = Annotated[Category, BeforeValidator(_norm_category)]
+SeverityIn = Annotated[Severity | None, BeforeValidator(_norm_severity)]
+ChannelSeverityIn = Annotated[ChannelSeverity | None, BeforeValidator(_norm_channel)]
+WoredaIdIn = Annotated[WoredaId, BeforeValidator(_norm_woreda)]
+
+
 class _Base(BaseModel):
     # Tolerant reader: unknown keys are ignored so a new backend field doesn't break us.
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
@@ -35,12 +100,14 @@ class _Base(BaseModel):
 class CaseIn(_Base):
     case_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_.:-]+$")
     kind: Literal["case", "sos"] = "case"
-    category: Category = "other"  # sender's hint, not trusted
+    category: CategoryIn = "other"  # sender's hint, not trusted
     source_org: str | None = Field(default=None, max_length=64)
-    suggested_severity: ChannelSeverity | None = None
+    suggested_severity: ChannelSeverityIn = None
     description: str = Field(min_length=3, max_length=4000)
     location_text: str | None = Field(default=None, max_length=300)
-    woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
+    # The backend's free-text `region`. A specific woreda in it is used; a vague one is kept as location text.
+    region: str | None = Field(default=None, max_length=128)
+    woredas: list[WoredaIdIn] = Field(default_factory=list, max_length=14)
     language: Lang = "en"
 
     @field_validator("woredas")
@@ -48,14 +115,24 @@ class CaseIn(_Base):
     def _dedupe(cls, v: list[str]) -> list[str]:
         return list(dict.fromkeys(v))
 
+    @model_validator(mode="after")
+    def _use_region_text(self) -> CaseIn:
+        if self.region and not self.woredas:
+            w = woreda_from_text(self.region)
+            if w:
+                self.woredas = [w]
+            elif not self.location_text:
+                self.location_text = self.region
+        return self
+
 
 class CaseBrief(_Base):
     id: str = Field(max_length=64)
     kind: Literal["case", "sos"] = "case"
-    category: Category = "other"
-    severity: Severity | None = None
+    category: CategoryIn = "other"
+    severity: SeverityIn = None
     description: str = Field(default="", max_length=500)
-    woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
+    woredas: list[WoredaIdIn] = Field(default_factory=list, max_length=14)
 
 
 class SummaryIn(_Base):
@@ -90,8 +167,8 @@ class RankIn(_Base):
 
 class DraftIn(_Base):
     case: CaseIn
-    target_woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
-    severity: ChannelSeverity | None = None
+    target_woredas: list[WoredaIdIn] = Field(default_factory=list, max_length=14)
+    severity: ChannelSeverityIn = None
     recommended_action: str | None = Field(default=None, max_length=500)
 
 

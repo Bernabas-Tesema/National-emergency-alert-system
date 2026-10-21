@@ -168,9 +168,9 @@ def test_unknown_case_in_offline_mode_uses_rules_and_is_low_confidence(client, a
 
 
 def test_validation_errors_do_not_echo_what_was_sent(client, auth):
-    r = client.post("/ai/v1/triage", json={"description": "call 0911234567 now", "category": "bogus"}, headers=auth)
+    r = client.post("/ai/v1/triage", json={"description": "call 0911234567 now", "woredas": ["BOLE-W15"]}, headers=auth)
     assert r.status_code == 422 and "0911234567" not in r.text
-    assert r.json()["error"]["problems"][0]["field"] == "category"
+    assert r.json()["error"]["problems"][0]["field"].startswith("woredas")
 
 
 def test_summary_needs_exactly_one_of_case_or_cases(client, auth, flood):
@@ -234,3 +234,48 @@ def test_real_data_class_skips_providers_that_train_on_free_tier():
     assert names == ["groq"]
     s2 = make_settings(mode="live", gemini_api_key="g" * 20, groq_api_key="q" * 20)
     assert [p.name for p in build_providers(s2, httpx.AsyncClient())] == ["groq", "gemini"]
+
+
+# ───── input tolerance: backend, web app and AI each name things differently ─────
+@pytest.mark.parametrize("sent,expected", [
+    ("health", "disease"), ("health_disease", "disease"), ("flood_weather", "flood"),
+    ("security_conflict", "security"), ("hazard", "other"), ("FIRE", "fire"),
+    ("Missing Person", "missing_person"), ("something-new", "other"), (None, "other"),
+])
+def test_category_hint_is_mapped_never_rejected(sent, expected):
+    assert CaseIn(description="smoke seen", category=sent).category == expected
+
+
+@pytest.mark.parametrize("sent,expected", [
+    ("CRITICAL", "critical"), ("High", "warning"), ("LOW", "information"), ("warning", "warning"),
+    ("information", "information"), ("nonsense", None), ("", None),
+])
+def test_suggested_severity_accepts_any_style(sent, expected):
+    assert CaseIn(description="smoke seen", suggested_severity=sent).suggested_severity == expected
+
+
+def test_rank_severity_accepts_backend_three_level_words():
+    items = RankIn(items=[{"id": "a", "severity": "WARNING"}, {"id": "b", "severity": "Critical"},
+                          {"id": "c", "severity": "information"}]).items
+    assert [i.severity for i in items] == ["medium", "critical", "low"]
+
+
+@pytest.mark.parametrize("region,woredas,location", [
+    ("Bole Woreda 3", ["BOLE-W03"], None), ("bole-w03", ["BOLE-W03"], None), ("BOLE W14", ["BOLE-W14"], None),
+    ("Bole", [], "Bole"), ("Addis Ababa", [], "Addis Ababa"), ("Bole Woreda 15", [], "Bole Woreda 15"),
+])
+def test_free_text_region_maps_to_a_woreda_only_when_specific(region, woredas, location):
+    c = CaseIn(description="smoke seen", region=region)
+    assert c.woredas == woredas and c.location_text == location
+
+
+def test_explicit_woredas_and_location_text_are_never_overwritten():
+    c = CaseIn(description="smoke seen", region="Bole Woreda 9", woredas=["bole-w03"], location_text="near the mall")
+    assert c.woredas == ["BOLE-W03"] and c.location_text == "near the mall"
+
+
+def test_backend_style_payload_is_accepted_end_to_end(client, auth):
+    body = {"description": "Building fire, people inside", "category": "health", "suggested_severity": "CRITICAL",
+            "region": "Bole Woreda 3", "latitude": 8.99, "longitude": 38.79, "organization": "Fire Brigade"}
+    r = client.post("/ai/v1/triage", json=body, headers=auth)
+    assert r.status_code == 200 and r.json()["suggestion"] is True

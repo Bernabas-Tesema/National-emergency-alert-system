@@ -19,6 +19,7 @@
 | 15 | In-memory rate limiter | One process is enough for V1. Use Redis if we run several | multiple replicas |
 | 16 | Prompts are files in versioned folders | Old audit rows stay explainable. `v2` = new folder, not an edit | |
 | 17 | Eval set has `dev` and `holdout` splits | Tune on dev, check holdout once. Otherwise the metric lies (Goodhart) | |
+| 18 | Sender hints (category, severity, woreda text) are mapped, not rejected. Model output stays strict | Three teams named things three ways. A naming difference must not become a 422 on demo day | the teams agree one vocabulary |
 
 ## Known limits
 

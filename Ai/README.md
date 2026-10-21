@@ -16,7 +16,7 @@ Part of the National Emergency Alert & Citizen Safety System. This service helps
 ```bash
 cd Ai
 make install                 # venv + dependencies + .env from the example
-make test                    # 179 tests, no keys, no internet
+make test                    # 204 tests, no keys, no internet
 export AI_SERVICE_KEYS=dev-key-0123456789abcdef
 make run-offline             # terminal 1
 AI_SERVICE_KEY=dev-key-0123456789abcdef make smoke    # terminal 2
@@ -58,7 +58,7 @@ Why it is built this way is in `docs/DECISIONS.md`. The short version: free prov
 | `app/prompts/v1/` | versioned prompts (examples are tested against the schemas) |
 | `data/` | woreda ids, demo cases, demo cache, all synthetic |
 | `evals/` | 20 golden cases + scorer |
-| `tests/` | 179 tests |
+| `tests/` | 204 tests |
 | `docs/AI_CONTRACT.md` | **give this to the backend team** |
 | `docs/TESTING.md`, `DEMO_DAY.md`, `DECISIONS.md` | how to test, how to present, why |
 

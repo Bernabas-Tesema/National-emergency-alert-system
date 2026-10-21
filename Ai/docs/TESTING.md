@@ -6,11 +6,11 @@ Work through the levels in order. Each one catches a different kind of problem, 
 
 ```bash
 make install     # once: creates .venv, installs everything, makes .env from the example
-make test        # 179 tests, no network
+make test        # 204 tests, no network
 make lint
 ```
 
-Expected: `179 passed`. What they cover:
+Expected: `204 passed`. What they cover:
 
 | File | What it proves |
 |---|---|
