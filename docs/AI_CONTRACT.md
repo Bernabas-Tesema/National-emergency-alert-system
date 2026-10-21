@@ -52,8 +52,9 @@ The backend should call us from the Case Service (triage on submit), the Alert C
 |---|---|
 | `description` | required, 3 to 4000 chars |
 | `kind` | `case` (agency) or `sos` (citizen). Default `case` |
-| `category` | `flood fire disease security missing_person weather accident other`. It is only a hint |
-| `suggested_severity` | `information`, `warning` or `critical`, from the sender. Optional |
+| `category` | `flood fire disease security missing_person weather accident other`. It is only a hint. Other names are mapped, never rejected (see "Names we accept") |
+| `suggested_severity` | `information`, `warning` or `critical`, from the sender. Optional. Any letter case; `low`, `medium`, `high` also accepted |
+| `region` | the backend's free-text region. "Bole Woreda 3" becomes `BOLE-W03`. Anything vaguer ("Bole", "Addis Ababa") is kept as location text, never guessed into woredas |
 | `woredas` | ids like `BOLE-W01` to `BOLE-W14`, max 14. Anything else gives 422 |
 | `case_id` | optional, `A-Za-z0-9_.:-`. Used for the demo cache lookup only |
 
@@ -150,3 +151,21 @@ CREATE TABLE ai_outputs (
 - Adding an optional field: fine, tell the backend team.
 - Renaming, removing or tightening anything: bump the URL to `/ai/v2/...` and keep v1 until the backend has moved.
 - Changing a prompt: new folder `app/prompts/v2/`, set `AI_PROMPT_VERSION=v2`. Old audit rows keep their `prompt_version`.
+
+## Names we accept (so nobody has to rename anything)
+
+The backend, the web app and this service each named things their own way. Hints from the sender are mapped, not rejected.
+
+| You send | We read it as |
+|---|---|
+| `health`, `health_disease` | `disease` |
+| `flood_weather` | `flood` |
+| `security_conflict` | `security` |
+| `hazard`, or any unknown name | `other` |
+| severity `LOW` `MEDIUM` `HIGH` `CRITICAL` (any case) | the same four levels |
+| severity `information` / `warning` (backend words) | `low` / `medium` for ranking; `information` / `warning` for alerts |
+| `bole-w03`, `BOLE W03` | `BOLE-W03` |
+
+Things we still reject with 422: a woreda number outside 01 to 14, duplicate ids in `rank`, an empty or oversized description.
+
+The AI's answer is not mapped. It always uses our names: category `flood fire disease security missing_person weather accident other`, severity `low medium high critical`, plus `channel_severity`. The backend stores `channel_severity` in its own `severity` column and keeps the full envelope in `ai_outputs`. The web app can show the four-level `severity` in capitals.
