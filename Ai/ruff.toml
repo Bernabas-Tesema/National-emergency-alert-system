@@ -1,0 +1,10 @@
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "PLE"]
+ignore = ["UP046"]  # Generic[T] style kept on purpose: clearer for students than PEP 695 syntax
+
+[lint.per-file-ignores]
+"tests/*" = ["E501"]
+"evals/*" = ["E501"]

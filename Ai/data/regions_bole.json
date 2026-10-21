@@ -1,0 +1,20 @@
+{
+  "_note": "Woreda ids only. TODO(team): add real landmarks per woreda below. The area-suggestion prompt can only match a place name to a woreda if landmarks are filled in. No coordinates are included on purpose: do not invent boundaries.",
+  "sub_city": "Bole",
+  "woredas": [
+    {"id": "BOLE-W01", "name_en": "Bole Woreda 01", "name_am": "ቦሌ ወረዳ 01", "landmarks": []},
+    {"id": "BOLE-W02", "name_en": "Bole Woreda 02", "name_am": "ቦሌ ወረዳ 02", "landmarks": []},
+    {"id": "BOLE-W03", "name_en": "Bole Woreda 03", "name_am": "ቦሌ ወረዳ 03", "landmarks": []},
+    {"id": "BOLE-W04", "name_en": "Bole Woreda 04", "name_am": "ቦሌ ወረዳ 04", "landmarks": []},
+    {"id": "BOLE-W05", "name_en": "Bole Woreda 05", "name_am": "ቦሌ ወረዳ 05", "landmarks": []},
+    {"id": "BOLE-W06", "name_en": "Bole Woreda 06", "name_am": "ቦሌ ወረዳ 06", "landmarks": []},
+    {"id": "BOLE-W07", "name_en": "Bole Woreda 07", "name_am": "ቦሌ ወረዳ 07", "landmarks": []},
+    {"id": "BOLE-W08", "name_en": "Bole Woreda 08", "name_am": "ቦሌ ወረዳ 08", "landmarks": []},
+    {"id": "BOLE-W09", "name_en": "Bole Woreda 09", "name_am": "ቦሌ ወረዳ 09", "landmarks": []},
+    {"id": "BOLE-W10", "name_en": "Bole Woreda 10", "name_am": "ቦሌ ወረዳ 10", "landmarks": []},
+    {"id": "BOLE-W11", "name_en": "Bole Woreda 11", "name_am": "ቦሌ ወረዳ 11", "landmarks": []},
+    {"id": "BOLE-W12", "name_en": "Bole Woreda 12", "name_am": "ቦሌ ወረዳ 12", "landmarks": []},
+    {"id": "BOLE-W13", "name_en": "Bole Woreda 13", "name_am": "ቦሌ ወረዳ 13", "landmarks": []},
+    {"id": "BOLE-W14", "name_en": "Bole Woreda 14", "name_am": "ቦሌ ወረዳ 14", "landmarks": []}
+  ]
+}

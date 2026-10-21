@@ -1,0 +1,39 @@
+{
+  "_note": "Synthetic demo scenarios. Send these to the endpoints as-is. Their case_id values are the keys in demo_cache.json.",
+  "cases": [
+    {
+      "case_id": "DEMO-FLOOD-001",
+      "kind": "case",
+      "category": "flood",
+      "source_org": "EMI",
+      "suggested_severity": "critical",
+      "description": "Heavy rain has fallen for six hours and river levels near Bole Woreda 03 are rising fast. Water is expected to overflow into low-lying homes within the next two hours. Residents of low-lying streets should move to higher ground.",
+      "location_text": "Low-lying streets, Bole Woreda 03",
+      "woredas": ["BOLE-W03"],
+      "language": "en"
+    },
+    {
+      "case_id": "DEMO-FIRE-001",
+      "kind": "sos",
+      "category": "fire",
+      "description": "Large fire at a warehouse near the main road. Thick black smoke and flames reaching the roof. The fire is close to neighbouring shops. Please send help.",
+      "location_text": "Warehouse near the main road, Bole Woreda 07",
+      "woredas": ["BOLE-W07"],
+      "language": "en"
+    },
+    {
+      "case_id": "DEMO-OUTBREAK-001",
+      "kind": "case",
+      "category": "disease",
+      "source_org": "EPHI",
+      "suggested_severity": "warning",
+      "description": "A health centre in Bole Woreda 11 has recorded 18 cases of severe watery diarrhoea over two days, mostly from the same neighbourhood. Samples have been sent for testing. The cause is not yet confirmed.",
+      "location_text": "Health centre, Bole Woreda 11",
+      "woredas": ["BOLE-W11"],
+      "language": "en"
+    }
+  ],
+  "sets": {
+    "DEMO-SET-001": ["DEMO-FLOOD-001", "DEMO-FIRE-001", "DEMO-OUTBREAK-001"]
+  }
+}

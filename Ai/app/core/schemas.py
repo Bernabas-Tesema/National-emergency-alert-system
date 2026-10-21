@@ -1,0 +1,192 @@
+"""Every request and response shape in one place. This file IS the contract.
+
+docs/AI_CONTRACT.md is the human version. If you change something here, change it there
+and tell the backend team.
+"""
+from __future__ import annotations
+
+import re
+from typing import Annotated, Generic, Literal, TypeVar
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+Category = Literal["flood", "fire", "disease", "security", "missing_person", "weather", "accident", "other"]
+Severity = Literal["low", "medium", "high", "critical"]  # AI's rating
+ChannelSeverity = Literal["information", "warning", "critical"]  # what the alert flow uses
+OrgCode = Literal["EDRMC", "EMI", "EPHI", "FEDERAL_POLICE", "FIRE_BRIGADE", "AMBULANCE",
+                  "LOCAL_DISPATCHER", "REGIONAL_BUREAU"]
+Lang = Literal["en", "am"]
+
+WoredaId = Annotated[str, Field(pattern=r"^BOLE-W(0[1-9]|1[0-4])$")]
+Line = Annotated[str, Field(min_length=1, max_length=240)]
+ETHIOPIC = re.compile(r"[ሀ-፿]")
+
+SEVERITY_TO_CHANNEL: dict[str, ChannelSeverity] = {
+    "low": "information", "medium": "warning", "high": "warning", "critical": "critical",
+}
+
+
+class _Base(BaseModel):
+    # Tolerant reader: unknown keys are ignored so a new backend field doesn't break us.
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+
+# ───────────────────────── requests ─────────────────────────
+class CaseIn(_Base):
+    case_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_.:-]+$")
+    kind: Literal["case", "sos"] = "case"
+    category: Category = "other"  # sender's hint, not trusted
+    source_org: str | None = Field(default=None, max_length=64)
+    suggested_severity: ChannelSeverity | None = None
+    description: str = Field(min_length=3, max_length=4000)
+    location_text: str | None = Field(default=None, max_length=300)
+    woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
+    language: Lang = "en"
+
+    @field_validator("woredas")
+    @classmethod
+    def _dedupe(cls, v: list[str]) -> list[str]:
+        return list(dict.fromkeys(v))
+
+
+class CaseBrief(_Base):
+    id: str = Field(max_length=64)
+    kind: Literal["case", "sos"] = "case"
+    category: Category = "other"
+    severity: Severity | None = None
+    description: str = Field(default="", max_length=500)
+    woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
+
+
+class SummaryIn(_Base):
+    """Give exactly one: `case` for a single case, or `cases` for a region or the whole open queue."""
+    case: CaseIn | None = None
+    cases: list[CaseBrief] | None = Field(default=None, max_length=50)
+    set_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_.:-]+$")
+    scope_label: str | None = Field(default=None, max_length=80)
+
+    @model_validator(mode="after")
+    def _one_of(self) -> SummaryIn:
+        if (self.case is None) == (not self.cases):
+            raise ValueError("send either `case` or a non-empty `cases`, not both and not neither")
+        return self
+
+
+class RankItemIn(CaseBrief):
+    age_minutes: int = Field(default=0, ge=0, le=60 * 24 * 30)
+
+
+class RankIn(_Base):
+    items: list[RankItemIn] = Field(min_length=1, max_length=50)
+    set_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_.:-]+$")
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> RankIn:
+        ids = [i.id for i in self.items]
+        if len(ids) != len(set(ids)):
+            raise ValueError("item ids must be unique")
+        return self
+
+
+class DraftIn(_Base):
+    case: CaseIn
+    target_woredas: list[WoredaId] = Field(default_factory=list, max_length=14)
+    severity: ChannelSeverity | None = None
+    recommended_action: str | None = Field(default=None, max_length=500)
+
+
+# ───────────────────────── model outputs ─────────────────────────
+class _Out(_Base):
+    confidence: float = Field(ge=0.0, le=1.0)
+    reasons: list[Line] = Field(default_factory=list, max_length=5)
+
+
+class TriageOut(_Out):
+    category: Category
+    severity: Severity
+    summary: Annotated[str, Field(min_length=1, max_length=400)]
+    reasons: list[Line] = Field(min_length=1, max_length=5)
+    missing_info: list[Line] = Field(default_factory=list, max_length=5)
+    channel_severity: ChannelSeverity | None = None  # filled by us, never trusted from the model
+
+
+class SummaryOut(_Out):
+    summary: Annotated[str, Field(min_length=1, max_length=900)]
+    key_points: list[Line] = Field(default_factory=list, max_length=6)
+
+
+class RankedItem(_Base):
+    id: str = Field(max_length=64)
+    rank: int = Field(ge=1)
+    score: int = Field(ge=0, le=100)
+    reason: Line
+
+
+class RankOut(_Out):
+    ranking: list[RankedItem] = Field(min_length=1, max_length=50)
+
+
+class AreaOut(_Out):
+    woredas: list[str] = Field(default_factory=list, max_length=14)  # filtered to real ids afterwards
+
+
+class DraftOut(_Out):
+    en: Annotated[str, Field(min_length=10, max_length=700)]
+    am: Annotated[str, Field(min_length=5, max_length=700)]
+    sms_en: Annotated[str, Field(min_length=5, max_length=160)]
+    sms_am: Annotated[str, Field(min_length=3, max_length=134)]  # 2 UCS-2 SMS segments
+    notes: list[Line] = Field(default_factory=list, max_length=3)
+
+    @field_validator("am", "sms_am")
+    @classmethod
+    def _must_be_amharic(cls, v: str) -> str:
+        if not ETHIOPIC.search(v):
+            raise ValueError("must be written in Amharic (Ge'ez) script")
+        return v
+
+    @field_validator("en", "sms_en")
+    @classmethod
+    def _must_not_be_amharic(cls, v: str) -> str:
+        letters = [c for c in v if c.isalpha()]
+        if letters and sum(bool(ETHIOPIC.match(c)) for c in letters) / len(letters) > 0.3:
+            raise ValueError("English fields must be in English")
+        return v
+
+
+class ResourceItem(_Base):
+    org: OrgCode
+    priority: Literal["now", "soon", "standby"]
+    reason: Line
+
+
+class ResourcesOut(_Out):
+    recommendations: list[ResourceItem] = Field(min_length=1, max_length=6)
+    scale: Literal["low", "medium", "high"]
+
+
+# ───────────────────────── envelope ─────────────────────────
+T = TypeVar("T", bound=BaseModel)
+
+
+class Envelope(BaseModel, Generic[T]):
+    """Same wrapper for every endpoint. The backend stores it as-is in `ai_outputs`."""
+    suggestion: Literal[True] = True  # always: AI never decides anything
+    request_id: str
+    source: Literal["llm", "cache", "rules"]
+    provider: str | None = None
+    model: str | None = None
+    cached: bool
+    latency_ms: int
+    prompt_version: str
+    confidence: float
+    low_confidence: bool
+    reasons: list[str]
+    warnings: list[str]
+    data: T
+
+
+TASK_SCHEMAS: dict[str, type[BaseModel]] = {
+    "triage": TriageOut, "summary": SummaryOut, "rank": RankOut,
+    "area": AreaOut, "draft": DraftOut, "resources": ResourcesOut,
+}
+

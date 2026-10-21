@@ -1,0 +1,13 @@
+# Runs the AI service alone. The main project compose can include this service later.
+services:
+  ai:
+    build: .
+    env_file: .env
+    environment:
+      AI_ENV: prod
+    ports:
+      - "127.0.0.1:8088:8088"   # localhost only: the backend reaches it, nobody else
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]

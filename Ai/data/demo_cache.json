@@ -1,0 +1,119 @@
+{
+  "_note": "Pre-checked answers for the three demo scenarios. Keyed by case_id (or set_id). Validated against the schemas at startup. Amharic text: have a native speaker check it before the demo.",
+
+  "triage": {
+    "DEMO-FLOOD-001": {
+      "category": "flood", "severity": "critical", "confidence": 0.86,
+      "summary": "The meteorological institute warns that rising river levels after six hours of heavy rain could flood low-lying homes in Bole Woreda 03 within two hours.",
+      "reasons": ["Source is the national meteorological institute and reports a rising river level", "Residents of low-lying streets face immediate risk", "A two-hour window leaves little time to act"],
+      "missing_info": ["Exact river gauge reading", "Expected time of peak water level"]
+    },
+    "DEMO-FIRE-001": {
+      "category": "fire", "severity": "high", "confidence": 0.8,
+      "summary": "A citizen reports a large warehouse fire near the main road in Bole Woreda 07, with flames at the roof and spread risk to nearby shops.",
+      "reasons": ["Flames at the roof and heavy smoke indicate a large fire", "Neighbouring shops are at risk of catching fire", "Single citizen report, not yet confirmed by a second source"],
+      "missing_info": ["Whether anyone is trapped", "Whether fire crews are already on site"]
+    },
+    "DEMO-OUTBREAK-001": {
+      "category": "disease", "severity": "high", "confidence": 0.78,
+      "summary": "A health centre in Bole Woreda 11 recorded 18 cases of severe watery diarrhoea in two days from one neighbourhood. The cause is not yet confirmed.",
+      "reasons": ["18 cases in two days from the same area suggests a cluster", "Cause is unconfirmed, so the alert should ask for care and hygiene, not name a disease"],
+      "missing_info": ["Laboratory result", "Number of severe cases"]
+    }
+  },
+
+  "summary": {
+    "DEMO-FLOOD-001": {
+      "summary": "A flash flood warning covers Bole Woreda 03 after six hours of heavy rain. Low-lying homes could be flooded within two hours. The current river level is not yet known.",
+      "key_points": ["Source: meteorological institute (EMI)", "Area: Bole Woreda 03", "Unknown: current river gauge reading"],
+      "confidence": 0.82, "reasons": ["Report gives a clear area and time window"]
+    },
+    "DEMO-FIRE-001": {
+      "summary": "A citizen reports a large warehouse fire in Bole Woreda 07. Flames have reached the roof and nearby shops are close. This is a single unconfirmed report.",
+      "key_points": ["Source: citizen SOS", "Area: Bole Woreda 07", "Unknown: people trapped, fire crews on site"],
+      "confidence": 0.78, "reasons": ["Clear description but only one reporter"]
+    },
+    "DEMO-OUTBREAK-001": {
+      "summary": "A health centre in Bole Woreda 11 has seen 18 cases of severe watery diarrhoea in two days from one neighbourhood. Samples are being tested and the cause is unconfirmed.",
+      "key_points": ["Source: public health institute (EPHI)", "Area: Bole Woreda 11", "Unknown: laboratory result"],
+      "confidence": 0.76, "reasons": ["Specific case count and timeframe, cause still open"]
+    },
+    "DEMO-SET-001": {
+      "summary": "Three open items in Bole. The flood warning in Woreda 03 is the most urgent because water could reach homes within two hours. A reported warehouse fire in Woreda 07 comes next. A possible disease cluster in Woreda 11 needs follow-up but is less time-critical.",
+      "key_points": ["DEMO-FLOOD-001: flood, critical, Woreda 03", "DEMO-FIRE-001: fire, high, Woreda 07 (single citizen report)", "DEMO-OUTBREAK-001: disease, high, Woreda 11 (cause unconfirmed)"],
+      "confidence": 0.8, "reasons": ["Ordered by threat to life and time left to act"]
+    }
+  },
+
+  "rank": {
+    "DEMO-SET-001": {
+      "ranking": [
+        {"id": "DEMO-FLOOD-001", "rank": 1, "score": 95, "reason": "Flood expected to reach homes within two hours, confirmed source"},
+        {"id": "DEMO-FIRE-001", "rank": 2, "score": 82, "reason": "Active large fire near shops, reported by one citizen"},
+        {"id": "DEMO-OUTBREAK-001", "rank": 3, "score": 68, "reason": "Possible disease cluster, serious but slower moving"}
+      ],
+      "confidence": 0.8, "reasons": ["Time left to act and threat to life decide the order"]
+    }
+  },
+
+  "area": {
+    "DEMO-FLOOD-001": {"woredas": ["BOLE-W03"], "confidence": 0.85, "reasons": ["Sender chose Woreda 03 and the report names low-lying streets there"]},
+    "DEMO-FIRE-001": {"woredas": ["BOLE-W07"], "confidence": 0.8, "reasons": ["Location names Woreda 07; no sign the fire has crossed into another woreda"]},
+    "DEMO-OUTBREAK-001": {"woredas": ["BOLE-W11"], "confidence": 0.8, "reasons": ["Cases come from one neighbourhood in Woreda 11"]}
+  },
+
+  "draft": {
+    "DEMO-FLOOD-001": {
+      "en": "ALERT: Flash flood risk in Bole Woreda 03. Water may reach low-lying homes within two hours. Move to higher ground now, avoid rivers and low-lying roads, and follow official instructions.",
+      "am": "አስቸኳይ ማስጠንቀቂያ፡ በቦሌ ወረዳ 03 ድንገተኛ የጎርፍ አደጋ ሊከሰት ይችላል። ውሃ በሁለት ሰዓት ውስጥ ዝቅተኛ ቦታ ላይ ያሉ ቤቶችን ሊደርስ ይችላል። አሁኑኑ ወደ ከፍታ ቦታ ይሂዱ፣ ወንዞችንና ዝቅተኛ መንገዶችን ያስወግዱ፣ የባለስልጣናትን መመሪያ ይከተሉ።",
+      "sms_en": "ALERT: Flood risk, Bole Woreda 03. Move to higher ground now. Avoid rivers and low roads.",
+      "sms_am": "አስቸኳይ ማስጠንቀቂያ፡ የጎርፍ አደጋ፣ ቦሌ ወረዳ 03። አሁኑኑ ወደ ከፍታ ቦታ ይሂዱ።",
+      "confidence": 0.84, "reasons": ["Uses the agency's recommended action and the two-hour window from the report"],
+      "notes": ["Native Amharic speaker should check the wording"]
+    },
+    "DEMO-FIRE-001": {
+      "en": "WARNING: Large fire reported at a warehouse in Bole Woreda 07. Stay away from the area, keep roads clear for fire crews, and follow official instructions.",
+      "am": "ማስጠንቀቂያ፡ በቦሌ ወረዳ 07 በአንድ መጋዘን ላይ ከፍተኛ የእሳት አደጋ ተከስቷል። ከአካባቢው ይራቁ፣ መንገዶችን ለእሳት አደጋ ሠራተኞች ክፍት ያድርጉ፣ የባለስልጣናትን መመሪያ ይከተሉ።",
+      "sms_en": "WARNING: Large fire, Bole Woreda 07. Stay away and keep roads clear for fire crews.",
+      "sms_am": "ማስጠንቀቂያ፡ ከፍተኛ የእሳት አደጋ፣ ቦሌ ወረዳ 07። ከአካባቢው ይራቁ።",
+      "confidence": 0.78, "reasons": ["Based on a single citizen report, so wording stays general"],
+      "notes": ["Confirm the fire with a second source before approval", "Native Amharic speaker should check the wording"]
+    },
+    "DEMO-OUTBREAK-001": {
+      "en": "NOTICE: A health cluster is being investigated in Bole Woreda 11. Wash hands with soap, drink safe water, and visit the nearest health facility if you have severe diarrhoea or vomiting.",
+      "am": "ማሳሰቢያ፡ በቦሌ ወረዳ 11 የጤና ክስተት እየተጣራ ነው። እጅዎን በሳሙና ይታጠቡ፣ ንጹህ ውሃ ይጠጡ፣ ከባድ ተቅማጥ ወይም ትውከት ካለዎት በአቅራቢያ ወዳለ ጤና ተቋም ይሂዱ።",
+      "sms_en": "NOTICE: Health cluster under check, Bole Woreda 11. Wash hands, drink safe water, seek care if sick.",
+      "sms_am": "ማሳሰቢያ፡ የጤና ክስተት እየተጣራ ነው፣ ቦሌ ወረዳ 11። እጅዎን ይታጠቡ፣ ንጹህ ውሃ ይጠጡ።",
+      "confidence": 0.76, "reasons": ["Cause is unconfirmed, so the text gives hygiene and care advice without naming a disease"],
+      "notes": ["Do not name a disease until EPHI confirms", "Native Amharic speaker should check the wording"]
+    }
+  },
+
+  "resources": {
+    "DEMO-FLOOD-001": {
+      "recommendations": [
+        {"org": "EDRMC", "priority": "now", "reason": "Coordinates flood response and evacuation"},
+        {"org": "LOCAL_DISPATCHER", "priority": "now", "reason": "Must be ready for SOS calls from Woreda 03"},
+        {"org": "EMI", "priority": "standby", "reason": "Can update rainfall and river forecasts"}
+      ],
+      "scale": "medium", "confidence": 0.8, "reasons": ["Residential flood risk needs disaster management plus local responders"]
+    },
+    "DEMO-FIRE-001": {
+      "recommendations": [
+        {"org": "FIRE_BRIGADE", "priority": "now", "reason": "Large active fire near other buildings"},
+        {"org": "AMBULANCE", "priority": "now", "reason": "Smoke and fire carry injury risk"},
+        {"org": "LOCAL_DISPATCHER", "priority": "now", "reason": "Coordinate on-site response in Woreda 07"},
+        {"org": "FEDERAL_POLICE", "priority": "soon", "reason": "Traffic and crowd control near the main road"}
+      ],
+      "scale": "medium", "confidence": 0.78, "reasons": ["Fire in a commercial area needs fire crews first, then medical and traffic support"]
+    },
+    "DEMO-OUTBREAK-001": {
+      "recommendations": [
+        {"org": "EPHI", "priority": "now", "reason": "Leads investigation and confirms the cause"},
+        {"org": "AMBULANCE", "priority": "standby", "reason": "May be needed if severe cases increase"},
+        {"org": "LOCAL_DISPATCHER", "priority": "soon", "reason": "Can relay symptoms reports from Woreda 11"}
+      ],
+      "scale": "low", "confidence": 0.74, "reasons": ["Cluster is under investigation and not yet an emergency scale event"]
+    }
+  }
+}
