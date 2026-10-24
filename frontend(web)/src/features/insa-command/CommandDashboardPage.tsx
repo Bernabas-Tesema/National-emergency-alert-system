@@ -25,16 +25,18 @@ export default function CommandDashboardPage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([fetchAlerts(), fetchCases(), fetchSosTickets()]).then(
-      ([loadedAlerts, loadedCases, loadedSos]) => {
+    Promise.all([fetchAlerts(), fetchCases(), fetchSosTickets()])
+      .then(([loadedAlerts, loadedCases, loadedSos]) => {
         if (!cancelled) {
           setAlerts(loadedAlerts)
           setCases(loadedCases)
           setSosTickets(loadedSos)
           setLoading(false)
         }
-      },
-    )
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => {
       cancelled = true
     }

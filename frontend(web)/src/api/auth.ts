@@ -1,5 +1,10 @@
 import { MOCK_ACCOUNTS, type MockAccount } from './mockAccounts'
 import type { User } from '@/types/user'
+import { liveApi } from './config'
+import { AuthError } from './auth-error'
+import { liveSubmitCredentials, liveSubmitTwoFactor } from './liveAuth'
+
+export { AuthError }
 
 const MOCK_2FA_CODE = '123456'
 
@@ -8,8 +13,6 @@ const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Accounts that passed step 1 and are waiting for their 2FA code.
 const pendingLogins = new Map<string, MockAccount>()
-
-export class AuthError extends Error {}
 
 function toUser(account: MockAccount): User {
   return {
@@ -26,6 +29,7 @@ export async function submitCredentials(
   username: string,
   password: string,
 ): Promise<{ challengeId: string }> {
+  if (liveApi) return liveSubmitCredentials(username, password)
   await delay()
   const account = MOCK_ACCOUNTS.find(
     (a) => a.username === username && a.password === password,
@@ -42,6 +46,7 @@ export async function submitTwoFactor(
   challengeId: string,
   code: string,
 ): Promise<{ token: string; user: User }> {
+  if (liveApi) return liveSubmitTwoFactor(challengeId, code)
   await delay()
   const account = pendingLogins.get(challengeId)
   if (!account) throw new AuthError('Session expired. Please sign in again.')

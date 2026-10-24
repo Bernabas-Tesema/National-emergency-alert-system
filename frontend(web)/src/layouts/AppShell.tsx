@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 
 import ConnectionIndicator from '@/components/ConnectionIndicator'
+import ThemeToggle from '@/features/theme/ThemeToggle'
 import SessionTimeout from '@/features/auth/SessionTimeout'
 import { useAuth } from '@/features/auth/useAuth'
 import { ROLE_LABELS, canonicalRole } from '@/packages/core/permissions/matrix'
@@ -325,6 +326,7 @@ export default function AppShell() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-xs font-semibold text-slate-200 truncate max-w-[130px]">{user.fullName}</p>
               <p className="text-[10px] text-teal-400/90 font-medium">

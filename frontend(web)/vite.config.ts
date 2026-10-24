@@ -10,6 +10,15 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/backend': {
+        target: 'http://127.0.0.1:8081',
+        changeOrigin: true,
+        rewrite: (requestPath) => requestPath.replace(/^\/backend/, ''),
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
