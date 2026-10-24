@@ -5,10 +5,11 @@ from typing import Annotated
 
 import jwt
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .db import Base, engine, get_db
+from .db import Base, engine, ensure_sqlite_columns, get_db
 from .models import Alert, AuditLog, Case, Citizen, DeliveryLog
 from .schemas import (
     AlertDraftCreate,
@@ -27,6 +28,16 @@ from .security import decode_token, hash_fayda_reference, make_token, new_otp
 
 app = FastAPI(title="National Emergency Alert System API", version="0.1.0")
 Base.metadata.create_all(bind=engine)
+ensure_sqlite_columns()
+
+_cors = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",") if origin.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 _pending_otps: dict[str, tuple[str, datetime]] = {}
 
@@ -106,13 +117,35 @@ def staff_login(payload: StaffLoginRequest, request: Request, db: Session = Depe
 
 @app.post("/api/v1/cases", response_model=CaseResponse, status_code=201)
 def create_case(payload: CaseCreate, request: Request, identity: dict = Depends(require_roles("organization_officer")), db: Session = Depends(get_db)) -> Case:
-    case = Case(organization=payload.organization, case_type=payload.case_type, severity=payload.severity, description=payload.description, region=payload.region, latitude=payload.latitude, longitude=payload.longitude)
+    case = Case(
+        organization=payload.organization,
+        case_type=payload.case_type,
+        severity=payload.severity,
+        description=payload.description,
+        region=payload.region,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        title=payload.title or payload.description[:200],
+        created_by=identity["sub"],
+    )
     db.add(case)
     db.flush()
     audit(db, identity["sub"], "case_created", f"case:{case.id}", request)
     db.commit()
     db.refresh(case)
     return case
+
+
+@app.get("/api/v1/cases", response_model=list[CaseResponse])
+def list_cases(identity: dict = Depends(current_identity), db: Session = Depends(get_db)) -> list[Case]:
+    stmt = select(Case).order_by(Case.created_at.desc())
+    if identity["role"] == "citizen":
+        stmt = stmt.where(Case.reporter_id == int(identity["sub"]))
+    elif identity["role"] == "organization_officer":
+        stmt = stmt.where(Case.created_by == identity["sub"])
+    elif identity["role"] not in {"insa_admin", "insa_officer"}:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    return list(db.scalars(stmt).all())
 
 
 @app.get("/api/v1/cases/{case_id}", response_model=CaseResponse)
@@ -131,9 +164,90 @@ def review_case(case_id: int, payload: ReviewRequest, request: Request, identity
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     case.status = {"verify": "verified", "reject": "rejected", "clarification": "clarification_requested"}[payload.decision]
+    case.review_comment = payload.comment
     audit(db, identity["sub"], f"case_{payload.decision}", f"case:{case_id}", request, {"comment": payload.comment})
     db.commit()
     return {"case_id": case_id, "status": case.status}
+
+
+@app.post("/api/v1/cases/{case_id}/resubmit")
+def resubmit_case(case_id: int, request: Request, identity: dict = Depends(require_roles("organization_officer")), db: Session = Depends(get_db)) -> dict:
+    case = db.get(Case, case_id)
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    if case.created_by != identity["sub"]:
+        raise HTTPException(status_code=403, detail="Case is not accessible")
+    if case.status != "clarification_requested":
+        raise HTTPException(status_code=409, detail="Only cases that need clarification can be resubmitted")
+    case.status = "submitted"
+    audit(db, identity["sub"], "case_resubmitted", f"case:{case_id}", request)
+    db.commit()
+    return {"case_id": case_id, "status": case.status}
+
+
+def alert_payload(db: Session, alert: Alert) -> dict:
+    logs = db.scalars(select(DeliveryLog).where(DeliveryLog.alert_id == alert.id)).all()
+    progress = {channel: {"queued": 0, "sent": 0, "delivered": 0, "failed": 0} for channel in ("push", "sms", "voice")}
+    for log in logs:
+        bucket = progress.setdefault(log.channel, {"queued": 0, "sent": 0, "delivered": 0, "failed": 0})
+        key = log.status if log.status in bucket else "queued"
+        bucket[key] += 1
+    return {
+        "id": alert.id,
+        "case_id": alert.case_id,
+        "title": alert.title,
+        "message": alert.message,
+        "severity": alert.severity,
+        "region": alert.region,
+        "channels": alert.channels,
+        "status": alert.status,
+        "reviewer_id": alert.reviewer_id,
+        "approver_id": alert.approver_id,
+        "created_at": alert.created_at,
+        "approved_at": alert.approved_at,
+        "dispatched_at": alert.dispatched_at,
+        "recipient_count": len({log.citizen_id for log in logs}),
+        "delivery": progress,
+    }
+
+
+@app.get("/api/v1/alerts")
+def list_alerts(identity: dict = Depends(require_roles("insa_admin", "insa_officer", "organization_officer")), db: Session = Depends(get_db)) -> list[dict]:
+    alerts = db.scalars(select(Alert).order_by(Alert.created_at.desc())).all()
+    return [alert_payload(db, alert) for alert in alerts]
+
+
+@app.get("/api/v1/alerts/mine")
+def my_alerts(identity: dict = Depends(require_roles("citizen")), db: Session = Depends(get_db)) -> list[dict]:
+    citizen = db.get(Citizen, int(identity["sub"]))
+    if not citizen:
+        raise HTTPException(status_code=404, detail="Citizen not found")
+    alerts = db.scalars(select(Alert).where(Alert.region == citizen.registered_region, Alert.status == "dispatched").order_by(Alert.dispatched_at.desc())).all()
+    return [{"id": alert.id, "title": alert.title, "message": alert.message, "severity": alert.severity, "region": alert.region, "channels": alert.channels, "dispatched_at": alert.dispatched_at} for alert in alerts]
+
+
+@app.get("/api/v1/alerts/{alert_id}")
+def get_alert(alert_id: int, identity: dict = Depends(require_roles("insa_admin", "insa_officer", "organization_officer")), db: Session = Depends(get_db)) -> dict:
+    alert = db.get(Alert, alert_id)
+    if not alert:
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return alert_payload(db, alert)
+
+
+@app.get("/api/v1/audit")
+def list_audit(identity: dict = Depends(require_roles("insa_admin", "insa_officer")), db: Session = Depends(get_db)) -> list[dict]:
+    rows = db.scalars(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(200)).all()
+    return [
+        {
+            "id": row.id,
+            "actor": row.actor,
+            "action": row.action,
+            "resource": row.resource,
+            "ip_address": row.ip_address,
+            "created_at": row.created_at,
+        }
+        for row in rows
+    ]
 
 
 @app.post("/api/v1/alerts/draft", status_code=201)
@@ -193,12 +307,3 @@ def submit_sos(payload: SosCreate, request: Request, identity: dict = Depends(re
     db.commit()
     db.refresh(case)
     return case
-
-
-@app.get("/api/v1/alerts/mine")
-def my_alerts(identity: dict = Depends(require_roles("citizen")), db: Session = Depends(get_db)) -> list[dict]:
-    citizen = db.get(Citizen, int(identity["sub"]))
-    if not citizen:
-        raise HTTPException(status_code=404, detail="Citizen not found")
-    alerts = db.scalars(select(Alert).where(Alert.region == citizen.registered_region, Alert.status == "dispatched").order_by(Alert.dispatched_at.desc())).all()
-    return [{"id": alert.id, "title": alert.title, "message": alert.message, "severity": alert.severity, "region": alert.region, "channels": alert.channels, "dispatched_at": alert.dispatched_at} for alert in alerts]

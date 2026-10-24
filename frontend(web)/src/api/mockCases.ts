@@ -18,6 +18,19 @@ import {
 import type { Message } from '@/types/message'
 import type { User } from '@/types/user'
 import { emitMockEvent } from './mockRealtimeBus'
+import { liveApi } from './config'
+import {
+  liveFetchCase,
+  liveFetchCases,
+  liveRejectCase,
+  liveRequestCaseUpdate,
+  liveRequestClarification,
+  liveResubmitCase,
+  liveSaveCase,
+  liveSendCaseMessage,
+  liveUpdateDraft,
+  liveVerifyCase,
+} from './liveCases'
 
 const delay = (ms = 400) =>
   new Promise((resolve) => setTimeout(resolve, ms))
@@ -270,6 +283,7 @@ function simulateInsaReview(
 // Later each of these becomes a real request to the backend.
 
 export async function fetchCases(): Promise<Case[]> {
+  if (liveApi) return liveFetchCases()
   await delay()
   return [...MOCK_CASES]
 }
@@ -278,6 +292,7 @@ export async function fetchCases(): Promise<Case[]> {
 export async function fetchCase(
   id: string,
 ): Promise<CaseRecord | null> {
+  if (liveApi) return liveFetchCase(id)
   await delay()
 
   const found = MOCK_CASES.find((c) => c.id === id)
@@ -320,6 +335,7 @@ export async function saveCase(
   values: CaseFormValues,
   status: Extract<CaseStatus, 'draft' | 'submitted'>,
 ): Promise<Case> {
+  if (liveApi) return liveSaveCase(values, status)
   await delay()
 
   const saved: CaseRecord = {
@@ -358,6 +374,7 @@ export async function updateDraft(
   values: CaseFormValues,
   status: Extract<CaseStatus, 'draft' | 'submitted'>,
 ): Promise<void> {
+  if (liveApi) return liveUpdateDraft(id, values, status)
   await delay()
 
   const found = MOCK_CASES.find((c) => c.id === id)
@@ -393,6 +410,7 @@ export async function updateDraft(
 export async function resubmitCase(
   caseId: string,
 ): Promise<void> {
+  if (liveApi) return liveResubmitCase(caseId)
   await delay(250)
 
   const found = MOCK_CASES.find((c) => c.id === caseId)
@@ -418,6 +436,7 @@ export async function sendCaseMessage(
   author: User,
   text: string,
 ): Promise<Message> {
+  if (liveApi) return liveSendCaseMessage(caseId, author, text)
   await delay(250)
 
   const found = MOCK_CASES.find((c) => c.id === caseId)
@@ -446,6 +465,7 @@ export async function requestCaseUpdate(
   text: string,
   author: User,
 ): Promise<CaseUpdate> {
+  if (liveApi) return liveRequestCaseUpdate(caseId, kind, text, author)
   await delay(250)
 
   const found = MOCK_CASES.find((c) => c.id === caseId)
@@ -472,6 +492,7 @@ export async function requestCaseUpdate(
 }
 
 export async function verifyCase(caseId: string, _author: User): Promise<void> {
+  if (liveApi) return liveVerifyCase(caseId)
   await delay(250)
   const found = MOCK_CASES.find((c) => c.id === caseId)
   if (!found) throw new Error('Case not found')
@@ -481,6 +502,7 @@ export async function verifyCase(caseId: string, _author: User): Promise<void> {
 }
 
 export async function rejectCase(caseId: string, author: User, reason: string): Promise<void> {
+  if (liveApi) return liveRejectCase(caseId, reason)
   await delay(250)
   const found = MOCK_CASES.find((c) => c.id === caseId)
   if (!found) throw new Error('Case not found')
@@ -496,6 +518,7 @@ export async function rejectCase(caseId: string, author: User, reason: string): 
 }
 
 export async function requestCaseClarification(caseId: string, author: User, question: string): Promise<void> {
+  if (liveApi) return liveRequestClarification(caseId, question)
   await delay(250)
   const found = MOCK_CASES.find((c) => c.id === caseId)
   if (!found) throw new Error('Case not found')

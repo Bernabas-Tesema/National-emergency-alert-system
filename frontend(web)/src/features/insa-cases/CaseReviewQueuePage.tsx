@@ -24,9 +24,11 @@ export default function CaseReviewQueuePage() {
   const [clarifyQuestion, setClarifyQuestion] = useState('')
   const [actionModal, setActionModal] = useState<'reject' | 'clarify' | 'merge' | null>(null)
   const [busy, setBusy] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => {
-    fetchCases().then((data) => {
+    fetchCases()
+      .then((data) => {
       // Sort by severity rank (critical > high > medium > low), then updated
       const severityOrder: Record<string, number> = {
         CRITICAL: 4,
@@ -48,11 +50,16 @@ export default function CaseReviewQueuePage() {
       setSelectedCase(sorted[0] || null)
       setLoading(false)
     })
+      .catch((err: unknown) => {
+        setActionError(err instanceof Error ? err.message : 'Could not load cases.')
+        setLoading(false)
+      })
   }, [])
 
   async function handleVerify(caseItem: Case) {
     if (!user) return
     setBusy(true)
+    setActionError('')
     try {
       await verifyCase(caseItem.id, user)
       setCases((prev) =>
@@ -61,6 +68,8 @@ export default function CaseReviewQueuePage() {
       if (selectedCase?.id === caseItem.id) {
         setSelectedCase({ ...selectedCase, status: 'verified' })
       }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not verify the case.')
     } finally {
       setBusy(false)
     }
@@ -69,6 +78,7 @@ export default function CaseReviewQueuePage() {
   async function handleReject() {
     if (!selectedCase || !user || !rejectReason.trim()) return
     setBusy(true)
+    setActionError('')
     try {
       await rejectCase(selectedCase.id, user, rejectReason.trim())
       setCases((prev) =>
@@ -77,6 +87,8 @@ export default function CaseReviewQueuePage() {
       setSelectedCase({ ...selectedCase, status: 'rejected' })
       setActionModal(null)
       setRejectReason('')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not reject the case.')
     } finally {
       setBusy(false)
     }
@@ -85,6 +97,7 @@ export default function CaseReviewQueuePage() {
   async function handleClarify() {
     if (!selectedCase || !user || !clarifyQuestion.trim()) return
     setBusy(true)
+    setActionError('')
     try {
       await requestCaseClarification(selectedCase.id, user, clarifyQuestion.trim())
       setCases((prev) =>
@@ -93,6 +106,8 @@ export default function CaseReviewQueuePage() {
       setSelectedCase({ ...selectedCase, status: 'needs_clarification' })
       setActionModal(null)
       setClarifyQuestion('')
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not request clarification.')
     } finally {
       setBusy(false)
     }
@@ -142,6 +157,12 @@ export default function CaseReviewQueuePage() {
           Review, verify, request clarification, or escalate partner emergency cases into public alerts.
         </p>
       </div>
+
+      {actionError && (
+        <p className="rounded-lg border border-red-800 bg-red-950/70 px-3 py-2 text-xs text-red-300">
+          {actionError}
+        </p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Queue List */}

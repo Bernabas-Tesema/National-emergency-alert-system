@@ -57,6 +57,7 @@ export default function AlertComposerPage() {
   )
 
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const [aiDrafting, setAiDrafting] = useState(false)
 
   // SMS character counter & segments
@@ -71,6 +72,7 @@ export default function AlertComposerPage() {
   async function handleSubmitTier1() {
     if (!user) return
     setBusy(true)
+    setError('')
     try {
       const draft = await createAlertDraft(
         {
@@ -84,7 +86,9 @@ export default function AlertComposerPage() {
         user,
       )
       await submitTier1(draft.id, user)
-      navigate('/insa/approvals')
+      navigate('/insa/dashboard')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not submit the alert.')
     } finally {
       setBusy(false)
     }
@@ -124,6 +128,12 @@ export default function AlertComposerPage() {
             Author multi-channel, multi-lingual emergency bulletins and submit for Tier-2 Higher Officer signature.
           </p>
         </div>
+
+        {error && (
+          <p className="rounded-lg border border-red-800 bg-red-950/70 px-3 py-2 text-xs text-red-300">
+            {error}
+          </p>
+        )}
 
         <button
           onClick={handleSubmitTier1}

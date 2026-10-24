@@ -1,5 +1,14 @@
 import type { User } from '@/types/user'
 import { emitMockEvent } from './mockRealtimeBus'
+import { liveApi } from './config'
+import {
+  liveApproveTier2,
+  liveCreateAlertDraft,
+  liveDispatchAlert,
+  liveFetchAlert,
+  liveFetchAlerts,
+  liveSubmitTier1,
+} from './liveAlerts'
 
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'
 export type AlertChannel = 'push' | 'sms' | 'voice'
@@ -164,17 +173,20 @@ let alertsStore: Alert[] = [
 ]
 
 export async function fetchAlerts(): Promise<Alert[]> {
+  if (liveApi) return liveFetchAlerts()
   await delay()
   return JSON.parse(JSON.stringify(alertsStore))
 }
 
 export async function fetchAlert(id: string): Promise<Alert | null> {
+  if (liveApi) return liveFetchAlert(id)
   await delay()
   const found = alertsStore.find((a) => a.id === id)
   return found ? JSON.parse(JSON.stringify(found)) : null
 }
 
-export async function createAlertDraft(input: Partial<Alert>, _user: User): Promise<Alert> {
+export async function createAlertDraft(input: Partial<Alert>, user: User): Promise<Alert> {
+  if (liveApi) return liveCreateAlertDraft(input, user)
   await delay()
   const newAlert: Alert = {
     id: `ALT-${Date.now().toString().slice(-4)}`,
@@ -200,6 +212,7 @@ export async function createAlertDraft(input: Partial<Alert>, _user: User): Prom
 }
 
 export async function submitTier1(id: string, user: User): Promise<Alert> {
+  if (liveApi) return liveSubmitTier1(id, user)
   await delay()
   const alert = alertsStore.find((a) => a.id === id)
   if (!alert) throw new Error('Alert not found')
@@ -216,6 +229,7 @@ export async function submitTier1(id: string, user: User): Promise<Alert> {
 }
 
 export async function approveTier2(id: string, user: User, code: string): Promise<Alert> {
+  if (liveApi) return liveApproveTier2(id, user, code)
   await delay()
   if (code !== '123456') {
     throw new Error('Invalid digital signature 2FA code.')
@@ -244,6 +258,9 @@ export async function approveTier2(id: string, user: User, code: string): Promis
 }
 
 export async function emergencyFastTrack(id: string, user: User, reason: string): Promise<Alert> {
+  if (liveApi) {
+    throw new Error('Emergency fast-track is not available on the API. A different officer must approve the draft.')
+  }
   await delay()
   const alert = alertsStore.find((a) => a.id === id)
   if (!alert) throw new Error('Alert not found')
@@ -271,6 +288,7 @@ export async function emergencyFastTrack(id: string, user: User, reason: string)
 }
 
 export async function dispatchAlert(id: string): Promise<Alert> {
+  if (liveApi) return liveDispatchAlert(id)
   await delay()
   const alert = alertsStore.find((a) => a.id === id)
   if (!alert) throw new Error('Alert not found')
@@ -298,6 +316,9 @@ export async function dispatchAlert(id: string): Promise<Alert> {
 }
 
 export async function retryFailedRecipients(alertId: string): Promise<void> {
+  if (liveApi) {
+    throw new Error('Recipient retry is not available on the API yet.')
+  }
   await delay(600)
   const alert = alertsStore.find((a) => a.id === alertId)
   if (alert) {

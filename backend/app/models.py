@@ -33,6 +33,9 @@ class Case(Base):
     region: Mapped[str] = mapped_column(String(128), index=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    title: Mapped[str] = mapped_column(String(200), default="")
+    created_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    review_comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), default="submitted")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

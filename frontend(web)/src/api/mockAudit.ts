@@ -6,6 +6,8 @@ import type {
   AuditQuery,
 } from '@/types/audit'
 import type { Role } from '@/types/role'
+import { liveApi } from './config'
+import { liveFetchAuditLog } from './liveAudit'
 
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -74,6 +76,7 @@ const ALL: AuditEntry[] = Array.from({ length: ENTRY_COUNT }, (_, i): AuditEntry
 // browser may add, change or delete one. Real version: GET /audit-log with
 // these same filters, applied by the server.
 export async function fetchAuditLog(query: AuditQuery): Promise<AuditPage> {
+  if (liveApi) return liveFetchAuditLog(query)
   await delay()
   const needle = query.search.trim().toLowerCase()
 

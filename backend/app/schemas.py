@@ -42,6 +42,7 @@ class CaseCreate(BaseModel):
     latitude: float | None = Field(default=None, ge=-90, le=90)
     longitude: float | None = Field(default=None, ge=-180, le=180)
     organization: str | None = Field(default=None, max_length=160)
+    title: str = Field(default="", max_length=200)
 
 
 class ReviewRequest(BaseModel):
@@ -75,5 +76,12 @@ class CaseResponse(BaseModel):
     severity: str
     region: str
     created_at: datetime
+    title: str = ""
+    description: str = ""
+    organization: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    review_comment: str | None = None
+    created_by: str | None = None
 
     model_config = {"from_attributes": True}

@@ -101,8 +101,8 @@ export default function CaseForm({
         await saveCase(values, status)
       }
       navigate(backPath)
-    } catch {
-      setFormError('Failed to save the incident report. Please try again.')
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to save the incident report. Please try again.')
       setBusy(false)
     }
   }
