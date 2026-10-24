@@ -22,12 +22,16 @@ export default function CaseDashboardPage() {
 
   useEffect(() => {
     let cancelled = false
-    fetchCases().then((data) => {
-      if (!cancelled) {
-        setCases(data)
-        setLoading(false)
-      }
-    })
+    fetchCases()
+      .then((data) => {
+        if (!cancelled) {
+          setCases(data)
+          setLoading(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false)
+      })
     return () => {
       cancelled = true
     }

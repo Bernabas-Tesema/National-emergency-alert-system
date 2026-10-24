@@ -2,6 +2,8 @@ import { useState, type ReactNode } from 'react'
 import { AuthContext } from './auth-context'
 import { ROLES } from '@/types/role'
 import type { User } from '@/types/user'
+import { clearAccessToken, getAccessToken } from '@/api/client'
+import { liveApi } from '@/api/config'
 
 // ---------------------------------------------------------------
 // TEMPORARY (MOCK ONLY): the signed-in user is saved in
@@ -20,7 +22,7 @@ function loadSavedUser(): User | null {
     if (!raw) return null
     const parsed = JSON.parse(raw) as User
     // Ignore saved data that does not look right (e.g. an old or edited role).
-    return ROLES.includes(parsed.role) ? parsed : null
+    return ROLES.includes(parsed.role) && (!liveApi || getAccessToken()) ? parsed : null
   } catch {
     return null
   }
@@ -37,6 +39,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   function logout() {
     sessionStorage.removeItem(STORAGE_KEY)
+    clearAccessToken()
     setUser(null)
   }
 

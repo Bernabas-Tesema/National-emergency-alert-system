@@ -5,6 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 
+from .env import load_local_env
+
+load_local_env()
+
 JWT_SECRET = os.getenv("JWT_SECRET", "development-only-change-this-secret")
 ALGORITHM = "HS256"
 
