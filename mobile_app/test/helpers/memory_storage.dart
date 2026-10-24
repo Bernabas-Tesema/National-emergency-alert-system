@@ -1,5 +1,5 @@
 import 'package:nea_citizen/core/storage/token_storage.dart';
-
+import 'dart:convert';
 /// Keeps everything in memory, so widget tests need no phone.
 class MemoryTokenStorage extends TokenStorage {
   TokenPair? _tokens;
@@ -40,4 +40,15 @@ class MemoryTokenStorage extends TokenStorage {
     _biometric = false;
     _offered = false;
   }
+}
+/// A citizen who is already signed in.
+Future<MemoryTokenStorage> signedInStorage() async {
+  final storage = MemoryTokenStorage();
+  await storage.save(const TokenPair('access', 'refresh'));
+  await storage.saveProfile(jsonEncode({
+    'id': 'cit_mock_001',
+    'phone': '+251911000201',
+    'registeredRegion': 'bole',
+  }));
+  return storage;
 }

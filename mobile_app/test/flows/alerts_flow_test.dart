@@ -1,27 +1,13 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nea_citizen/core/storage/token_storage.dart';
 
 import '../helpers/memory_storage.dart';
 import '../helpers/pump_app.dart';
 
-/// A citizen who is already signed in.
-Future<MemoryTokenStorage> _signedIn() async {
-  final storage = MemoryTokenStorage();
-  await storage.save(const TokenPair('access', 'refresh'));
-  await storage.saveProfile(jsonEncode({
-    'id': 'cit_mock_001',
-    'phone': '+251911000201',
-    'registeredRegion': 'bole',
-  }));
-  return storage;
-}
-
 void main() {
   testWidgets('Home lists only the active alerts', (tester) async {
-    await pumpApp(tester, await _signedIn());
+    useTallScreen(tester);
+    await pumpApp(tester, await signedInStorage());
     await advance(tester);
 
     expect(find.text('Flash flood warning: Bole'), findsOneWidget);
@@ -32,7 +18,8 @@ void main() {
 
   testWidgets('History shows the all-clear alert and its detail',
       (tester) async {
-    await pumpApp(tester, await _signedIn());
+    useTallScreen(tester);
+    await pumpApp(tester, await signedInStorage());
     await advance(tester);
 
     await tester.tap(find.byIcon(Icons.history));
@@ -48,10 +35,15 @@ void main() {
     await closeApp(tester);
   });
 
-  testWidgets('Sign out returns to the login screen', (tester) async {
-    await pumpApp(tester, await _signedIn());
+  testWidgets('Sign out (now in Profile) returns to the login screen',
+      (tester) async {
+    useTallScreen(tester);
+    await pumpApp(tester, await signedInStorage());
     await advance(tester);
 
+    await tester.tap(find.text('Profile'));
+    await advance(tester);
+    await tester.ensureVisible(find.text('Sign out'));
     await tester.tap(find.text('Sign out'));
     await advance(tester);
     expect(find.text('Sign in'), findsOneWidget);

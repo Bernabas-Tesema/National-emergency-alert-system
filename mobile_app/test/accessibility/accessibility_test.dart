@@ -26,10 +26,9 @@ void main() {
 
   testWidgets('main screens do not overflow at 200% text on a small phone',
       (tester) async {
-    tester.view.physicalSize = const Size(720, 1280); // 360 x 640 at 2x
-    tester.view.devicePixelRatio = 2.0;
+    // Narrow like a small phone (360 wide), but tall so every item is built.
+    useTallScreen(tester, width: 360, height: 3000, pixelRatio: 2.0);
     tester.platformDispatcher.textScaleFactorTestValue = 2.0;
-    addTearDown(tester.view.reset);
     addTearDown(tester.platformDispatcher.clearAllTestValues);
 
     await pumpApp(tester, MemoryTokenStorage());

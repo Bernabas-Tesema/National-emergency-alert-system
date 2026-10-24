@@ -76,10 +76,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           'next time, without waiting for an SMS code.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Not now'),
-          ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Turn on'),

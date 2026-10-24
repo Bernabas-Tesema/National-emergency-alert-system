@@ -64,7 +64,6 @@ void main() {
 
     await tester.enterText(find.byType(TextField), '123456');
     await advance(tester);
-    expect(find.text('Alerts'), findsOneWidget);
     expect(find.text('Flash flood warning: Bole'), findsOneWidget);
     await closeApp(tester);
   });

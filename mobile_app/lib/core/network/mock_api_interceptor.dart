@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
+
 import 'mock_alerts.dart';
+import 'mock_sos.dart';
 
 /// Fake backend for development. Every shape here is an ASSUMPTION
 /// until the backend team confirms the real contract.
@@ -15,36 +17,86 @@ class MockApiInterceptor extends Interceptor {
 
   @override
   void onRequest(
-      RequestOptions options, RequestInterceptorHandler handler) async {
-    if (delay > Duration.zero) await Future<void>.delayed(delay);
-    final body = options.data is Map ? options.data as Map : const {};
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
+    final body = options.data is Map
+        ? options.data as Map
+        : const {};
 
     switch (options.path) {
       case '/auth/phone/verify':
         return _verify(options, handler, body);
+
       case '/auth/phone/confirm':
         return _confirm(options, handler, body);
+
       case '/auth/refresh':
         return _ok(options, handler, _tokens());
-            case '/devices':
+
+      case '/devices':
         return _ok(options, handler, {'registered': true});
-            case '/alerts/mine':
-        return _ok(options, handler, {'alerts': mockAlertsJson()});
+
+      case '/sos/media':
+        return _ok(options, handler, {
+          'url':
+              's3://sos-vault/mock-${DateTime.now().millisecondsSinceEpoch}.bin',
+        });
+
+      case '/sos/submit':
+        return _sosSubmit(options, handler, body);
+
+      case '/sos/mine':
+        return _ok(options, handler, {
+          'reports': mockSosList(),
+        });
+
+      case '/alerts/mine':
+        return _ok(options, handler, {
+          'alerts': mockAlertsJson(),
+        });
+
       default:
         if (options.path.startsWith('/alerts/')) {
           final id = options.path.substring('/alerts/'.length);
-          final matches = mockAlertsJson().where((a) => a['id'] == id);
+          final matches =
+              mockAlertsJson().where((a) => a['id'] == id);
+
           if (matches.isNotEmpty) {
             return _ok(options, handler, matches.first);
           }
-          return _fail(options, handler, 404, 'NOT_FOUND', 'Alert not found.');
+
+          return _fail(
+            options,
+            handler,
+            404,
+            'NOT_FOUND',
+            'Alert not found.',
+          );
         }
-        return _fail(options, handler, 404, 'NOT_FOUND', 'Mock: no such endpoint');
+
+        return _fail(
+          options,
+          handler,
+          404,
+          'NOT_FOUND',
+          'Mock: no such endpoint',
+        );
     }
   }
 
-  void _verify(RequestOptions o, RequestInterceptorHandler h, Map body) {
-    final phone = (body['phone'] as String? ?? '').replaceAll(' ', '');
+  void _verify(
+    RequestOptions o,
+    RequestInterceptorHandler h,
+    Map body,
+  ) {
+    final phone =
+        (body['phone'] as String? ?? '').replaceAll(' ', '');
+
     switch (phone) {
       case linkedPhone:
         _ok(o, h, {
@@ -52,20 +104,42 @@ class MockApiInterceptor extends Interceptor {
           'expiresInSeconds': 300,
           'resendAfterSeconds': 30,
         });
+        return;
+
       case rateLimitedPhone:
-        _fail(o, h, 429, 'RATE_LIMITED', 'Too many tries. Try again later.',
-            retryAfter: 60);
-      default: // includes notLinkedPhone and any unknown number
-        _fail(o, h, 404, 'NUMBER_NOT_LINKED',
-            'This number is not linked to a Fayda ID.');
+        _fail(
+          o,
+          h,
+          429,
+          'RATE_LIMITED',
+          'Too many tries. Try again later.',
+          retryAfter: 60,
+        );
+        return;
+
+      default:
+        // Includes notLinkedPhone and any unknown number.
+        _fail(
+          o,
+          h,
+          404,
+          'NUMBER_NOT_LINKED',
+          'This number is not linked to a Fayda ID.',
+        );
+        return;
     }
   }
 
-  void _confirm(RequestOptions o, RequestInterceptorHandler h, Map body) {
+  void _confirm(
+    RequestOptions o,
+    RequestInterceptorHandler h,
+    Map body,
+  ) {
     if (body['code'] != validOtp) {
       _fail(o, h, 401, 'OTP_INVALID', 'The code is wrong.');
       return;
     }
+
     _ok(o, h, {
       ..._tokens(),
       'citizen': {
@@ -76,8 +150,31 @@ class MockApiInterceptor extends Interceptor {
     });
   }
 
+  void _sosSubmit(
+    RequestOptions o,
+    RequestInterceptorHandler h,
+    Map body,
+  ) {
+    final description =
+        (body['description'] as String? ?? '').trim();
+
+    if (description.isEmpty || body['location'] == null) {
+      _fail(
+        o,
+        h,
+        422,
+        'VALIDATION',
+        'A description and a location are required.',
+      );
+      return;
+    }
+
+    _ok(o, h, mockSosSubmit(body));
+  }
+
   Map<String, dynamic> _tokens() {
     final stamp = DateTime.now().millisecondsSinceEpoch;
+
     return {
       'accessToken': 'mock-access-$stamp',
       'refreshToken': 'mock-refresh-$stamp',
@@ -85,8 +182,18 @@ class MockApiInterceptor extends Interceptor {
     };
   }
 
-  void _ok(RequestOptions o, RequestInterceptorHandler h, Object data) {
-    h.resolve(Response(requestOptions: o, statusCode: 200, data: data));
+  void _ok(
+    RequestOptions o,
+    RequestInterceptorHandler h,
+    Object data,
+  ) {
+    h.resolve(
+      Response(
+        requestOptions: o,
+        statusCode: 200,
+        data: data,
+      ),
+    );
   }
 
   void _fail(
@@ -103,9 +210,10 @@ class MockApiInterceptor extends Interceptor {
       data: {
         'code': code,
         'message': message,
-        'retryAfterSeconds': ?retryAfter,
+        'retryAfterSeconds': retryAfter,
       },
     );
+
     h.reject(
       DioException.badResponse(
         statusCode: status,
