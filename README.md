@@ -13,7 +13,7 @@
 
 ### Main features
 
-**Website: the control centre (main product)**
+**Website: the control center**
 - Role-based access for seven roles, with a guard that sends citizens to the mobile app.
 - Agencies report incidents with severity, attachments and an area drawn on a map.
 - Case review, an alert composer in English and Amharic, and two-tier approval with a two-factor signature.
@@ -24,10 +24,10 @@
 - FastAPI: one-time-code login, staff login, SOS, cases, two-person approval, region-based broadcast and audit logs.
 
 **Mobile app (citizens)**
-- Phone sign-in linked to the national ID (Fayda), an SMS code, then fingerprint or face unlock.
+- Phone sign-in linked to the national ID (Fayda), an SMS code.
 - Active alerts with severity colours, labels, an area map, updates and an all-clear.
 - Loud push notifications for critical alerts.
-- SOS reporting with automatic GPS, six categories, and a photo or short video.
+- SOS reporting with automatic GPS, six categories, and a photo or short video if available.
 - My reports with status and messages from responders.
 - Offline safety guide, large text, screen reader labels and read-aloud.
 
@@ -36,7 +36,7 @@
 
 **Prototype limits:** real Fayda and SMS integration, translations into Afan Oromo, Tigrinya and Somali, identity verification at registration, and an iOS build are not implemented. The mobile app has 45 automated tests.
 
-## Run the website (main)
+## Run the website
 
 **Requirements:** Git, Python 3.10+, Node.js 20+. Use two PowerShell windows.
 
@@ -68,7 +68,7 @@ npm run dev
 
 Open http://localhost:5173. The dev server forwards `/backend` to the backend, so no URL needs to be set.
 
-## Run the other parts
+## Run the mobile-app (main)
 
 **Mobile app (Flutter)**
 
