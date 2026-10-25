@@ -25,9 +25,22 @@ enum Severity {
   final Color onColor; // text colour on top of [color]
   final List<Channel> defaultChannels;
 
-  /// Unknown values fall back to high, so we never under-warn a citizen.
-  static Severity fromApi(String value) => Severity.values.firstWhere(
-        (s) => s.apiValue == value.toUpperCase(),
-        orElse: () => Severity.high,
-      );
+  /// Maps backend values ('information', 'warning', 'critical') and legacy formats
+  /// to our UI severity levels. Unknown values fall back to high so we never under-warn.
+  static Severity fromApi(String value) {
+    switch (value.toLowerCase()) {
+      case 'information':
+      case 'low':
+        return Severity.low;
+      case 'warning':
+      case 'medium':
+        return Severity.medium;
+      case 'high':
+        return Severity.high;
+      case 'critical':
+        return Severity.critical;
+      default:
+        return Severity.high;
+    }
+  }
 }
