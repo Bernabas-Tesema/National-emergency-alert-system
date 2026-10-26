@@ -5,7 +5,7 @@
 ## Submission
 
 - **GitHub repository:** https://github.com/Bernabas-Tesema/National-emergency-alert-system
-- **Video presentation (5 minutes):** [Watch the demo video](https://drive.google.com/file/d/1eEvJI_RQL3dwXH_ycwuMCCRIUuTFTBEM/view?usp=drive_link)
+- **Video presentation (5 minutes):** [Watch the demo video](https://drive.google.com/file/d/1EE94jCJMRafxHlF8Bl5nuzw2FAPGUUKN/view?usp=drive_link)
 
 ## Project information
 
