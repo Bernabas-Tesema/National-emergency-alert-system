@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from . import llm, prompts, rules
@@ -147,6 +147,32 @@ async def unhandled_exception(_request: Request, exc: Exception):
     log.exception("unhandled error: %s", exc.__class__.__name__)
     detail = str(exc) if DEV else "Internal server error"
     return JSONResponse(status_code=500, content={"detail": detail})
+
+
+_LANDING = Path(__file__).parent / "static" / "index.html"
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+def landing_page():
+    """Public landing page for the deployed AI service URL."""
+    if _LANDING.is_file():
+        return HTMLResponse(_LANDING.read_text(encoding="utf-8"))
+    return HTMLResponse(
+        "<h1>EthioAlert AI</h1><p>Service is running. Try <a href='/ai/health'>/ai/health</a>.</p>"
+    )
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    # Tiny teal SVG favicon so browsers stop 404-ing.
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+        '<rect width="64" height="64" rx="16" fill="#0f766e"/>'
+        '<text x="32" y="40" text-anchor="middle" font-size="22" '
+        'font-family="Arial,sans-serif" font-weight="700" fill="#fff">EAi</text>'
+        "</svg>"
+    )
+    return Response(content=svg, media_type="image/svg+xml")
 
 
 @app.get("/ai/health")
