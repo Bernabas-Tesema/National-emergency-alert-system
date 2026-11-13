@@ -44,3 +44,29 @@ SMTP variables belong only on the **Django API** service, not AI.
 ## After AI is live
 
 Open `https://YOUR-AI.onrender.com/ai/health` — should return `"status":"ok"`.
+
+## 3) Frontend (Static Site)
+
+1. Render → **New** → **Static Site**
+2. Same repo, branch `main`
+3. Settings:
+   - **Root Directory:** `frontend(web)`
+   - **Build Command:** `npm install && npm run build`
+   - **Publish Directory:** `dist`
+4. Environment (build-time):
+
+```env
+VITE_API_BASE=https://national-emergency-alert-system-1-backend.onrender.com
+```
+
+5. After deploy, copy the frontend URL (e.g. `https://something.onrender.com`)
+6. Update the **API** service env:
+
+```env
+CORS_ORIGINS=https://YOUR-FRONTEND.onrender.com
+CSRF_TRUSTED_ORIGINS=https://YOUR-FRONTEND.onrender.com,https://national-emergency-alert-system-1-backend.onrender.com
+FRONTEND_URL=https://YOUR-FRONTEND.onrender.com
+ALLOWED_HOSTS=national-emergency-alert-system-1-backend.onrender.com
+```
+
+7. Save API env → restart/redeploy API, then open the frontend `/login`

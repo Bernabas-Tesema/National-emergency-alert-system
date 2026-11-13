@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib import admin, messages
-from unfold.admin import ModelAdmin
 
 from .ai_client import AiServiceError, call_ai
 from .mailer import send_credentials_email
@@ -23,7 +22,7 @@ def _case_ai_payload(case: Case) -> dict:
 
 
 @admin.register(StaffAccount)
-class StaffAccountAdmin(ModelAdmin):
+class StaffAccountAdmin(admin.ModelAdmin):
     list_display = (
         "username",
         "full_name",
@@ -95,14 +94,14 @@ class StaffAccountAdmin(ModelAdmin):
 
 
 @admin.register(Citizen)
-class CitizenAdmin(ModelAdmin):
+class CitizenAdmin(admin.ModelAdmin):
     list_display = ("id", "phone", "registered_region", "language", "created_at")
     search_fields = ("phone", "registered_region")
     list_filter = ("registered_region", "language")
 
 
 @admin.register(Case)
-class CaseAdmin(ModelAdmin):
+class CaseAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "title",
@@ -167,20 +166,20 @@ class CaseAdmin(ModelAdmin):
 
 
 @admin.register(Alert)
-class AlertAdmin(ModelAdmin):
+class AlertAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "severity", "region", "status", "case_id", "created_at", "dispatched_at")
     search_fields = ("title", "message", "region")
     list_filter = ("status", "severity", "region")
 
 
 @admin.register(DeliveryLog)
-class DeliveryLogAdmin(ModelAdmin):
+class DeliveryLogAdmin(admin.ModelAdmin):
     list_display = ("id", "alert_id", "citizen_id", "channel", "status", "created_at")
     list_filter = ("channel", "status")
 
 
 @admin.register(AuditLog)
-class AuditLogAdmin(ModelAdmin):
+class AuditLogAdmin(admin.ModelAdmin):
     list_display = ("id", "actor", "action", "resource", "ip_address", "created_at")
     search_fields = ("actor", "action", "resource")
     list_filter = ("action",)

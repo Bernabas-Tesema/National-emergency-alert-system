@@ -83,6 +83,22 @@ services:
       - key: STAFF_FALLBACK_OTP_EMAIL
         sync: false
 
+  - type: web
+    name: ethioalert-web
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend(web)
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE
+        value: https://national-emergency-alert-system-1-backend.onrender.com
+
 databases:
   - name: ethioalert-db
     plan: free

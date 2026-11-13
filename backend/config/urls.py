@@ -7,7 +7,7 @@ from alerts_api.views import health
 
 
 def root_to_admin_login(_request):
-    """Opening the backend base URL goes straight to Unfold admin login."""
+    """Opening the backend base URL goes straight to Jazzmin admin login."""
     return redirect("/admin/login/")
 
 

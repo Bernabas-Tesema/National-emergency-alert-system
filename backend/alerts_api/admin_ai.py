@@ -77,7 +77,7 @@ def ethio_ai_console(request):
                         {
                             "role": "ADMINISTRATOR",
                             "message": message,
-                            "context": "Django Unfold admin EthioAlert AI console",
+                            "context": "Django Jazzmin admin EthioAlert AI console",
                         },
                     )
                     context["assist_reply"] = result.get("reply") or "No reply."

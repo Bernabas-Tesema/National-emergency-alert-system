@@ -33,7 +33,7 @@ py -3 manage.py runserver 127.0.0.1:8081
 
 Health check: `http://127.0.0.1:8081/health`
 
-Opening `http://127.0.0.1:8081/` redirects to the clean **Unfold** admin login (`/admin/login/`).
+Opening `http://127.0.0.1:8081/` redirects to the **Jazzmin** admin login (`/admin/login/`).
 
 ```powershell
 pip install -r requirements.txt

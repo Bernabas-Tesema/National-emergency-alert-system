@@ -23,7 +23,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or os.getenv("JWT_SECRET") or "djang
 ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", "127.0.0.1,localhost")
 
 INSTALLED_APPS = [
-    "unfold",
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -158,55 +158,81 @@ LOGIN_URL = "/admin/login/"
 LOGIN_REDIRECT_URL = "/admin/"
 LOGOUT_REDIRECT_URL = "/admin/login/"
 
-UNFOLD = {
-    "SITE_TITLE": "EthioAlert Admin",
-    "SITE_HEADER": "EthioAlert",
-    "SITE_SUBHEADER": "Operations admin",
-    "SITE_SYMBOL": "shield",
-    "SHOW_HISTORY": True,
-    "SHOW_VIEW_ON_SITE": False,
-    "THEME": "light",
-    "COLORS": {
-        "primary": {
-            "50": "eff6ff",
-            "100": "dbeafe",
-            "200": "bfdbfe",
-            "300": "93c5fd",
-            "400": "60a5fa",
-            "500": "3b82f6",
-            "600": "2563eb",
-            "700": "1d4ed8",
-            "800": "1e40af",
-            "900": "1e3a8a",
-            "950": "172554",
-        },
+JAZZMIN_SETTINGS = {
+    "site_title": "EthioAlert Admin",
+    "site_header": "EthioAlert",
+    "site_brand": "EthioAlert",
+    "welcome_sign": "Sign in to EthioAlert operations admin",
+    "copyright": "EthioAlert",
+    "search_model": ["alerts_api.StaffAccount", "alerts_api.Case", "alerts_api.Citizen"],
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "EthioAlert AI", "url": "/admin/ethio-ai/", "new_window": False},
+        {"name": "API health", "url": "/health", "new_window": True},
+        {"name": "Web console", "url": FRONTEND_URL, "new_window": True},
+    ],
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "hide_apps": [],
+    "hide_models": [],
+    "order_with_respect_to": [
+        "alerts_api",
+        "alerts_api.StaffAccount",
+        "alerts_api.Case",
+        "alerts_api.Alert",
+        "alerts_api.Citizen",
+        "alerts_api.AuditLog",
+        "auth",
+    ],
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "alerts_api.StaffAccount": "fas fa-id-badge",
+        "alerts_api.Case": "fas fa-folder-open",
+        "alerts_api.Alert": "fas fa-bullhorn",
+        "alerts_api.Citizen": "fas fa-mobile-alt",
+        "alerts_api.DeliveryLog": "fas fa-paper-plane",
+        "alerts_api.AuditLog": "fas fa-history",
     },
-    "SIDEBAR": {
-        "show_search": True,
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": "Operations",
-                "separator": True,
-                "items": [
-                    {"title": "Dashboard", "icon": "dashboard", "link": "/admin/"},
-                    {"title": "EthioAlert AI", "icon": "auto_awesome", "link": "/admin/ethio-ai/"},
-                    {"title": "Staff accounts", "icon": "badge", "link": "/admin/alerts_api/staffaccount/"},
-                    {"title": "Cases", "icon": "folder_open", "link": "/admin/alerts_api/case/"},
-                    {"title": "Alerts", "icon": "campaign", "link": "/admin/alerts_api/alert/"},
-                    {"title": "Citizens", "icon": "phone_android", "link": "/admin/alerts_api/citizen/"},
-                    {"title": "Audit log", "icon": "history", "link": "/admin/alerts_api/auditlog/"},
-                ],
-            },
-            {
-                "title": "Links",
-                "separator": True,
-                "items": [
-                    {"title": "API health", "icon": "monitor_heart", "link": "/health"},
-                    {"title": "Web console", "icon": "open_in_new", "link": FRONTEND_URL},
-                ],
-            },
-        ],
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    "related_modal_active": True,
+    "custom_css": None,
+    "custom_js": None,
+    "show_ui_builder": False,
+    "changeform_format": "horizontal_tabs",
+}
+
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark navbar-primary",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
     },
 }
 
