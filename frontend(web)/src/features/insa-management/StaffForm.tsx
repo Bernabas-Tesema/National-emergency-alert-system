@@ -23,6 +23,7 @@ export default function StaffForm({
 }: StaffFormProps) {
   const [fullName, setFullName] = useState('')
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
   const [role, setRole] = useState<Role | ''>('')
   const [organizationId, setOrganizationId] = useState('')
@@ -39,6 +40,7 @@ export default function StaffForm({
     if (
       !fullName.trim() ||
       !username.trim() ||
+      !email.trim() ||
       !phone.trim() ||
       !role ||
       !organizationId
@@ -52,6 +54,7 @@ export default function StaffForm({
       await onSubmit({
         fullName: fullName.trim(),
         username: username.trim(),
+        email: email.trim(),
         phone: phone.trim(),
         role,
         organizationId,
@@ -92,6 +95,17 @@ export default function StaffForm({
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="off"
           className="border-[#1b2e34] bg-[#0c1417] text-slate-100 font-mono text-xs"
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="staff-email" className="text-xs text-slate-300">Email</Label>
+        <Input
+          id="staff-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="officer@organization.gov.et"
+          className="border-[#1b2e34] bg-[#0c1417] text-slate-100 text-xs"
         />
       </div>
       <div className="space-y-2">
@@ -145,7 +159,8 @@ export default function StaffForm({
       </div>
       {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
       <p className="text-xs text-slate-400">
-        The person receives an invitation by SMS to set their own password.
+        EthioAlert emails the temporary username/password plus a change-password link.
+        On every sign-in a random verification code is sent to this email address.
       </p>
       <div className="flex gap-3 pt-2">
         <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white text-xs">

@@ -10,6 +10,8 @@ import {
   Compass,
 } from 'lucide-react'
 
+import { liveApi } from '@/api/config'
+import { liveAiSummary } from '@/api/liveAi'
 import { fetchAlerts, type Alert } from '@/api/mockAlerts'
 import { fetchCases } from '@/api/mockCases'
 import { fetchSosTickets, type SosTicket } from '@/api/mockSos'
@@ -22,6 +24,11 @@ export default function CommandDashboardPage() {
   const [cases, setCases] = useState<Case[]>([])
   const [sosTickets, setSosTickets] = useState<SosTicket[]>([])
   const [loading, setLoading] = useState(true)
+  const [aiSummary, setAiSummary] = useState(
+    'Threat Level: ELEVATED. Review open cases and SOS tickets. Refresh AI for a live brief.',
+  )
+  const [aiPoints, setAiPoints] = useState<string[]>([])
+  const [aiBusy, setAiBusy] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +48,41 @@ export default function CommandDashboardPage() {
       cancelled = true
     }
   }, [])
+
+  async function refreshAiSummary(currentCases: Case[], currentSos: SosTicket[]) {
+    if (!liveApi) return
+    setAiBusy(true)
+    try {
+      const items = [
+        ...currentCases.slice(0, 8).map((c) => ({
+          id: c.id,
+          category: 'other',
+          severity: (c.severity || 'MEDIUM').toLowerCase(),
+          description: `${c.category}: ${c.title}`,
+          age_minutes: 30,
+        })),
+        ...currentSos.slice(0, 5).map((s) => ({
+          id: s.id,
+          category: s.type,
+          severity: 'critical',
+          description: s.notes[0] || `SOS ${s.type}`,
+          age_minutes: 15,
+        })),
+      ]
+      if (items.length === 0) {
+        setAiSummary('No open cases or SOS tickets yet. Queue is quiet.')
+        setAiPoints([])
+        return
+      }
+      const result = await liveAiSummary({ set_id: 'dashboard', items })
+      setAiSummary(result.data.summary)
+      setAiPoints(result.data.key_points || [])
+    } catch {
+      setAiSummary('AI brief unavailable right now. Continue with human triage.')
+    } finally {
+      setAiBusy(false)
+    }
+  }
 
   if (loading) {
     return <div className="p-8 text-center text-xs text-slate-400">Loading operations console telemetry...</div>
@@ -237,19 +279,25 @@ export default function CommandDashboardPage() {
                 AI Executive Summary
               </h3>
             </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-300 border border-teal-800">
-              AI-generated
-            </span>
+            <button
+              type="button"
+              disabled={aiBusy}
+              onClick={() => void refreshAiSummary(cases, sosTickets)}
+              className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-950/80 text-teal-300 border border-teal-800 hover:bg-teal-900 disabled:opacity-50"
+            >
+              {aiBusy ? 'Refreshing…' : 'Refresh AI'}
+            </button>
           </div>
 
           <div className="space-y-3 text-xs leading-relaxed text-slate-300">
-            <p>
-              <strong className="text-white">Threat Level: ELEVATED (Awash Basin & Bale Ridge).</strong>
-              Hydrological sensors detect continued cresting at Mojo bridge (+4.2m). Downstream flash flood risk remains Critical for next 6 hours.
-            </p>
-            <p>
-              Secondary hazard: Bale wildfire smoke plume drifting towards Goba township. 84,000 citizens in targeted evacuation zones.
-            </p>
+            <p>{aiSummary}</p>
+            {aiPoints.length > 0 && (
+              <ul className="list-disc space-y-1 pl-4 text-slate-400">
+                {aiPoints.map((point) => (
+                  <li key={point}>{point}</li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="pt-3 border-t border-[#1b2e34] space-y-2.5">

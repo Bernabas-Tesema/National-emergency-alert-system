@@ -12,8 +12,9 @@ import {
 const goodStaff = {
   fullName: 'Test Person',
   username: 'test.person',
+  email: 'test.person@example.com',
   phone: '0911000009',
-  role: 'provider' as const,
+  role: 'ORG_OFFICER' as const,
   organizationId: 'org-fire',
 }
 
@@ -31,12 +32,12 @@ describe('staff safeguards', () => {
 
   it('rejects a role that does not fit the organization', async () => {
     await expect(
-      createStaff({ ...goodStaff, role: 'provider', organizationId: 'org-insa' }),
+      createStaff({ ...goodStaff, role: 'ORG_OFFICER', organizationId: 'org-insa' }),
     ).rejects.toThrow(/cannot be used/i)
     await expect(
-      createStaff({ ...goodStaff, role: 'dispatcher', organizationId: 'org-fire' }),
+      createStaff({ ...goodStaff, role: 'DISPATCHER', organizationId: 'org-fire' }),
     ).rejects.toThrow(/cannot be used/i)
-    await expect(changeStaffRole('u-006', 'u-001', 'dispatcher')).rejects.toThrow(/cannot be used/i)
+    await expect(changeStaffRole('u-006', 'u-001', 'DISPATCHER')).rejects.toThrow(/cannot be used/i)
   })
 
   it('creates an account and then refuses a duplicate username', async () => {

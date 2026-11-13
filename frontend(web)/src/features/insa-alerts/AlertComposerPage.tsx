@@ -10,6 +10,8 @@ import {
   AlertOctagon,
 } from 'lucide-react'
 
+import { liveApi } from '@/api/config'
+import { liveAiDraft } from '@/api/liveAi'
 import { createAlertDraft, submitTier1, type AlertSeverity, type AlertChannel } from '@/api/mockAlerts'
 import { MapPicker, type GeoJsonFeature } from '@/packages/ui/MapPicker'
 import { useAuth } from '@/features/auth/useAuth'
@@ -94,17 +96,32 @@ export default function AlertComposerPage() {
     }
   }
 
-  function handleAiDraft() {
+  async function handleAiDraft() {
     setAiDrafting(true)
-    setTimeout(() => {
-      setTextEn(
-        `OFFICIAL INSA WARNING: ${severity.toUpperCase()} hazard detected in ${targetArea}. Public safety protocols are activated. Follow instructions from local emergency personnel immediately.`,
-      )
-      setTextAm(
-        `ይፋዊ የኢንሳ ማስጠንቀቂያ፡ በ${targetArea} አደገኛ ሁኔታ ተከስቷል። የደህንነት መመሪያዎችን ተግባራዊ ያድርጉና የአካባቢውን የድንገተኛ አደጋ መመሪያዎችን ይከተሉ።`,
-      )
+    setError('')
+    try {
+      if (liveApi) {
+        const result = await liveAiDraft({
+          category: 'other',
+          suggested_severity: severity,
+          description: textEn || `${severity} hazard in ${targetArea}. Public warning needed.`,
+          region: targetArea,
+        })
+        setTextEn(result.data.en)
+        setTextAm(result.data.am)
+      } else {
+        setTextEn(
+          `OFFICIAL INSA WARNING: ${severity.toUpperCase()} hazard detected in ${targetArea}. Public safety protocols are activated. Follow instructions from local emergency personnel immediately.`,
+        )
+        setTextAm(
+          `ይፋዊ የኢንሳ ማስጠንቀቂያ፡ በ${targetArea} አደገኛ ሁኔታ ተከስቷል። የደህንነት መመሪያዎችን ተግባራዊ ያድርጉና የአካባቢውን የድንገተኛ አደጋ መመሪያዎችን ይከተሉ።`,
+        )
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'AI draft failed')
+    } finally {
       setAiDrafting(false)
-    }, 800)
+    }
   }
 
   const toggleChannel = (ch: AlertChannel) => {

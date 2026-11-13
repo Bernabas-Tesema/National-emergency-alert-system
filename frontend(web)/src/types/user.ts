@@ -6,4 +6,6 @@ export interface User {
   fullName: string
   role: Role
   organization: string
+  mustChangePassword?: boolean
+  email?: string
 }

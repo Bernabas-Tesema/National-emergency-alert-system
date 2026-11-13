@@ -11,6 +11,9 @@ export default function ProtectedRoute({
   const { user } = useAuth()
 
   if (!user) return <Navigate to="/login" replace />
+  if (user.mustChangePassword) {
+    return <Navigate to="/change-password" replace />
+  }
   if (!isRoleAllowed(user.role, allowedRoles)) {
     return <Navigate to="/forbidden" replace />
   }

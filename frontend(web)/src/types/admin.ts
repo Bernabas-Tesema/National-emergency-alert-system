@@ -36,6 +36,7 @@ export interface StaffAccount {
   fullName: string
   username: string
   phone: string
+  email?: string
   role: Role
   organizationId: string
   status: AccountStatus
@@ -50,6 +51,7 @@ export interface NewOrganizationInput {
 export interface NewStaffInput {
   fullName: string
   username: string
+  email: string
   phone: string
   role: Role
   organizationId: string

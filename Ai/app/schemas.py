@@ -116,3 +116,16 @@ class Draft(BaseModel):
 
 
 TASKS = {"triage": Triage, "summary": Summary, "rank": Rank, "draft": Draft}
+
+
+class AssistRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+    role: str = Field("CITIZEN", max_length=64)
+    message: str = Field(min_length=2, max_length=2000)
+    context: str | None = Field(None, max_length=4000)
+
+
+class AssistReply(BaseModel):
+    reply: str
+    role: str
+    provider: str | None = None

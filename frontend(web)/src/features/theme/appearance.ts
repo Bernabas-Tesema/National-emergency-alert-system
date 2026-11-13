@@ -5,9 +5,11 @@ export const APPEARANCE_EVENT = 'ness-appearance'
 
 export function readAppearance(): Appearance {
   try {
-    return localStorage.getItem(APPEARANCE_KEY) === 'bright' ? 'bright' : 'dim'
+    const stored = localStorage.getItem(APPEARANCE_KEY)
+    if (stored === 'dim') return 'dim'
+    return 'bright'
   } catch {
-    return 'dim'
+    return 'bright'
   }
 }
 

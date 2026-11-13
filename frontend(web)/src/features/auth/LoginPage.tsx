@@ -1,17 +1,10 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { ShieldCheck, AlertCircle, Radio, Siren, Users } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Lock, User } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 
 import { AuthError, submitCredentials, submitTwoFactor } from '@/api/auth'
 import { useAuth } from '@/features/auth/useAuth'
@@ -21,7 +14,6 @@ import {
 } from '@/lib/session'
 import { ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
 import { liveApi } from '@/api/config'
-import ThemeToggle from '@/features/theme/ThemeToggle'
 
 type Step = 'credentials' | 'twofactor' | 'mobile-only'
 
@@ -38,8 +30,14 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>('credentials')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+  const [showDemoAccounts, setShowDemoAccounts] = useState(false)
   const [code, setCode] = useState('')
   const [challengeId, setChallengeId] = useState('')
+  const [emailHint, setEmailHint] = useState('')
+  const [debugOtp, setDebugOtp] = useState('')
+  const [emailWarning, setEmailWarning] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -57,6 +55,9 @@ export default function LoginPage() {
     try {
       const result = await submitCredentials(username.trim(), password)
       setChallengeId(result.challengeId)
+      setEmailHint(result.emailHint || '')
+      setDebugOtp(result.debugOtp || '')
+      setEmailWarning(result.emailWarning || '')
       setStep('twofactor')
     } catch (err) {
       setError(messageFrom(err))
@@ -78,7 +79,11 @@ export default function LoginPage() {
         setStep('mobile-only')
       } else {
         login(result.user)
-        navigate(home, { replace: true })
+        if (result.user.mustChangePassword) {
+          navigate('/change-password', { replace: true })
+        } else {
+          navigate(home, { replace: true })
+        }
       }
     } catch (err) {
       setError(messageFrom(err))
@@ -91,19 +96,29 @@ export default function LoginPage() {
     setStep('credentials')
     setPassword('')
     setCode('')
+    setEmailHint('')
+    setDebugOtp('')
+    setEmailWarning('')
     setError('')
   }
 
-  function quickFill(user: string, password = 'Password123!') {
+  function quickFill(user: string, nextPassword = 'Password123!') {
     setUsername(user)
-    setPassword(password)
+    setPassword(nextPassword)
+    setShowDemoAccounts(false)
   }
 
   const demoAccounts = liveApi
     ? [
-        ['insa_admin', 'INSA Administrator', 'change-me'],
-        ['insa_officer', 'INSA Officer', 'change-me'],
-        ['org_officer', 'Organization Officer', 'change-me'],
+        ['sysadmin1', 'Super Admin', 'change-me'],
+        ['admin1', 'Administrator', 'change-me'],
+        ['officer1', 'Higher Officer', 'change-me'],
+        ['dispatcher1', 'Dispatcher', 'change-me'],
+        ['auditor1', 'Auditor', 'change-me'],
+        ['orgadmin1', 'Org Admin', 'change-me'],
+        ['provider1', 'Org Officer', 'change-me'],
+        ['insa_admin', 'Legacy Admin', 'change-me'],
+        ['org_officer', 'Legacy Org', 'change-me'],
       ]
     : [
         ['sysadmin1', 'Super Admin', 'Password123!'],
@@ -115,214 +130,271 @@ export default function LoginPage() {
       ]
 
   return (
-    <div className="relative min-h-screen font-sans text-slate-100 lg:grid lg:grid-cols-2">
-      <div className="absolute right-4 top-4 z-20">
-        <ThemeToggle />
-      </div>
-
-      <section className="platform-panel flex flex-col justify-center px-8 py-16 sm:px-12 lg:px-16">
-        <div className="mx-auto w-full max-w-xl">
-          <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl border border-teal-400/30 bg-teal-400/10 text-teal-300">
-            <ShieldCheck className="h-6 w-6" />
+    <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6">
+      <div className="login-card relative z-10 grid w-full max-w-[980px] overflow-hidden rounded-[26px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.28)] lg:grid-cols-[0.92fr_1.08fr]">
+        {/* Left panel — exact mockup composition */}
+        <section className="login-brand relative hidden min-h-[580px] overflow-hidden px-11 py-14 text-white lg:flex lg:flex-col lg:justify-center">
+          <div className="login-spheres" aria-hidden="true">
+            <span className="login-sphere login-sphere-lg" />
+            <span className="login-sphere login-sphere-md" />
+            <span className="login-sphere login-sphere-sm" />
+            <span className="login-sphere login-sphere-xs" />
+            <span className="login-sphere login-sphere-tiny" />
           </div>
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-teal-300">
-            Information Network Security Administration
-          </p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">
-            EthioAlert
-          </h1>
-          <p className="platform-muted mt-4 text-base leading-relaxed">
-            The national emergency alert and citizen safety console. INSA and partner
-            organizations use it to report incidents, confirm what is real, and send
-            a public warning only after two different officers approve it.
-          </p>
-          <ul className="mt-8 space-y-4 text-sm">
-            <li className="flex gap-3">
-              <Siren className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
-              <span className="platform-muted">
-                Partner officers submit fires, floods, health events, and other incidents.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <Users className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
-              <span className="platform-muted">
-                INSA reviews each case, asks for clarification, or rejects it with a written reason.
-              </span>
-            </li>
-            <li className="flex gap-3">
-              <Radio className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
-              <span className="platform-muted">
-                Approved alerts go out by push notification, SMS, and voice call to the affected area.
-              </span>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <section className="login-stage flex items-center justify-center bg-[#0c1417] px-4 py-16">
-      <Card className="w-full max-w-md border border-[#1b2e34] bg-[#111d21] shadow-2xl rounded-2xl overflow-hidden">
-        <CardHeader className="border-b border-[#1b2e34] bg-[#09181b] p-6 text-center space-y-1.5">
-          <div className="mx-auto w-10 h-10 rounded-xl bg-[#133e42] border border-teal-500/30 flex items-center justify-center text-teal-400 mb-2 shadow-[0_0_15px_rgba(45,212,191,0.25)]">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <CardTitle className="text-xl font-bold tracking-tight text-white">
-            EthioAlert Operations Console
-          </CardTitle>
-          <CardDescription className="text-xs text-slate-400">
-            {step === 'credentials' && 'National Emergency Alert and Citizen Safety Portal'}
-            {step === 'twofactor' && 'Two-Factor Authentication Step-Up Required'}
-            {step === 'mobile-only' && 'Web access is restricted to verified staff only'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="p-6">
-          {step === 'credentials' && timedOut && (
-            <p className="mb-4 rounded-lg border border-amber-800 bg-amber-950/60 px-3 py-2 text-xs text-amber-200">
-              You were signed out because of inactivity. Please sign in again.
+          <div className="relative z-10 max-w-[300px]">
+            <p className="text-[34px] font-extrabold uppercase leading-none tracking-[0.06em] text-white">
+              Welcome
             </p>
-          )}
+            <h1 className="mt-5 text-[20px] font-bold uppercase leading-snug tracking-[0.05em] text-white">
+              EthioAlert
+            </h1>
+            <p className="mt-6 text-[12.5px] leading-[1.7] text-[#d7e6ff]">
+              The national emergency alert and citizen safety console. INSA and partner
+              organizations use it to report incidents, confirm what is real, and send
+              a public warning only after two different officers approve it.
+            </p>
+            <p className="mt-4 text-[12.5px] leading-[1.7] text-[#d7e6ff]">
+              INSA and partner organizations use it to report incidents, confirm what is
+              real, and send a public warning only after two different officers approve it.
+            </p>
+          </div>
+        </section>
 
-          {step === 'credentials' && (
-            <form onSubmit={handleCredentials} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="username" className="text-xs font-medium text-slate-300">
-                  Username
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
-                    placeholder="e.g. sysadmin1 or provider1"
-                    required
-                    className="bg-[#0c1417] border-[#1b2e34] text-slate-100 placeholder-slate-500 focus:border-teal-400 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-xs font-medium text-slate-300">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                  placeholder="••••••••••••"
-                  className="bg-[#0c1417] border-[#1b2e34] text-slate-100 placeholder-slate-500 focus:border-teal-400 text-xs"
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-lg bg-red-950/70 border border-red-800 p-2.5 text-xs text-red-300 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs py-2.5 transition-colors shadow-md"
-                disabled={loading}
-              >
-                {loading ? 'Authenticating...' : 'Continue'}
-              </Button>
-
-              {/* Demo Quick-Fill Roles */}
-              <div className="pt-4 border-t border-[#1b2e34] space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400/80 block text-center">
-                  {liveApi
-                    ? 'API accounts (password: change-me)'
-                    : 'Quick Demo Accounts (Password: Password123!)'}
-                </span>
-                <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                  {demoAccounts.map(([user, label, password]) => (
-                    <button
-                      key={user}
-                      type="button"
-                      onClick={() => quickFill(user, password)}
-                      className="p-1.5 rounded bg-[#162327] border border-[#1b2e34] text-slate-300 hover:text-teal-300 hover:border-teal-500/40 text-left truncate"
-                    >
-                      {user} ({label})
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </form>
-          )}
-
-          {step === 'twofactor' && (
-            <form onSubmit={handleTwoFactor} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="code" className="text-xs font-medium text-slate-300">
-                  Verification code
-                </Label>
-                <Input
-                  id="code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="123456"
-                  autoComplete="one-time-code"
-                  required
-                  className="bg-[#0c1417] border-[#1b2e34] text-center font-mono text-lg tracking-widest text-teal-300 focus:border-teal-400"
-                />
-                <span className="text-[10px] text-slate-400 block text-center">
-                  {liveApi
-                    ? 'Local API sign-in still asks for verification code 123456.'
-                    : 'Mock 2FA verification code: 123456'}
-                </span>
-              </div>
-
-              {error && (
-                <div className="rounded-lg bg-red-950/70 border border-red-800 p-2.5 text-xs text-red-300">
-                  {error}
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs py-2.5"
-                disabled={loading}
-              >
-                {loading ? 'Verifying...' : 'Verify and sign in'}
-              </Button>
-
-              <Button
-                type="button"
-                variant="ghost"
-                className="w-full text-slate-400 hover:text-white text-xs"
-                onClick={startOver}
-              >
-                Back to sign in
-              </Button>
-            </form>
-          )}
-
-          {step === 'mobile-only' && (
-            <div className="space-y-4 text-center py-2">
-              <p className="text-sm text-slate-300">
-                Please use the mobile app.
+        {/* Right panel — Sign in form */}
+        <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-12 sm:py-14">
+          <div className="w-full max-w-[340px]">
+            <div className="mb-6 lg:hidden">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2f6fed]">
+                EthioAlert
               </p>
-              <p className="text-xs text-slate-500">
-                Citizens receive emergency broadcasts through mobile push notifications and SMS alerts.
-              </p>
-              <Button
-                className="w-full bg-teal-600 hover:bg-teal-500 text-white text-xs"
-                onClick={startOver}
-              >
-                Back to sign in
-              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      </section>
+
+            <h2 className="text-[32px] font-bold leading-none tracking-tight text-[#1a1a1a]">
+              Sign in
+            </h2>
+            <p className="mt-3 text-[13px] leading-5 text-[#8b93a7]">
+              {step === 'credentials' &&
+                'National Emergency Alert and Citizen Safety Portal'}
+              {step === 'twofactor' && 'Two-Factor Authentication Step-Up Required'}
+              {step === 'mobile-only' && 'Web access is restricted to verified staff only'}
+            </p>
+
+            {step === 'credentials' && timedOut && (
+              <p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                You were signed out because of inactivity. Please sign in again.
+              </p>
+            )}
+
+            {step === 'credentials' && (
+              <form onSubmit={handleCredentials} className="mt-8 space-y-4">
+                <div>
+                  <Label htmlFor="username" className="sr-only">
+                    Username
+                  </Label>
+                  <div className="relative">
+                    <User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#9aa3b5]" />
+                    <Input
+                      id="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      autoComplete="username"
+                      placeholder="User Name"
+                      required
+                      className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] pl-12 text-[14px] text-[#1a1a1a] placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="password" className="sr-only">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#9aa3b5]" />
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                      placeholder="Password"
+                      className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] px-12 text-[14px] text-[#1a1a1a] placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#2f6fed]"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : 'Show'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-[13px]">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-[#5b6475]">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 rounded border-[#c5cad3] text-[#2f6fed] focus:ring-[#2f6fed]"
+                    />
+                    Remember me
+                  </label>
+                  <button
+                    type="button"
+                    className="font-medium text-[#2f6fed] hover:underline"
+                    onClick={() =>
+                      setError('Password reset is handled by your system administrator.')
+                    }
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  disabled={loading}
+                >
+                  {loading ? 'Authenticating...' : 'Sign in'}
+                </Button>
+
+                <div className="relative py-3">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-[#e4e7ec]" />
+                  </div>
+                  <div className="relative flex justify-center text-[13px]">
+                    <span className="bg-white px-3 text-[#8b93a7]">or</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowDemoAccounts((v) => !v)}
+                  className="flex h-[52px] w-full items-center justify-center rounded-[10px] border border-[#1a1a1a] bg-white text-[15px] font-semibold text-[#1a1a1a] transition hover:bg-[#f8fafc]"
+                >
+                  Sign in with other
+                </button>
+
+                {showDemoAccounts && (
+                  <div className="space-y-2 rounded-[12px] border border-[#e4e7ec] bg-[#f8fafc] p-3">
+                    <span className="block text-center text-[10px] font-bold uppercase tracking-wider text-[#8b93a7]">
+                      {liveApi
+                        ? 'API accounts (password: change-me)'
+                        : 'Quick Demo Accounts (Password: Password123!)'}
+                    </span>
+                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                      {demoAccounts.map(([user, label, accountPassword]) => (
+                        <button
+                          key={user}
+                          type="button"
+                          onClick={() => quickFill(user, accountPassword)}
+                          className="truncate rounded-lg border border-[#e4e7ec] bg-white p-2 text-left text-[#5b6475] hover:border-[#2f6fed]/40 hover:text-[#1d4ed8]"
+                        >
+                          {user} ({label})
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <p className="pt-2 text-center text-[13px] text-[#8b93a7]">
+                  Don&apos;t have an account?{' '}
+                  <span className="font-semibold text-[#2f6fed]">
+                    Staff access only
+                  </span>
+                </p>
+              </form>
+            )}
+
+            {step === 'twofactor' && (
+              <form onSubmit={handleTwoFactor} className="mt-8 space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="code" className="text-xs font-medium text-[#5b6475]">
+                    Verification code
+                  </Label>
+                  <Input
+                    id="code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    autoComplete="one-time-code"
+                    required
+                    className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] text-center font-mono text-lg tracking-widest text-[#1d4ed8] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                  />
+                  <span className="block text-center text-[10px] text-[#8b93a7]">
+                    {liveApi
+                      ? emailHint
+                        ? `A random code was emailed to ${emailHint}.`
+                        : 'A random verification code was emailed to your login address.'
+                      : 'Mock 2FA verification code: 123456'}
+                  </span>
+                  {liveApi && emailWarning ? (
+                    <span className="block text-center text-[10px] font-medium text-amber-700">
+                      {emailWarning}
+                    </span>
+                  ) : null}
+                  {liveApi && debugOtp ? (
+                    <span className="block text-center text-[10px] font-medium text-amber-600">
+                      Dev mode code: {debugOtp}
+                    </span>
+                  ) : null}
+                </div>
+
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  disabled={loading}
+                >
+                  {loading ? 'Verifying...' : 'Verify and sign in'}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-[13px] text-[#8b93a7] hover:text-[#1a1a1a]"
+                  onClick={startOver}
+                >
+                  Back to sign in
+                </Button>
+              </form>
+            )}
+
+            {step === 'mobile-only' && (
+              <div className="mt-8 space-y-4 py-2 text-center">
+                <p className="text-sm text-[#1a1a1a]">Please use the mobile app.</p>
+                <p className="text-xs text-[#8b93a7]">
+                  Citizens receive emergency broadcasts through mobile push notifications and SMS alerts.
+                </p>
+                <Button
+                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  onClick={startOver}
+                >
+                  Back to sign in
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   )
 }

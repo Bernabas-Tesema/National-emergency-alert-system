@@ -3,26 +3,21 @@ import type { Role } from '@/types/role'
 import { AuthError } from './auth-error'
 import { ApiError, apiFetch, setAccessToken } from './client'
 
-const DEV_STEP_UP = '123456'
-
-interface StaffSession {
-  token: string
-  user: User
+interface PendingChallenge {
+  challengeId: string
+  emailHint: string
+  debugOtp?: string
 }
 
-const pending = new Map<string, StaffSession>()
+const pending = new Map<string, PendingChallenge>()
 
 const ROLE_BY_API: Record<string, Role> = {
   insa_admin: 'ADMINISTRATOR',
   insa_officer: 'HIGHER_OFFICER',
   organization_officer: 'ORG_OFFICER',
+  dispatcher: 'DISPATCHER',
+  auditor: 'AUDITOR',
   citizen: 'citizen',
-}
-
-const NAMES: Record<string, string> = {
-  insa_admin: 'INSA Administrator',
-  insa_officer: 'INSA Officer',
-  org_officer: 'Organization Officer',
 }
 
 function readRole(token: string): string {
@@ -37,36 +32,64 @@ function readRole(token: string): string {
   }
 }
 
-function toUser(username: string, token: string): User {
+interface StaffLoginChallengeResponse {
+  challenge_id: string
+  email_hint?: string
+  otp_sent?: boolean
+  expires_in_minutes?: number
+  debug_otp?: string
+  email_warning?: string
+}
+
+interface StaffLoginResponse {
+  access_token: string
+  must_change_password?: boolean
+  full_name?: string
+  role?: string
+  organization?: string
+  email?: string
+}
+
+function toUser(username: string, token: string, login: StaffLoginResponse): User {
   const apiRole = readRole(token)
+  const frontendRole = (login.role as Role | undefined) || ROLE_BY_API[apiRole] || 'ADMINISTRATOR'
   return {
     id: username,
     username,
-    fullName: NAMES[username] ?? username,
-    role: ROLE_BY_API[apiRole] ?? 'ADMINISTRATOR',
-    organization: apiRole === 'organization_officer' ? 'Partner organization' : 'INSA',
+    fullName: login.full_name || username,
+    role: frontendRole,
+    organization: login.organization || (apiRole === 'organization_officer' ? 'Partner organization' : 'INSA'),
+    mustChangePassword: Boolean(login.must_change_password),
+    email: login.email || '',
   }
 }
 
 export async function liveSubmitCredentials(
   username: string,
   password: string,
-): Promise<{ challengeId: string }> {
+): Promise<{ challengeId: string; emailHint?: string; debugOtp?: string; emailWarning?: string }> {
   try {
-    const result = await apiFetch<{ access_token: string }>('/api/v1/auth/staff/login', {
+    const result = await apiFetch<StaffLoginChallengeResponse>('/api/v1/auth/staff/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     })
-    const challengeId = crypto.randomUUID()
+    const challengeId = result.challenge_id
     pending.set(challengeId, {
-      token: result.access_token,
-      user: toUser(username, result.access_token),
+      challengeId,
+      emailHint: result.email_hint || '',
+      debugOtp: result.debug_otp,
     })
-    return { challengeId }
+    return {
+      challengeId,
+      emailHint: result.email_hint,
+      debugOtp: result.debug_otp,
+      emailWarning: result.email_warning,
+    }
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       throw new AuthError('Invalid username or password')
     }
+    if (err instanceof ApiError) throw new AuthError(err.message)
     throw new AuthError(err instanceof Error ? err.message : 'Could not reach the API')
   }
 }
@@ -77,8 +100,53 @@ export async function liveSubmitTwoFactor(
 ): Promise<{ token: string; user: User }> {
   const session = pending.get(challengeId)
   if (!session) throw new AuthError('Session expired. Please sign in again.')
-  if (code !== DEV_STEP_UP) throw new AuthError('Incorrect verification code')
-  pending.delete(challengeId)
-  setAccessToken(session.token)
-  return { token: session.token, user: session.user }
+  try {
+    const result = await apiFetch<StaffLoginResponse>('/api/v1/auth/staff/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ challenge_id: challengeId, code }),
+    })
+    pending.delete(challengeId)
+    setAccessToken(result.access_token)
+    // Username is JWT sub; API does not re-send username — recover from token payload if needed
+    let username = ''
+    try {
+      const payload = result.access_token.split('.')[1]
+      if (payload) {
+        const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+          sub?: string
+        }
+        username = claims.sub || ''
+      }
+    } catch {
+      username = result.email?.split('@')[0] || 'staff'
+    }
+    const user = toUser(username, result.access_token, result)
+    return { token: result.access_token, user }
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      throw new AuthError(err.message || 'Incorrect verification code')
+    }
+    if (err instanceof ApiError) throw new AuthError(err.message)
+    throw new AuthError('Could not verify the code')
+  }
+}
+
+export async function liveChangePassword(input: {
+  newPassword: string
+  currentPassword?: string
+  token?: string
+}): Promise<void> {
+  try {
+    await apiFetch('/api/v1/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        new_password: input.newPassword,
+        current_password: input.currentPassword || '',
+        token: input.token || '',
+      }),
+    })
+  } catch (err) {
+    if (err instanceof ApiError) throw new AuthError(err.message)
+    throw new AuthError('Could not change password')
+  }
 }

@@ -1,23 +1,16 @@
 import type { OrganizationKind } from '@/types/admin'
-import { hasWebAccess, type Role } from '@/types/role'
+import { STAFF_ROLES, canonicalRole, hasWebAccess, type Role } from '@/types/role'
 
-// Roles an admin can give to a person: every role that uses the web app.
-export const ASSIGNABLE_ROLES: Role[] = [
-  'provider',
-  'org_admin',
-  'dispatcher',
-  'higher_officer',
-  'auditor',
-  'system_admin',
-]
+/** Roles INSA Super Admin / Administrator can assign in Staff Accounts. */
+export const ASSIGNABLE_ROLES: Role[] = [...STAFF_ROLES]
 
-const EXTERNAL_ROLES: Role[] = ['provider', 'org_admin']
+const EXTERNAL_CANONICAL = new Set(['ORG_ADMIN', 'ORG_OFFICER'])
 
-// Outside-agency roles belong to outside agencies, and INSA roles to INSA.
-export function organizationFitsRole(
-  kind: OrganizationKind,
-  role: Role,
-): boolean {
+/** Outside-agency roles belong to partner orgs; INSA roles belong to INSA. */
+export function organizationFitsRole(kind: OrganizationKind, role: Role): boolean {
   if (!hasWebAccess(role)) return false
-  return EXTERNAL_ROLES.includes(role) ? kind !== 'insa' : kind === 'insa'
+  const norm = canonicalRole(role)
+  if (!norm || norm === 'CITIZEN') return false
+  const external = EXTERNAL_CANONICAL.has(norm)
+  return external ? kind !== 'insa' : kind === 'insa'
 }

@@ -8,6 +8,7 @@ import {
   Radio,
 } from 'lucide-react'
 
+import { liveAiTriage } from '@/api/liveAi'
 import { fetchCases, verifyCase, rejectCase, requestCaseClarification } from '@/api/mockCases'
 import { StatusBadge } from '@/packages/ui/StatusBadge'
 import { DataTable } from '@/packages/ui/DataTable'
@@ -25,6 +26,8 @@ export default function CaseReviewQueuePage() {
   const [actionModal, setActionModal] = useState<'reject' | 'clarify' | 'merge' | null>(null)
   const [busy, setBusy] = useState(false)
   const [actionError, setActionError] = useState('')
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiText, setAiText] = useState('Select a case to run EthioAlert AI triage.')
 
   useEffect(() => {
     fetchCases()
@@ -55,6 +58,42 @@ export default function CaseReviewQueuePage() {
         setLoading(false)
       })
   }, [])
+
+  useEffect(() => {
+    if (!selectedCase) {
+      setAiText('Select a case to run EthioAlert AI triage.')
+      return
+    }
+    let cancelled = false
+    setAiBusy(true)
+    setAiText('Running EthioAlert AI triage…')
+    void liveAiTriage({
+      case_id: selectedCase.id,
+      category: selectedCase.category || 'other',
+      suggested_severity: (selectedCase.severity || 'medium').toLowerCase(),
+      description: selectedCase.title,
+      region: selectedCase.area || '',
+    })
+      .then((result) => {
+        if (cancelled) return
+        const data = result.data
+        const reasons = (data.reasons || []).join('; ')
+        setAiText(
+          `Suggested category: ${data.category} · severity: ${data.severity} · confidence: ${data.confidence}. ${data.summary}${reasons ? ` Reasons: ${reasons}.` : ''} (Suggestion only — verify before acting.)`,
+        )
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAiText('AI triage unavailable right now. Continue with human review.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAiBusy(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selectedCase?.id])
 
   async function handleVerify(caseItem: Case) {
     if (!user) return
@@ -199,16 +238,13 @@ export default function CaseReviewQueuePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-300">
                     <Sparkles className="w-4 h-4 text-teal-400" />
-                    <span>AI Triage & Synthesis</span>
+                    <span>EthioAlert AI Triage</span>
                   </div>
                   <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-teal-950 text-teal-300 border border-teal-800">
-                    AI-generated
+                    {aiBusy ? 'Running…' : 'Suggestion'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  Calculated threat score is <strong>94/100</strong>. High population density area with limited immediate drainage.
-                  Matches pattern of 2 past incidents in Awash Valley. Potential duplicate of Case ETH-001 (92% semantic similarity).
-                </p>
+                <p className="text-xs text-slate-300 leading-relaxed">{aiText}</p>
               </div>
 
               {/* Action Buttons */}

@@ -21,7 +21,7 @@
 - SOS operations with masked citizen identities, and a read-only audit log.
 
 **Backend**
-- FastAPI: one-time-code login, staff login, SOS, cases, two-person approval, region-based broadcast and audit logs.
+- Django REST Framework: one-time-code login, staff login, SOS, cases, two-person approval, region-based broadcast and audit logs.
 
 **Mobile app (citizens)**
 - Phone sign-in linked to the national ID (Fayda), an SMS code.
@@ -53,10 +53,11 @@ py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 Copy-Item .env.example .env
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8081
+py manage.py migrate
+py manage.py runserver 127.0.0.1:8081
 ```
 
-Check http://127.0.0.1:8081/health. API docs: http://127.0.0.1:8081/docs. Staff passwords are set in `backend/.env`. In dev mode the phone login returns a `debug_otp`, so no real SMS is needed.
+Check http://127.0.0.1:8081/health. Staff passwords are set in `backend/.env` (default `change-me`). In dev mode the phone login returns a `debug_otp`, so no real SMS is needed.
 
 **Window 2: website (port 5173)**
 
@@ -91,13 +92,25 @@ python -m uvicorn app.main:app --port 8088 --env-file .env
 
 Set `AI_SERVICE_KEY` in `Ai/.env`. Use `AI_MODE=demo` to answer without internet.
 
-**Tests:** `npm test` (website), `pytest` (backend), `flutter test` (mobile), `python -m pytest` (AI, after `pip install -r requirements-dev.txt`).
+**Tests:** `npm test` (website), `py manage.py test` (backend), `flutter test` (mobile), `python -m pytest` (AI, after `pip install -r requirements-dev.txt`).
+
+## Production deploy (API + AI)
+
+Production Docker Compose runs Postgres, Redis, Django (Gunicorn), and the AI service:
+
+```powershell
+Copy-Item .env.production.example .env.production
+# fill strong secrets, hosts, SMTP, and at least one LLM key
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Details: [`backend/DEPLOY.md`](backend/DEPLOY.md) and [`Ai/DEPLOY.md`](Ai/DEPLOY.md).
 
 ## Repository layout
 
 ```text
 frontend(web)/   Website (React + Vite), port 5173
-backend/         FastAPI API, port 8081
+backend/         Django REST API, port 8081
 mobile/          Flutter citizen app
 Ai/              AI suggestion service, port 8088
 docs/            API contract and assumptions

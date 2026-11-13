@@ -28,7 +28,7 @@ function toUser(account: MockAccount): User {
 export async function submitCredentials(
   username: string,
   password: string,
-): Promise<{ challengeId: string }> {
+): Promise<{ challengeId: string; emailHint?: string; debugOtp?: string; emailWarning?: string }> {
   if (liveApi) return liveSubmitCredentials(username, password)
   await delay()
   const account = MOCK_ACCOUNTS.find(
@@ -38,7 +38,7 @@ export async function submitCredentials(
 
   const challengeId = crypto.randomUUID()
   pendingLogins.set(challengeId, account)
-  return { challengeId }
+  return { challengeId, emailHint: 'demo@****.local' }
 }
 
 // Step 2: the 2FA code.

@@ -74,6 +74,13 @@ describe('who can open which page', () => {
     ).toBeInTheDocument()
   })
 
+  it('lets an INSA administrator open the staff accounts page', async () => {
+    renderAt('/insa/staff', 'ADMINISTRATOR')
+    expect(
+      await screen.findByRole('heading', { name: 'Staff accounts' }, WAIT),
+    ).toBeInTheDocument()
+  })
+
   it('lets a system admin open the organizations page', async () => {
     renderAt('/insa/organizations', 'system_admin')
     expect(

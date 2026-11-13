@@ -30,7 +30,7 @@ async function submitCredentials(username: string, password: string) {
   const user = userEvent.setup()
   await user.type(screen.getByLabelText('Username'), username)
   await user.type(screen.getByLabelText('Password'), password)
-  await user.click(screen.getByRole('button', { name: 'Continue' }))
+  await user.click(screen.getByRole('button', { name: 'Sign in' }))
   return user
 }
 

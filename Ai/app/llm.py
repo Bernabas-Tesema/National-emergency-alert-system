@@ -9,9 +9,9 @@ import httpx
 log = logging.getLogger("ai")
 
 PROVIDERS = {
-    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile", True),
+    "groq": ("https://api.groq.com/openai/v1", "openai/gpt-oss-120b", True),
     "cerebras": ("https://api.cerebras.ai/v1", "llama-3.3-70b", True),
-    "openrouter": ("https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct:free", False),
+    "openrouter": ("https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct", False),
 }
 PAUSED: dict[str, float] = {}
 
@@ -61,6 +61,42 @@ def ask(schema, system: str, user: str, check=None):
             if check is None or check(result):
                 return result, name
         except Exception as exc:  # noqa: BLE001 any provider failure means try the next one
-            PAUSED[name] = time.time() + 60
-            log.warning("provider %s failed: %s", name, type(exc).__name__)
+            PAUSED[name] = time.time() + 45
+            detail = getattr(exc, "response", None)
+            extra = f" {detail.status_code}" if detail is not None else ""
+            log.warning("provider %s failed: %s%s", name, type(exc).__name__, extra)
+    return None
+
+
+def ask_text(system: str, user: str) -> tuple[str, str] | None:
+    """Free-form assistant reply (plain text, not JSON schema)."""
+    for name in configured():
+        if PAUSED.get(name, 0) > time.time():
+            continue
+        try:
+            base, default_model, _json_mode = PROVIDERS[name]
+            body = {
+                "model": os.getenv(f"AI_{name.upper()}_MODEL", default_model),
+                "temperature": 0.4,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+            }
+            key = os.environ[f"{name.upper()}_API_KEY"]
+            reply = httpx.post(
+                f"{base}/chat/completions",
+                json=body,
+                timeout=30,
+                headers={"Authorization": f"Bearer {key}"},
+            )
+            reply.raise_for_status()
+            text = (reply.json()["choices"][0]["message"].get("content") or "").strip()
+            if text:
+                return text, name
+        except Exception as exc:  # noqa: BLE001
+            PAUSED[name] = time.time() + 45
+            detail = getattr(exc, "response", None)
+            extra = f" {detail.status_code}" if detail is not None else ""
+            log.warning("provider %s text failed: %s%s", name, type(exc).__name__, extra)
     return None

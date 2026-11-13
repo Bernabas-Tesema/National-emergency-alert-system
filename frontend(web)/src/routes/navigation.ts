@@ -48,7 +48,7 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Staff accounts',
     path: '/insa/staff',
-    roles: ['system_admin'],
+    roles: ['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR'],
   },
     {
     label: 'Settings',

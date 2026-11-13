@@ -14,6 +14,9 @@ Copy-Item .env.example .env
 Put a long random value in `AI_SERVICE_KEY` and at least one free key (Groq is enough) in `.env`.
 `AI_MODE`: `live` (AI, then demo cache, then rules), `demo` (cache first), `offline` (no network).
 
+## Final standalone deploy
+See **[DEPLOY.md](./DEPLOY.md)** for Docker, VPS/systemd, and Render/Railway/Fly steps, plus how to point Django `AI_SERVICE_URL` at the live AI host.
+
 ## Endpoints
 All need the header `X-Service-Key`. Health does not.
 
@@ -24,6 +27,7 @@ All need the header `X-Service-Key`. Health does not.
 | `POST /ai/draft` | same as triage | AI Generate Text |
 | `POST /ai/summary` | `{items: [{id, category?, severity?, description?, age_minutes?}], set_id?}` | AI Executive Summary |
 | `POST /ai/rank` | same as summary | AI Threat Ranking |
+| `POST /ai/assist` | `{role, message, context?}` | EthioAlert AI chat (all roles + citizen) |
 
 Every answer has the same shape:
 ```

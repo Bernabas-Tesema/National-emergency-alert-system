@@ -1,8 +1,15 @@
 import type { User } from '@/types/user'
+import { liveApi } from './config'
+import {
+  liveAssignSos,
+  liveFetchSos,
+  liveUpdateSosStatus,
+  type ApiSosCase,
+} from './liveSos'
 import { emitMockEvent } from './mockRealtimeBus'
 
 export type SosTicketStatus = 'new' | 'assigned' | 'in_progress' | 'resolved'
-export type SosType = 'medical' | 'trapped' | 'missing_person' | 'fire' | 'flood'
+export type SosType = 'medical' | 'trapped' | 'missing_person' | 'fire' | 'flood' | 'accident' | 'health' | 'other'
 
 export interface SosTicket {
   id: string
@@ -20,9 +27,60 @@ export interface SosTicket {
   notes: string[]
   createdAt: string
   promotedToAlertId?: string
+  orgName?: string
+  sourceStatus?: string
 }
 
 const delay = (ms = 350) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const TYPE_MAP: Record<string, SosType> = {
+  fire: 'fire',
+  flood: 'flood',
+  health: 'health',
+  missing_person: 'missing_person',
+  accident: 'accident',
+  other: 'other',
+  medical: 'medical',
+  trapped: 'trapped',
+}
+
+function mapApiStatus(status: string): SosTicketStatus {
+  if (status === 'new') return 'new'
+  if (status === 'org_reviewing') return 'in_progress'
+  if (status === 'submitted' || status === 'verified') return 'assigned'
+  if (status === 'resolved' || status === 'rejected') return 'resolved'
+  return 'new'
+}
+
+function fromApi(row: ApiSosCase): SosTicket {
+  return {
+    id: `SOS-${row.id}`,
+    type: TYPE_MAP[row.case_type] || 'other',
+    status: mapApiStatus(row.status),
+    region: row.region,
+    coordinates: [row.latitude ?? 9.03, row.longitude ?? 38.74],
+    citizenHash: `citizen-${row.id}`,
+    citizenNameMasked: 'Citizen ****',
+    citizenPhoneMasked: '+251 *** *** ***',
+    notes: [
+      row.description,
+      row.org_response ? `Org response: ${row.org_response}` : '',
+      row.assigned_organization ? `Assigned org: ${row.assigned_organization}` : '',
+    ].filter(Boolean),
+    createdAt: row.created_at,
+    orgName: row.assigned_organization || row.organization || undefined,
+    sourceStatus: row.status,
+    assignedDispatcher:
+      row.status === 'org_reviewing' || row.status === 'submitted' || row.status === 'verified'
+        ? row.assigned_organization || 'Organization / INSA'
+        : undefined,
+  }
+}
+
+function apiId(id: string): number {
+  const raw = id.replace(/^SOS-/i, '')
+  return Number(raw)
+}
 
 let sosTicketsStore: SosTicket[] = [
   {
@@ -40,60 +98,24 @@ let sosTicketsStore: SosTicket[] = [
     notes: ['Citizen reported trapped on 2nd floor balcony due to ground floor flash flood.'],
     createdAt: new Date(Date.now() - 300000).toISOString(),
   },
-  {
-    id: 'SOS-902',
-    type: 'medical',
-    status: 'assigned',
-    region: 'Oromia - East Shewa (Adama)',
-    coordinates: [8.541, 39.271],
-    citizenHash: 'eth_id_12b774c9',
-    citizenNameMasked: 'A**** K*****',
-    citizenPhoneMasked: '+251 92* *** 882',
-    realCitizenName: 'Aster Kebede',
-    realCitizenPhone: '+251 922 881 882',
-    assignedDispatcher: 'Dawit Alemu (Dispatcher)',
-    notes: ['Dispatched Red Cross ambulance unit 4. ETA 8 minutes.'],
-    createdAt: new Date(Date.now() - 1200000).toISOString(),
-  },
-  {
-    id: 'SOS-903',
-    type: 'missing_person',
-    status: 'in_progress',
-    region: 'Addis Ababa - Bole (Bulbula)',
-    coordinates: [8.981, 38.789],
-    citizenHash: 'eth_id_65e311a2',
-    citizenNameMasked: 'B**** L****',
-    citizenPhoneMasked: '+251 94* *** 901',
-    realCitizenName: 'Birhanu Lemma',
-    realCitizenPhone: '+251 944 551 901',
-    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=60',
-    assignedDispatcher: 'Dawit Alemu (Dispatcher)',
-    notes: ['Child separated from family during sudden evacuation near Bulbula river.'],
-    createdAt: new Date(Date.now() - 2800000).toISOString(),
-  },
-  {
-    id: 'SOS-904',
-    type: 'fire',
-    status: 'resolved',
-    region: 'Addis Ababa - Addis Ketema',
-    coordinates: [9.032, 38.734],
-    citizenHash: 'eth_id_99f220c3',
-    citizenNameMasked: 'M**** H****',
-    citizenPhoneMasked: '+251 93* *** 331',
-    realCitizenName: 'Mohammed Hassen',
-    realCitizenPhone: '+251 933 112 331',
-    assignedDispatcher: 'Dawit Alemu (Dispatcher)',
-    notes: ['Fire extinguished by Mercato emergency station. No casualties.'],
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-  },
 ]
 
 export async function fetchSosTickets(): Promise<SosTicket[]> {
+  if (liveApi) {
+    const rows = await liveFetchSos()
+    return rows.map(fromApi)
+  }
   await delay()
   return JSON.parse(JSON.stringify(sosTicketsStore))
 }
 
 export async function assignSosTicket(id: string, dispatcherName: string): Promise<SosTicket> {
+  if (liveApi) {
+    const updated = await liveAssignSos(apiId(id), `Claimed by ${dispatcherName}`)
+    const ticket = fromApi(updated)
+    ticket.assignedDispatcher = dispatcherName
+    return ticket
+  }
   await delay()
   const ticket = sosTicketsStore.find((t) => t.id === id)
   if (!ticket) throw new Error('Ticket not found')
@@ -104,6 +126,15 @@ export async function assignSosTicket(id: string, dispatcherName: string): Promi
 }
 
 export async function updateSosStatus(id: string, status: SosTicketStatus, note?: string): Promise<SosTicket> {
+  if (liveApi) {
+    if (status === 'new') {
+      const updated = await liveAssignSos(apiId(id), note || '')
+      return fromApi(updated)
+    }
+    const mapped = status === 'resolved' ? 'resolved' : status === 'assigned' ? 'assigned' : 'in_progress'
+    const updated = await liveUpdateSosStatus(apiId(id), mapped, note || '')
+    return fromApi(updated)
+  }
   await delay()
   const ticket = sosTicketsStore.find((t) => t.id === id)
   if (!ticket) throw new Error('Ticket not found')
@@ -115,6 +146,9 @@ export async function updateSosStatus(id: string, status: SosTicketStatus, note?
 
 export async function promoteMissingPersonToAlert(id: string, user: User): Promise<string> {
   await delay()
+  if (liveApi) {
+    return `ALT-SOS-${id}`
+  }
   const ticket = sosTicketsStore.find((t) => t.id === id)
   if (!ticket) throw new Error('Ticket not found')
   const newAlertId = `ALT-SOS-${ticket.id}`
@@ -136,6 +170,10 @@ export async function revealCitizenIdentity(
   }
   if (!justification || justification.trim().length < 20) {
     throw new Error('Minimum 20 characters written justification is legally required for identity unmasking.')
+  }
+
+  if (liveApi) {
+    return { fullName: 'Masked until Fayda adapter', phone: '+251 *** *** ***' }
   }
 
   const ticket = sosTicketsStore.find((t) => t.id === ticketId)

@@ -25,6 +25,9 @@ interface ApiCase {
   title: string
   description: string
   organization: string | null
+  assigned_organization?: string | null
+  source?: string
+  org_response?: string | null
   latitude: number | null
   longitude: number | null
   review_comment: string | null
@@ -67,8 +70,10 @@ const API_TO_SEVERITY: Record<string, Severity> = {
 const API_TO_STATUS: Record<string, CaseStatus> = {
   submitted: 'submitted',
   new: 'submitted',
+  org_reviewing: 'under_review',
   verified: 'verified',
   rejected: 'rejected',
+  resolved: 'rejected',
   clarification_requested: 'needs_clarification',
 }
 
@@ -114,6 +119,16 @@ function toRecord(api: ApiCase): CaseRecord {
   const status = API_TO_STATUS[api.status] ?? 'submitted'
   const comment = api.review_comment ?? ''
   const messages = [...(localMessages.get(id) ?? [])]
+  if (api.org_response) {
+    messages.unshift({
+      id: `org-response-${id}`,
+      authorId: 'org',
+      authorName: api.assigned_organization || api.organization || 'Organization',
+      authorRole: 'ORG_OFFICER',
+      text: `Org handoff to INSA: ${api.org_response}`,
+      sentAt: api.created_at,
+    })
+  }
   if (status === 'needs_clarification' && comment) {
     messages.unshift({
       id: `review-${id}`,
@@ -124,9 +139,10 @@ function toRecord(api: ApiCase): CaseRecord {
       sentAt: api.created_at,
     })
   }
+  const sourceTag = api.source === 'sos' ? '[SOS] ' : ''
   return {
     id,
-    title: api.title || body.slice(0, 120),
+    title: `${sourceTag}${api.title || body.slice(0, 120)}`,
     category: CATEGORY_LABELS[categoryId],
     area: api.region,
     status,

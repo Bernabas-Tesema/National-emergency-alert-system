@@ -77,7 +77,7 @@ export default function StaffPage() {
     setShowForm(false)
     setActionError('')
     setNotice(
-      `${account.fullName} was added. An invitation was sent to ${maskPhone(account.phone)}.`,
+      `${account.fullName} (${ROLE_LABELS[account.role]}) was created. Initial username/password and a change-password link were emailed to ${input.email.trim()}.`,
     )
   }
 

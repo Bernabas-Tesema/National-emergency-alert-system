@@ -113,6 +113,7 @@ export const PERMISSION_MATRIX: Record<StaffRole, readonly Permission[]> = {
     'sos.assign',
     'sos.update_status',
     'sos.escalate',
+    'staff.manage',
   ],
 
   HIGHER_OFFICER: [
@@ -121,6 +122,7 @@ export const PERMISSION_MATRIX: Record<StaffRole, readonly Permission[]> = {
     'case.view_all',
     'audit.view',
     'reports.view_national',
+    'sos.view',
   ],
 
   DISPATCHER: [
@@ -136,6 +138,7 @@ export const PERMISSION_MATRIX: Record<StaffRole, readonly Permission[]> = {
     'reports.view_national',
     'case.view_all',
     'alert.view',
+    'sos.view',
   ],
 
   ORG_ADMIN: [
@@ -146,6 +149,10 @@ export const PERMISSION_MATRIX: Record<StaffRole, readonly Permission[]> = {
     'case.view_own',
     'org.manage_own_officers',
     'reports.view_org',
+    'sos.view',
+    'sos.update_status',
+    'sos.escalate',
+    'alert.view',
   ],
 
   ORG_OFFICER: [
@@ -154,6 +161,10 @@ export const PERMISSION_MATRIX: Record<StaffRole, readonly Permission[]> = {
     'case.submit',
     'case.update_status',
     'case.view_own',
+    'sos.view',
+    'sos.update_status',
+    'sos.escalate',
+    'alert.view',
   ],
 }
 

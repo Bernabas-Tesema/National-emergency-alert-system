@@ -1,0 +1,98 @@
+# Production-shaped stack: Postgres + Django API + AI service
+# Usage:
+#   1. Copy env templates and fill secrets
+#   2. docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ethioalert}
+      POSTGRES_USER: ${POSTGRES_USER:-ethioalert}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - ethio_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ethioalert} -d ${POSTGRES_DB:-ethioalert}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  ai:
+    build:
+      context: ./Ai
+    restart: unless-stopped
+    environment:
+      AI_ENV: prod
+      AI_MODE: ${AI_MODE:-live}
+      AI_SERVICE_KEY: ${AI_SERVICE_KEY:?set AI_SERVICE_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      CEREBRAS_API_KEY: ${CEREBRAS_API_KEY:-}
+      AI_PROVIDER_ORDER: ${AI_PROVIDER_ORDER:-groq,openrouter,cerebras}
+      AI_ALLOWED_HOSTS: ${AI_ALLOWED_HOSTS:-*}
+      WEB_CONCURRENCY: ${AI_WEB_CONCURRENCY:-2}
+      PORT: 8088
+    expose:
+      - "8088"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8088/ai/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai:
+        condition: service_healthy
+    environment:
+      DEV_MODE: "false"
+      DATABASE_URL: postgres://${POSTGRES_USER:-ethioalert}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ethioalert}
+      REDIS_URL: redis://redis:6379/0
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?set ALLOWED_HOSTS}
+      CORS_ORIGINS: ${CORS_ORIGINS:?set CORS_ORIGINS}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      FRONTEND_URL: ${FRONTEND_URL:?set FRONTEND_URL}
+      AI_SERVICE_URL: http://ai:8088
+      AI_SERVICE_KEY: ${AI_SERVICE_KEY:?set AI_SERVICE_KEY}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-true}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-noreply@ethioalert.local}
+      STAFF_FALLBACK_OTP_EMAIL: ${STAFF_FALLBACK_OTP_EMAIL:-}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-false}
+      WEB_CONCURRENCY: ${API_WEB_CONCURRENCY:-3}
+      PORT: 8081
+    ports:
+      - "${API_PUBLISH_PORT:-8081}:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8081/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ethio_pgdata:

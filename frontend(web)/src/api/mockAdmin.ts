@@ -8,6 +8,8 @@ import type {
   StaffAccount,
 } from '@/types/admin'
 import type { Role } from '@/types/role'
+import { liveApi } from './config'
+import { ApiError, apiFetch } from './client'
 import { MOCK_ACCOUNTS } from './mockAccounts'
 
 const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -59,16 +61,14 @@ function refuseSelfChange(actorId: string, target: StaffAccount) {
   }
 }
 
+function isAdminRole(role: Role): boolean {
+  return role === 'system_admin' || role === 'SUPER_ADMIN'
+}
+
 // The last active system administrator must stay active and keep the role.
 function isLastActiveAdmin(target: StaffAccount): boolean {
-  const activeAdmins = STAFF.filter(
-    (s) => s.role === 'system_admin' && s.status === 'active',
-  )
-  return (
-    target.role === 'system_admin' &&
-    target.status === 'active' &&
-    activeAdmins.length <= 1
-  )
+  const activeAdmins = STAFF.filter((s) => isAdminRole(s.role) && s.status === 'active')
+  return isAdminRole(target.role) && target.status === 'active' && activeAdmins.length <= 1
 }
 
 // --- Functions the screens call ----------------------------------------
@@ -129,12 +129,14 @@ export async function fetchStaff(): Promise<StaffAccount[]> {
 let nextStaffNumber = 100
 
 export async function createStaff(input: NewStaffInput): Promise<StaffAccount> {
-  await delay()
   if (!input.fullName.trim()) throw new AdminError('Enter the full name.')
   if (!USERNAME_PATTERN.test(input.username)) {
     throw new AdminError(
       'Username must be 3 to 30 characters: letters, numbers, dots, dashes or underscores.',
     )
+  }
+  if (!input.email.trim() || !input.email.includes('@')) {
+    throw new AdminError('Enter a valid email address for credentials delivery.')
   }
   if (!isValidPhone(input.phone)) {
     throw new AdminError(
@@ -152,6 +154,52 @@ export async function createStaff(input: NewStaffInput): Promise<StaffAccount> {
   if (!organizationFitsRole(organization.kind, input.role)) {
     throw new AdminError('That role cannot be used in this organization.')
   }
+
+  if (liveApi) {
+    try {
+      const created = await apiFetch<{
+        id: number
+        username: string
+        email?: string
+        full_name: string
+        phone: string
+        role: string
+        organization: string
+        email_sent?: boolean
+      }>('/api/v1/staff', {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: input.fullName.trim(),
+          username: input.username.trim(),
+          email: input.email.trim(),
+          phone: input.phone.trim(),
+          role: input.role,
+          organization: organization.name,
+        }),
+      })
+      if (created.email_sent === false) {
+        throw new AdminError(
+          'Account was created but the credentials email failed. Check SMTP settings and try again.',
+        )
+      }
+      return {
+        id: String(created.id),
+        fullName: created.full_name,
+        username: created.username,
+        phone: created.phone,
+        role: created.role as Role,
+        organizationId: input.organizationId,
+        status: 'active',
+        lastLoginAt: null,
+        email: created.email || input.email.trim(),
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw new AdminError(err.message)
+      throw new AdminError('Could not create the staff account.')
+    }
+  }
+
+  await delay()
   if (usernameTaken(input.username)) {
     throw new AdminError('That username is already taken.')
   }

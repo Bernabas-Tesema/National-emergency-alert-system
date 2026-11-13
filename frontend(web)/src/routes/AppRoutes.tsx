@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import LoginPage from '@/features/auth/LoginPage'
+import ChangePasswordPage from '@/features/auth/ChangePasswordPage'
 import { useAuth } from '@/features/auth/useAuth'
 import PlaceholderPage from '@/components/PlaceholderPage'
 import AppShell from '@/layouts/AppShell'
@@ -11,6 +12,8 @@ import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
 import CaseEditPage from '@/features/resource-portal/CaseEditPage'
 import CaseFormPage from '@/features/resource-portal/CaseFormPage'
 import OrgAdminPage from '@/features/resource-portal/OrgAdminPage'
+import OrgOutcomesPage from '@/features/resource-portal/OrgOutcomesPage'
+import OrgSosInboxPage from '@/features/resource-portal/OrgSosInboxPage'
 
 // INSA Operations & Control Centre Views
 import CommandDashboardPage from '@/features/insa-command/CommandDashboardPage'
@@ -38,6 +41,7 @@ const WEB_ROLES = ROLES.filter(hasWebAccess)
 function HomeRedirect() {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
+  if (user.mustChangePassword) return <Navigate to="/change-password" replace />
   const target = ROLE_HOME_PATH[user.role] ?? '/login'
   return <Navigate to={target} replace />
 }
@@ -46,6 +50,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/" element={<HomeRedirect />} />
 
       {/* Outer guard: must be signed in with a staff role. */}
@@ -63,6 +68,8 @@ export default function AppRoutes() {
             <Route path="/resource/cases/new" element={<CaseFormPage />} />
             <Route path="/resource/cases/:caseId" element={<CaseDetailPage />} />
             <Route path="/resource/cases/:caseId/edit" element={<CaseEditPage />} />
+            <Route path="/resource/outcomes" element={<OrgOutcomesPage />} />
+            <Route path="/resource/sos" element={<OrgSosInboxPage />} />
           </Route>
 
           {/* Organization administration: org_admin only */}
@@ -75,8 +82,22 @@ export default function AppRoutes() {
             <Route path="/insa/dashboard" element={<CommandDashboardPage />} />
           </Route>
 
-          {/* INSA Case Triage & Review Queue */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR']} />}>
+          {/* INSA Case Triage & Review Queue (Higher Officer / Auditor can view handoffs) */}
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  'system_admin',
+                  'SUPER_ADMIN',
+                  'ADMINISTRATOR',
+                  'higher_officer',
+                  'HIGHER_OFFICER',
+                  'auditor',
+                  'AUDITOR',
+                ]}
+              />
+            }
+          >
             <Route path="/insa/cases" element={<CaseReviewQueuePage />} />
           </Route>
 
@@ -101,20 +122,55 @@ export default function AppRoutes() {
             <Route path="/insa/sos" element={<SosOperationsPage />} />
           </Route>
 
+          {/* Staff accounts: Super Admin + INSA Administrator create roles & email credentials */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR']} />
+            }
+          >
+            <Route path="/insa/staff" element={<StaffPage />} />
+          </Route>
+
           {/* INSA System Management & Settings */}
           <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN']} />}>
             <Route path="/insa/organizations" element={<OrganizationsPage />} />
             <Route path="/insa/settings" element={<SettingsPage />} />
-            <Route path="/insa/staff" element={<StaffPage />} />
           </Route>
 
           {/* Analytics & Reports */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR', 'AUDITOR', 'auditor']} />}>
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  'system_admin',
+                  'SUPER_ADMIN',
+                  'ADMINISTRATOR',
+                  'AUDITOR',
+                  'auditor',
+                  'higher_officer',
+                  'HIGHER_OFFICER',
+                ]}
+              />
+            }
+          >
             <Route path="/insa/reports" element={<ReportsAnalyticsPage />} />
           </Route>
 
           {/* Read-Only Audit Log */}
-          <Route element={<ProtectedRoute allowedRoles={['auditor', 'AUDITOR', 'system_admin', 'SUPER_ADMIN']} />}>
+          <Route
+            element={
+              <ProtectedRoute
+                allowedRoles={[
+                  'auditor',
+                  'AUDITOR',
+                  'system_admin',
+                  'SUPER_ADMIN',
+                  'higher_officer',
+                  'HIGHER_OFFICER',
+                ]}
+              />
+            }
+          >
             <Route path="/insa/audit" element={<AuditLogPage />} />
           </Route>
 
