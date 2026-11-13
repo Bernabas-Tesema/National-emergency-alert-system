@@ -32,7 +32,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
-  const [showDemoAccounts, setShowDemoAccounts] = useState(false)
   const [code, setCode] = useState('')
   const [challengeId, setChallengeId] = useState('')
   const [emailHint, setEmailHint] = useState('')
@@ -101,33 +100,6 @@ export default function LoginPage() {
     setEmailWarning('')
     setError('')
   }
-
-  function quickFill(user: string, nextPassword = 'Password123!') {
-    setUsername(user)
-    setPassword(nextPassword)
-    setShowDemoAccounts(false)
-  }
-
-  const demoAccounts = liveApi
-    ? [
-        ['sysadmin1', 'Super Admin', 'change-me'],
-        ['admin1', 'Administrator', 'change-me'],
-        ['officer1', 'Higher Officer', 'change-me'],
-        ['dispatcher1', 'Dispatcher', 'change-me'],
-        ['auditor1', 'Auditor', 'change-me'],
-        ['orgadmin1', 'Org Admin', 'change-me'],
-        ['provider1', 'Org Officer', 'change-me'],
-        ['insa_admin', 'Legacy Admin', 'change-me'],
-        ['org_officer', 'Legacy Org', 'change-me'],
-      ]
-    : [
-        ['sysadmin1', 'Super Admin', 'Password123!'],
-        ['admin1', 'Administrator', 'Password123!'],
-        ['officer1', 'Higher Officer', 'Password123!'],
-        ['dispatcher1', 'Dispatcher', 'Password123!'],
-        ['provider1', 'Resource Org', 'Password123!'],
-        ['auditor1', 'Auditor', 'Password123!'],
-      ]
 
   return (
     <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6">
@@ -268,45 +240,6 @@ export default function LoginPage() {
                 >
                   {loading ? 'Authenticating...' : 'Sign in'}
                 </Button>
-
-                <div className="relative py-3">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[#e4e7ec]" />
-                  </div>
-                  <div className="relative flex justify-center text-[13px]">
-                    <span className="bg-white px-3 text-[#8b93a7]">or</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowDemoAccounts((v) => !v)}
-                  className="flex h-[52px] w-full items-center justify-center rounded-[10px] border border-[#1a1a1a] bg-white text-[15px] font-semibold text-[#1a1a1a] transition hover:bg-[#f8fafc]"
-                >
-                  Sign in with other
-                </button>
-
-                {showDemoAccounts && (
-                  <div className="space-y-2 rounded-[12px] border border-[#e4e7ec] bg-[#f8fafc] p-3">
-                    <span className="block text-center text-[10px] font-bold uppercase tracking-wider text-[#8b93a7]">
-                      {liveApi
-                        ? 'API accounts (password: change-me)'
-                        : 'Quick Demo Accounts (Password: Password123!)'}
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-                      {demoAccounts.map(([user, label, accountPassword]) => (
-                        <button
-                          key={user}
-                          type="button"
-                          onClick={() => quickFill(user, accountPassword)}
-                          className="truncate rounded-lg border border-[#e4e7ec] bg-white p-2 text-left text-[#5b6475] hover:border-[#2f6fed]/40 hover:text-[#1d4ed8]"
-                        >
-                          {user} ({label})
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 <p className="pt-2 text-center text-[13px] text-[#8b93a7]">
                   Don&apos;t have an account?{' '}
