@@ -142,10 +142,13 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
+        # Avoid CompressedManifestStaticFilesStorage: Jazzmin change/add forms
+        # {% static %} select2 (and similar) and raise ValueError → HTTP 500 when a
+        # hashed manifest entry is missing. Compressed (non-manifest) is safe with Jazzmin.
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG
-            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            else "whitenoise.storage.CompressedStaticFilesStorage"
         ),
     },
 }
@@ -197,7 +200,7 @@ JAZZMIN_SETTINGS = {
     },
     "default_icon_parents": "fas fa-chevron-circle-right",
     "default_icon_children": "fas fa-circle",
-    "related_modal_active": True,
+    "related_modal_active": False,
     "custom_css": None,
     "custom_js": "admin/js/login_autocomplete.js",
     "show_ui_builder": False,

@@ -43,7 +43,7 @@ class StaffAccountAdmin(admin.ModelAdmin):
     # Avoid Jazzmin tab/readonly crashes on unsaved auto_now / hash fields.
     add_fieldsets = (
         (
-            None,
+            "New staff account",
             {
                 "fields": (
                     "username",
@@ -99,6 +99,11 @@ class StaffAccountAdmin(admin.ModelAdmin):
         if obj is None:
             return self.add_fieldsets
         return self.fieldsets
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj is None:
+            return ()
+        return self.readonly_fields
 
     def save_model(self, request, obj, form, change):
         normalized = normalize_staff_role(obj.role)
