@@ -7,6 +7,15 @@
 - **GitHub repository:** https://github.com/Bernabas-Tesema/National-emergency-alert-system
 - **Video presentation (5 minutes):** [Watch the demo video](https://drive.google.com/file/d/1EE94jCJMRafxHlF8Bl5nuzw2FAPGUUKN/view?usp=drive_link)
 
+## Live pages
+
+| Page | URL |
+|---|---|
+| Website login (Vercel) | https://national-emergency-alert-system-esk.vercel.app/login |
+| Website login (Vercel, alt) | https://national-emergency-alert-system-hl8.vercel.app/login |
+| Django admin login (Render) | https://national-emergency-alert-system-1-backend.onrender.com/admin/login/ |
+| API health | https://national-emergency-alert-system-1-backend.onrender.com/health |
+
 ## Project information
 
 **Purpose.** EthioAlert sends the right alert to the right citizens quickly, lets citizens report emergencies back to responders, and requires two different officials to approve every public broadcast, so false alerts are less likely.
