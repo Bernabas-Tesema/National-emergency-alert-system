@@ -5,6 +5,7 @@ from .ai_client import AiServiceError, call_ai
 from .mailer import send_credentials_email
 from .models import Alert, AuditLog, Case, Citizen, DeliveryLog, StaffAccount
 from .passwords import generate_temporary_password, generate_token, hash_password
+from .roles import normalize_staff_role
 
 
 def _case_ai_payload(case: Case) -> dict:
@@ -23,6 +24,8 @@ def _case_ai_payload(case: Case) -> dict:
 
 @admin.register(StaffAccount)
 class StaffAccountAdmin(admin.ModelAdmin):
+    """Create/edit staff. Password hash is generated server-side — never typed in admin."""
+
     list_display = (
         "username",
         "full_name",
@@ -35,16 +38,56 @@ class StaffAccountAdmin(admin.ModelAdmin):
     )
     search_fields = ("username", "full_name", "email", "organization")
     list_filter = ("role", "must_change_password", "is_active")
-    readonly_fields = ("password_hash", "password_change_token", "created_at", "updated_at", "last_login_at")
-    fields = (
-        "username",
-        "email",
-        "full_name",
-        "phone",
-        "role",
-        "organization",
-        "is_active",
-        "must_change_password",
+    ordering = ("username",)
+
+    # Avoid Jazzmin tab/readonly crashes on unsaved auto_now / hash fields.
+    add_fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "username",
+                    "email",
+                    "full_name",
+                    "phone",
+                    "role",
+                    "organization",
+                    "is_active",
+                )
+            },
+        ),
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "username",
+                    "email",
+                    "full_name",
+                    "phone",
+                    "role",
+                    "organization",
+                    "is_active",
+                    "must_change_password",
+                )
+            },
+        ),
+        (
+            "Security (read only)",
+            {
+                "classes": ("collapse",),
+                "fields": (
+                    "password_hash",
+                    "password_change_token",
+                    "last_login_at",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
+    )
+    readonly_fields = (
         "password_hash",
         "password_change_token",
         "last_login_at",
@@ -52,7 +95,16 @@ class StaffAccountAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+    def get_fieldsets(self, request, obj=None):
+        if obj is None:
+            return self.add_fieldsets
+        return self.fieldsets
+
     def save_model(self, request, obj, form, change):
+        normalized = normalize_staff_role(obj.role)
+        if normalized:
+            obj.role = normalized
+
         sending_credentials = False
         temporary_password = ""
         if not change or not obj.password_hash:

@@ -202,6 +202,9 @@ JAZZMIN_SETTINGS = {
     "custom_js": "admin/js/login_autocomplete.js",
     "show_ui_builder": False,
     "changeform_format": "horizontal_tabs",
+    "changeform_format_overrides": {
+        "alerts_api.staffaccount": "single",
+    },
 }
 
 JAZZMIN_UI_TWEAKS = {

@@ -1,5 +1,9 @@
 from django.db import models
 
+from .roles import CANONICAL_STAFF_ROLES
+
+STAFF_ROLE_CHOICES = [(role, role) for role in sorted(CANONICAL_STAFF_ROLES)]
+
 
 class StaffAccount(models.Model):
     """Web/API staff users created by admins (INSA + organization officers)."""
@@ -8,9 +12,10 @@ class StaffAccount(models.Model):
     email = models.EmailField()
     full_name = models.CharField(max_length=160)
     phone = models.CharField(max_length=32, blank=True, default="")
-    role = models.CharField(max_length=64)  # frontend role labels e.g. ORG_OFFICER
+    role = models.CharField(max_length=64, choices=STAFF_ROLE_CHOICES)
     organization = models.CharField(max_length=160, blank=True, default="")
-    password_hash = models.CharField(max_length=256)
+    # Set by admin/API on create; must not be required on the add form.
+    password_hash = models.CharField(max_length=256, blank=True, default="")
     must_change_password = models.BooleanField(default=True)
     password_change_token = models.CharField(max_length=128, blank=True, default="")
     is_active = models.BooleanField(default=True)
