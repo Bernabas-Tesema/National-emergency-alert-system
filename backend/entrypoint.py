@@ -22,6 +22,11 @@ def main() -> None:
     if os.getenv("DEV_MODE", "false").lower() != "true" and not os.getenv("REDIS_URL", "").strip():
         run([sys.executable, "manage.py", "createcachetable"], allow_fail=True)
 
+    # Ensure /admin login works after fresh Postgres (idempotent create/update).
+    run([sys.executable, "manage.py", "bootstrap_admin"])
+    if os.getenv("BOOTSTRAP_DEMO_STAFF", "").strip().lower() in {"1", "true", "yes", "on"}:
+        run([sys.executable, "manage.py", "bootstrap_demo_staff"])
+
     run([sys.executable, "manage.py", "collectstatic", "--noinput"])
 
     port = os.getenv("PORT", "8081")

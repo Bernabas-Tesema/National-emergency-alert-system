@@ -107,7 +107,9 @@ export default function ChangePasswordPage() {
                 <Label htmlFor="current-password">Current password</Label>
                 <Input
                   id="current-password"
+                  name="current-password"
                   type="password"
+                  autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   className="h-11 rounded-xl border-0 bg-[#eef2f7]"
@@ -119,7 +121,9 @@ export default function ChangePasswordPage() {
               <Label htmlFor="new-password">New password</Label>
               <Input
                 id="new-password"
+                name="new-password"
                 type="password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="h-11 rounded-xl border-0 bg-[#eef2f7]"
@@ -131,7 +135,9 @@ export default function ChangePasswordPage() {
               <Label htmlFor="confirm-password">Confirm new password</Label>
               <Input
                 id="confirm-password"
+                name="confirm-password"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-11 rounded-xl border-0 bg-[#eef2f7]"

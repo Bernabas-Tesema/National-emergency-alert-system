@@ -70,3 +70,24 @@ ALLOWED_HOSTS=national-emergency-alert-system-1-backend.onrender.com
 ```
 
 7. Save API env → restart/redeploy API, then open the frontend `/login`
+
+## Django admin login (`/admin`)
+
+On each API boot the container runs `bootstrap_admin` (creates/updates user `admin`).
+
+| Field | Value |
+|---|---|
+| URL | `https://YOUR-API.onrender.com/admin/login/` |
+| Username | `admin` |
+| Password | value of `DJANGO_ADMIN_PASSWORD` (default `change-me` if unset) |
+
+Also set on the API service:
+
+```env
+DJANGO_ADMIN_PASSWORD=<strong-password>
+BOOTSTRAP_DEMO_STAFF=true
+ALLOWED_HOSTS=national-emergency-alert-system-1-backend.onrender.com
+CSRF_TRUSTED_ORIGINS=https://YOUR-FRONTEND,https://national-emergency-alert-system-1-backend.onrender.com
+```
+
+`BOOTSTRAP_DEMO_STAFF=true` seeds frontend staff users (`sysadmin1`, …) with password `change-me`.

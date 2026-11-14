@@ -199,7 +199,7 @@ JAZZMIN_SETTINGS = {
     "default_icon_children": "fas fa-circle",
     "related_modal_active": True,
     "custom_css": None,
-    "custom_js": None,
+    "custom_js": "admin/js/login_autocomplete.js",
     "show_ui_builder": False,
     "changeform_format": "horizontal_tabs",
 }
@@ -249,7 +249,28 @@ CORS_ALLOWED_ORIGIN_REGEXES = (
     else []
 )
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS") or list(CORS_ALLOWED_ORIGINS)
+
+
+def _csrf_origins_for_hosts(hosts: list[str]) -> list[str]:
+    """Django admin POST needs the API's own https origin in CSRF_TRUSTED_ORIGINS."""
+    origins: list[str] = []
+    for host in hosts:
+        cleaned = host.strip().split(":")[0]
+        if not cleaned or cleaned == "*" or cleaned.startswith("."):
+            continue
+        origins.append(f"https://{cleaned}")
+        if DEBUG:
+            origins.append(f"http://{cleaned}")
+            origins.append(f"http://{cleaned}:8081")
+    return origins
+
+
+CSRF_TRUSTED_ORIGINS = list(
+    dict.fromkeys(
+        (_env_list("CSRF_TRUSTED_ORIGINS") or list(CORS_ALLOWED_ORIGINS))
+        + _csrf_origins_for_hosts(ALLOWED_HOSTS)
+    )
+)
 
 REST_FRAMEWORK = {
     "UNAUTHENTICATED_USER": None,
