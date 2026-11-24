@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { ROLES, ROLE_HOME_PATH, ROLE_LABELS, hasWebAccess } from './role'
 
 describe('roles', () => {
-  it('gives citizens no web access and every staff role access', () => {
-    expect(hasWebAccess('citizen')).toBe(false)
-    for (const role of ROLES.filter((r) => r !== 'citizen')) {
+  it('gives all staff roles web access', () => {
+    for (const role of ROLES) {
       expect(hasWebAccess(role)).toBe(true)
     }
+    // non-role strings have no access
+    expect(hasWebAccess('citizen')).toBe(false)
+    expect(hasWebAccess('unknown')).toBe(false)
   })
 
   it('has a label for every role', () => {
@@ -15,9 +17,8 @@ describe('roles', () => {
     }
   })
 
-  it('sends every staff role to a home page, and citizens nowhere', () => {
-    expect(ROLE_HOME_PATH.citizen).toBeNull()
-    for (const role of ROLES.filter((r) => r !== 'citizen')) {
+  it('sends every staff role to a home page', () => {
+    for (const role of ROLES) {
       expect(ROLE_HOME_PATH[role]).toMatch(/^\/(resource|insa)\//)
     }
   })

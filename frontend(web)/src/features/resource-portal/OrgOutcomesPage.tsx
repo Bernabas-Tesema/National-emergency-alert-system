@@ -57,7 +57,7 @@ export default function OrgOutcomesPage() {
       accessorKey: 'id',
       header: 'Case ID',
       cell: ({ row }: any) => (
-        <span className="font-mono text-sm font-semibold text-[#2563eb]">{row.original.id}</span>
+        <span className="font-mono text-sm font-semibold text-[#2dd4bf]">{row.original.id}</span>
       ),
     },
     {
@@ -82,7 +82,7 @@ export default function OrgOutcomesPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2563eb]">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2dd4bf]">
           Organization officer
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
@@ -116,7 +116,7 @@ export default function OrgOutcomesPage() {
             onClick={() => setFilter(id)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
               filter === id
-                ? 'bg-[#2563eb] text-white'
+                ? 'bg-[#0d9488] text-white'
                 : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
             }`}
           >

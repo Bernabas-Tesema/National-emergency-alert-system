@@ -31,7 +31,7 @@ const STAFF: StaffAccount[] = [
   { id: 'u-003', fullName: 'Dawit Alemu', username: 'dispatcher1', phone: '+251911000103', role: 'dispatcher', organizationId: 'org-insa', status: 'active', lastLoginAt: '2026-10-15T18:20:00Z' },
   { id: 'u-004', fullName: 'Hanna Bekele', username: 'officer1', phone: '+251911000104', role: 'higher_officer', organizationId: 'org-insa', status: 'active', lastLoginAt: '2026-10-15T16:00:00Z' },
   { id: 'u-005', fullName: 'Yonas Girma', username: 'auditor1', phone: '+251911000105', role: 'auditor', organizationId: 'org-insa', status: 'active', lastLoginAt: null },
-  { id: 'u-006', fullName: 'Marta Haile', username: 'sysadmin1', phone: '+251911000106', role: 'system_admin', organizationId: 'org-insa', status: 'active', lastLoginAt: '2026-10-16T09:00:00Z' },
+  { id: 'u-006', fullName: 'Marta Haile', username: 'sysadmin1', phone: '+251911000106', role: 'ADMINISTRATOR', organizationId: 'org-insa', status: 'active', lastLoginAt: '2026-10-16T09:00:00Z' },
 ]
 
 const USERNAME_PATTERN = /^[a-z0-9._-]{3,30}$/i
@@ -62,7 +62,7 @@ function refuseSelfChange(actorId: string, target: StaffAccount) {
 }
 
 function isAdminRole(role: Role): boolean {
-  return role === 'system_admin' || role === 'SUPER_ADMIN'
+  return role === 'ADMINISTRATOR' || role === 'system_admin'
 }
 
 // The last active system administrator must stay active and keep the role.
@@ -247,7 +247,7 @@ export async function changeStaffRole(
   if (!organization || !organizationFitsRole(organization.kind, role)) {
     throw new AdminError('That role cannot be used in this organization.')
   }
-  if (role !== 'system_admin' && isLastActiveAdmin(target)) {
+  if (role !== 'ADMINISTRATOR' && isLastActiveAdmin(target)) {
     throw new AdminError('At least one active system administrator must remain.')
   }
   target.role = role

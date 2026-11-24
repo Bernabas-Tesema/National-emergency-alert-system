@@ -131,7 +131,7 @@ const MOCK_CASES: CaseRecord[] = (
           id: 'm-seed-1',
           authorId: 'u-006',
           authorName: 'Marta Haile',
-          authorRole: 'system_admin',
+          authorRole: 'ADMINISTRATOR',
           text: 'Which school is this, and how many students are affected?',
           sentAt: '2026-10-15T11:20:00Z',
         },
@@ -232,7 +232,7 @@ function simulateInsaReview(
         id: crypto.randomUUID(),
         authorId: 'u-006',
         authorName: 'Marta Haile',
-        authorRole: 'system_admin',
+        authorRole: 'ADMINISTRATOR',
         text:
           'Please confirm how many people are affected and whether emergency services are on site.',
         sentAt: new Date().toISOString(),

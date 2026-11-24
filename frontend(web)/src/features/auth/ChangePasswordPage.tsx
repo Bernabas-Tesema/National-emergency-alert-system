@@ -79,12 +79,12 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="login-page flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-[24px] bg-white p-8 shadow-[0_28px_80px_rgba(15,23,42,0.28)]">
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1d4ed8] text-white">
+      <div className="w-full max-w-md rounded-[24px] bg-[#0e1619] p-8 shadow-[0_28px_80px_rgba(0,0,0,0.6)]">
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0d9488] text-white">
           <ShieldCheck className="h-6 w-6" />
         </div>
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2563eb]">EthioAlert</p>
-        <h1 className="mt-2 text-2xl font-bold text-slate-900">{title}</h1>
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2dd4bf]">EthioAlert</p>
+        <h1 className="mt-2 text-2xl font-bold text-slate-100">{title}</h1>
         <p className="mt-2 text-sm text-slate-500">
           {usingEmailLink
             ? 'You opened the secure link from your EthioAlert credentials email. Choose a new password to finish activating your account.'
@@ -96,7 +96,7 @@ export default function ChangePasswordPage() {
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
               Password updated. You can now sign in to EthioAlert.
             </p>
-            <Link to="/login" className="inline-flex text-sm font-semibold text-[#2563eb] hover:underline">
+            <Link to="/login" className="inline-flex text-sm font-semibold text-[#2dd4bf] hover:underline">
               Go to sign in
             </Link>
           </div>
@@ -112,7 +112,7 @@ export default function ChangePasswordPage() {
                   autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="h-11 rounded-xl border-0 bg-[#eef2f7]"
+                  className="h-11 rounded-xl border-0 bg-[#16282d]"
                   required
                 />
               </div>
@@ -126,7 +126,7 @@ export default function ChangePasswordPage() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-11 rounded-xl border-0 bg-[#eef2f7]"
+                className="h-11 rounded-xl border-0 bg-[#16282d]"
                 required
                 minLength={8}
               />
@@ -140,7 +140,7 @@ export default function ChangePasswordPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-11 rounded-xl border-0 bg-[#eef2f7]"
+                className="h-11 rounded-xl border-0 bg-[#16282d]"
                 required
                 minLength={8}
               />
@@ -151,7 +151,7 @@ export default function ChangePasswordPage() {
             <Button
               type="submit"
               disabled={busy}
-              className="h-11 w-full rounded-xl bg-[#1e3a8a] text-white hover:bg-[#1d4ed8]"
+              className="h-11 w-full rounded-xl bg-[#0d9488] text-white hover:bg-[#14b8a6]"
             >
               {busy ? 'Saving...' : 'Save new password'}
             </Button>

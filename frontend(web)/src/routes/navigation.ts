@@ -23,12 +23,12 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Command Dashboard',
     path: '/insa/dashboard',
-    roles: ['system_admin'],
+    roles: ['ADMINISTRATOR'],
   },
   {
     label: 'SOS Operations',
     path: '/insa/sos',
-    roles: ['dispatcher', 'higher_officer', 'auditor', 'system_admin'],
+    roles: ['dispatcher', 'higher_officer', 'auditor'],
   },
   {
     label: 'Approvals',
@@ -38,21 +38,21 @@ export const NAV_ITEMS: NavItem[] = [
   {
     label: 'Audit Log',
     path: '/insa/audit',
-    roles: ['auditor', 'system_admin'],
+    roles: ['auditor'],
   },
     {
     label: 'Organizations',
     path: '/insa/organizations',
-    roles: ['system_admin'],
+    roles: ['ADMINISTRATOR'],
   },
   {
     label: 'Staff accounts',
     path: '/insa/staff',
-    roles: ['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR'],
+    roles: ['ADMINISTRATOR'],
   },
     {
     label: 'Settings',
     path: '/insa/settings',
-    roles: ['system_admin'],
+    roles: ['ADMINISTRATOR'],
   },
 ]

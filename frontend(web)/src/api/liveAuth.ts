@@ -17,7 +17,6 @@ const ROLE_BY_API: Record<string, Role> = {
   organization_officer: 'ORG_OFFICER',
   dispatcher: 'DISPATCHER',
   auditor: 'AUDITOR',
-  citizen: 'citizen',
 }
 
 function readRole(token: string): string {

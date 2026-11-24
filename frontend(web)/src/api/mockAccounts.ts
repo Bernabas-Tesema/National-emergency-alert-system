@@ -50,26 +50,10 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
   },
   {
     id: 'u-006',
-    username: 'sysadmin1',
-    password: MOCK_PASSWORD,
-    fullName: 'Marta Haile',
-    role: 'system_admin',
-    organization: 'INSA',
-  },
-  {
-    id: 'u-008',
     username: 'admin1',
     password: MOCK_PASSWORD,
-    fullName: 'Tewodros Kassahun',
+    fullName: 'Marta Haile',
     role: 'ADMINISTRATOR',
     organization: 'INSA',
-  },
-  {
-    id: 'u-007',
-    username: 'citizen1',
-    password: MOCK_PASSWORD,
-    fullName: 'Biruk Lemma',
-    role: 'citizen',
-    organization: 'None',
   },
 ]

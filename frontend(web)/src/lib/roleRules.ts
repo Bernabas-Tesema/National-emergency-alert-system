@@ -10,7 +10,7 @@ const EXTERNAL_CANONICAL = new Set(['ORG_ADMIN', 'ORG_OFFICER'])
 export function organizationFitsRole(kind: OrganizationKind, role: Role): boolean {
   if (!hasWebAccess(role)) return false
   const norm = canonicalRole(role)
-  if (!norm || norm === 'CITIZEN') return false
+  if (!norm) return false
   const external = EXTERNAL_CANONICAL.has(norm)
   return external ? kind !== 'insa' : kind === 'insa'
 }

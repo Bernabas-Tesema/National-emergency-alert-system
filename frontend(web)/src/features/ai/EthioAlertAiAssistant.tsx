@@ -21,7 +21,7 @@ export default function EthioAlertAiAssistant() {
   const endRef = useRef<HTMLDivElement>(null)
 
   const role = canonicalRole(user?.role) || 'ADMINISTRATOR'
-  const staffOnly = Boolean(user?.role && hasWebAccess(user.role) && role !== 'CITIZEN')
+  const staffOnly = Boolean(user?.role && hasWebAccess(user.role))
   const prompts = useMemo(() => quickPromptsForRole(role), [role])
 
   useEffect(() => {
@@ -75,72 +75,72 @@ export default function EthioAlertAiAssistant() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2563eb] text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d4ed8]"
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d9488] text-white shadow-lg shadow-teal-900/40 transition hover:bg-[#14b8a6]"
         aria-label="Open EthioAlert AI"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
       </button>
 
       {open && (
-        <div className="fixed bottom-24 right-5 z-40 flex h-[min(720px,82vh)] w-[min(560px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <header className="flex items-center gap-3 border-b border-slate-100 bg-gradient-to-r from-[#1e3a8a] to-[#2563eb] px-4 py-3 text-white">
+        <div className="fixed bottom-24 right-5 z-40 flex h-[min(720px,82vh)] w-[min(560px,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl">
+          <header className="flex items-center gap-3 border-b border-border bg-gradient-to-r from-[#0b292e] to-[#134e4a] px-4 py-3 text-white">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
-              <Bot className="h-4 w-4" />
+              <Bot className="h-4 w-4 text-teal-300" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">EthioAlert AI</p>
-              <p className="truncate text-[11px] text-blue-100">{role.replace(/_/g, ' ')} assistant</p>
+              <p className="truncate text-[11px] text-teal-200">{role.replace(/_/g, ' ')} assistant</p>
             </div>
           </header>
 
-          <div className="flex gap-2 overflow-x-auto border-b border-slate-100 px-3 py-2">
+          <div className="flex gap-2 overflow-x-auto border-b border-border px-3 py-2">
             {prompts.map((prompt) => (
               <button
                 key={prompt}
                 type="button"
                 disabled={busy}
                 onClick={() => void send(prompt)}
-                className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-600 hover:border-[#2563eb]/40 hover:text-[#2563eb]"
+                className="shrink-0 rounded-full border border-border bg-secondary px-3 py-1 text-[11px] text-muted-foreground hover:border-ring/50 hover:text-foreground"
               >
                 {prompt.length > 42 ? `${prompt.slice(0, 42)}…` : prompt}
               </button>
             ))}
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto bg-[#f8fafc] px-3 py-3">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-background px-3 py-3">
             {messages.map((m) => (
               <div
                 key={m.id}
                 className={`max-w-[94%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
                   m.role === 'user'
-                    ? 'ml-auto bg-[#2563eb] text-white'
-                    : 'mr-auto border border-slate-200 bg-white text-slate-700'
+                    ? 'ml-auto bg-[#0d9488] text-white'
+                    : 'mr-auto border border-border bg-card text-card-foreground'
                 }`}
               >
                 {m.text}
               </div>
             ))}
             {busy && (
-              <p className="text-xs font-medium text-slate-400">Thinking…</p>
+              <p className="text-xs font-medium text-muted-foreground">Thinking…</p>
             )}
             <div ref={endRef} />
           </div>
 
           {error && (
-            <p className="border-t border-red-100 bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+            <p className="border-t border-red-900/50 bg-red-950/40 px-3 py-2 text-xs text-red-300">{error}</p>
           )}
 
-          <form onSubmit={handleSubmit} className="flex gap-2 border-t border-slate-100 p-3">
+          <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-3">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask EthioAlert AI…"
-              className="h-10 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none focus:border-[#2563eb]"
+              className="h-10 flex-1 rounded-xl border border-border bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-ring"
             />
             <button
               type="submit"
               disabled={busy || !input.trim()}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2563eb] text-white disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d9488] text-white hover:bg-[#14b8a6] disabled:opacity-50"
               aria-label="Send"
             >
               <Send className="h-4 w-4" />

@@ -281,7 +281,7 @@ export default function ApprovalQueuePage() {
                   <button
                     onClick={() => handleOneClickDispatch(selectedAlert.id)}
                     disabled={busy}
-                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-blue-500 transition-colors shadow-lg ml-auto"
+                    className="flex items-center gap-2 rounded-lg bg-teal-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-teal-500 transition-colors shadow-lg ml-auto"
                   >
                     <Radio className="w-4 h-4" />
                     <span>Execute One-Click Dispatch</span>

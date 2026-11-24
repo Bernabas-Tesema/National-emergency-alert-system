@@ -128,7 +128,7 @@ export default function OrgSosInboxPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2563eb]">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#2dd4bf]">
           Organization officer
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">SOS inbox</h1>
@@ -170,7 +170,7 @@ export default function OrgSosInboxPage() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-semibold text-[#2563eb]">SOS-{ticket.id}</span>
+                  <span className="font-mono text-xs font-semibold text-[#2dd4bf]">SOS-{ticket.id}</span>
                   <StatusBadge value={ticket.status === 'new' ? 'submitted' : ticket.status === 'org_reviewing' ? 'under_review' : ticket.status} />
                 </div>
                 <span className="line-clamp-1 text-sm font-medium text-slate-800">{ticket.title}</span>
@@ -253,7 +253,7 @@ export default function OrgSosInboxPage() {
                       type="button"
                       disabled={busy}
                       onClick={() => void handleReturn('escalate')}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#1e3a8a] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#1d4ed8] disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#0d9488] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#14b8a6] disabled:opacity-60"
                     >
                       <Send className="h-4 w-4" />
                       Escalate to INSA

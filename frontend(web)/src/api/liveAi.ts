@@ -45,11 +45,8 @@ export interface AiSummaryResult {
 }
 
 const ROLE_PROMPTS: Record<string, string[]> = {
-  SUPER_ADMIN: [
-    'What should I check before creating a new org admin?',
-    'Summarize Super Admin responsibilities in EthioAlert.',
-  ],
   ADMINISTRATOR: [
+    'What should I check before creating a new org admin?',
     'How should I triage a critical fire case?',
     'Draft talking points for an alert about urban flooding.',
   ],
@@ -73,17 +70,12 @@ const ROLE_PROMPTS: Record<string, string[]> = {
     'Help me write a clear incident description for INSA.',
     'What belongs in an SOS return note to INSA?',
   ],
-  CITIZEN: [
-    'What should I do during a building fire?',
-    'When should I send an EthioAlert SOS?',
-    'Flood safety tips near my home',
-  ],
 }
 
 export function quickPromptsForRole(role: string): string[] {
   const key = role.toUpperCase().replace(/-/g, '_')
   const map: Record<string, string> = {
-    SYSTEM_ADMIN: 'SUPER_ADMIN',
+    SYSTEM_ADMIN: 'ADMINISTRATOR',
     PROVIDER: 'ORG_OFFICER',
     ORG_ADMIN: 'ORG_ADMIN',
   }

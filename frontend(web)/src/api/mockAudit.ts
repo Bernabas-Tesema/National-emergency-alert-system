@@ -19,7 +19,7 @@ interface Actor {
   ip: string
 }
 
-const MARTA: Actor = { name: 'Marta Haile', role: 'system_admin', ip: '192.0.2.10' }
+const MARTA: Actor = { name: 'Marta Haile', role: 'ADMINISTRATOR', ip: '192.0.2.10' }
 const HANNA: Actor = { name: 'Hanna Bekele', role: 'higher_officer', ip: '192.0.2.21' }
 const YONAS: Actor = { name: 'Yonas Girma', role: 'auditor', ip: '192.0.2.33' }
 const SELAM: Actor = { name: 'Selam Tesfaye', role: 'org_admin', ip: '198.51.100.12' }

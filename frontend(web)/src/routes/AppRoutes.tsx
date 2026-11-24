@@ -78,7 +78,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* INSA Command Dashboard */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR', 'HIGHER_OFFICER', 'higher_officer']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['ADMINISTRATOR', 'HIGHER_OFFICER', 'higher_officer']} />}>
             <Route path="/insa/dashboard" element={<CommandDashboardPage />} />
           </Route>
 
@@ -87,8 +87,7 @@ export default function AppRoutes() {
             element={
               <ProtectedRoute
                 allowedRoles={[
-                  'system_admin',
-                  'SUPER_ADMIN',
+                  'ADMINISTRATOR',
                   'ADMINISTRATOR',
                   'higher_officer',
                   'HIGHER_OFFICER',
@@ -102,7 +101,7 @@ export default function AppRoutes() {
           </Route>
 
           {/* INSA Public Alert Composer */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']} />}>
             <Route path="/insa/alerts" element={<AlertComposerPage />} />
             <Route path="/insa/alerts/composer" element={<AlertComposerPage />} />
           </Route>
@@ -113,26 +112,26 @@ export default function AppRoutes() {
           </Route>
 
           {/* INSA Live Broadcast Telemetry Monitor */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR', 'HIGHER_OFFICER', 'higher_officer']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['ADMINISTRATOR', 'HIGHER_OFFICER', 'higher_officer']} />}>
             <Route path="/insa/dispatch/:id" element={<DispatchMonitorPage />} />
           </Route>
 
           {/* SOS Operations Feed */}
-          <Route element={<ProtectedRoute allowedRoles={['dispatcher', 'DISPATCHER', 'higher_officer', 'HIGHER_OFFICER', 'auditor', 'AUDITOR', 'system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['dispatcher', 'DISPATCHER', 'higher_officer', 'HIGHER_OFFICER', 'auditor', 'AUDITOR', 'ADMINISTRATOR']} />}>
             <Route path="/insa/sos" element={<SosOperationsPage />} />
           </Route>
 
           {/* Staff accounts: Super Admin + INSA Administrator create roles & email credentials */}
           <Route
             element={
-              <ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN', 'ADMINISTRATOR']} />
+              <ProtectedRoute allowedRoles={['ADMINISTRATOR']} />
             }
           >
             <Route path="/insa/staff" element={<StaffPage />} />
           </Route>
 
           {/* INSA System Management & Settings */}
-          <Route element={<ProtectedRoute allowedRoles={['system_admin', 'SUPER_ADMIN']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['ADMINISTRATOR']} />}>
             <Route path="/insa/organizations" element={<OrganizationsPage />} />
             <Route path="/insa/settings" element={<SettingsPage />} />
           </Route>
@@ -142,8 +141,7 @@ export default function AppRoutes() {
             element={
               <ProtectedRoute
                 allowedRoles={[
-                  'system_admin',
-                  'SUPER_ADMIN',
+                  'ADMINISTRATOR',
                   'ADMINISTRATOR',
                   'AUDITOR',
                   'auditor',
@@ -163,8 +161,7 @@ export default function AppRoutes() {
                 allowedRoles={[
                   'auditor',
                   'AUDITOR',
-                  'system_admin',
-                  'SUPER_ADMIN',
+                  'ADMINISTRATOR',
                   'higher_officer',
                   'HIGHER_OFFICER',
                 ]}

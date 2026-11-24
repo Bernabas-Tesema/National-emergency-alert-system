@@ -103,7 +103,7 @@ export default function LoginPage() {
 
   return (
     <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6">
-      <div className="login-card relative z-10 grid w-full max-w-[980px] overflow-hidden rounded-[26px] bg-white shadow-[0_28px_80px_rgba(15,23,42,0.28)] lg:grid-cols-[0.92fr_1.08fr]">
+      <div className="login-card relative z-10 grid w-full max-w-[980px] overflow-hidden rounded-[26px] bg-[#0e1619] shadow-[0_28px_80px_rgba(0,0,0,0.6)] lg:grid-cols-[0.92fr_1.08fr]">
         {/* Left panel — exact mockup composition */}
         <section className="login-brand relative hidden min-h-[580px] overflow-hidden px-11 py-14 text-white lg:flex lg:flex-col lg:justify-center">
           <div className="login-spheres" aria-hidden="true">
@@ -121,12 +121,12 @@ export default function LoginPage() {
             <h1 className="mt-5 text-[20px] font-bold uppercase leading-snug tracking-[0.05em] text-white">
               EthioAlert
             </h1>
-            <p className="mt-6 text-[12.5px] leading-[1.7] text-[#d7e6ff]">
+            <p className="mt-6 text-[12.5px] leading-[1.7] text-teal-200/80">
               The national emergency alert and citizen safety console. INSA and partner
               organizations use it to report incidents, confirm what is real, and send
               a public warning only after two different officers approve it.
             </p>
-            <p className="mt-4 text-[12.5px] leading-[1.7] text-[#d7e6ff]">
+            <p className="mt-4 text-[12.5px] leading-[1.7] text-teal-200/80">
               INSA and partner organizations use it to report incidents, confirm what is
               real, and send a public warning only after two different officers approve it.
             </p>
@@ -137,12 +137,12 @@ export default function LoginPage() {
         <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-12 sm:py-14">
           <div className="w-full max-w-[340px]">
             <div className="mb-6 lg:hidden">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2f6fed]">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2dd4bf]">
                 EthioAlert
               </p>
             </div>
 
-            <h2 className="text-[32px] font-bold leading-none tracking-tight text-[#1a1a1a]">
+            <h2 className="text-[32px] font-bold leading-none tracking-tight text-slate-200">
               Sign in
             </h2>
             <p className="mt-3 text-[13px] leading-5 text-[#8b93a7]">
@@ -174,7 +174,7 @@ export default function LoginPage() {
                       autoComplete="username"
                       placeholder="User Name"
                       required
-                      className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] pl-12 text-[14px] text-[#1a1a1a] placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                      className="h-[52px] rounded-[10px] border-0 bg-[#16282d] pl-12 text-[14px] text-slate-200 placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
                     />
                   </div>
                 </div>
@@ -194,12 +194,12 @@ export default function LoginPage() {
                       autoComplete="current-password"
                       required
                       placeholder="Password"
-                      className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] px-12 text-[14px] text-[#1a1a1a] placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                      className="h-[52px] rounded-[10px] border-0 bg-[#16282d] px-12 text-[14px] text-slate-200 placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#2f6fed]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#2dd4bf]"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -213,13 +213,13 @@ export default function LoginPage() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 rounded border-[#c5cad3] text-[#2f6fed] focus:ring-[#2f6fed]"
+                      className="h-4 w-4 rounded border-[#c5cad3] text-[#2dd4bf] focus:ring-[#2f6fed]"
                     />
                     Remember me
                   </label>
                   <button
                     type="button"
-                    className="font-medium text-[#2f6fed] hover:underline"
+                    className="font-medium text-[#2dd4bf] hover:underline"
                     onClick={() =>
                       setError('Password reset is handled by your system administrator.')
                     }
@@ -237,7 +237,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
                   disabled={loading}
                 >
                   {loading ? 'Authenticating...' : 'Sign in'}
@@ -245,7 +245,7 @@ export default function LoginPage() {
 
                 <p className="pt-2 text-center text-[13px] text-[#8b93a7]">
                   Don&apos;t have an account?{' '}
-                  <span className="font-semibold text-[#2f6fed]">
+                  <span className="font-semibold text-[#2dd4bf]">
                     Staff access only
                   </span>
                 </p>
@@ -267,7 +267,7 @@ export default function LoginPage() {
                     placeholder="6-digit code"
                     autoComplete="one-time-code"
                     required
-                    className="h-[52px] rounded-[10px] border-0 bg-[#eceff3] text-center font-mono text-lg tracking-widest text-[#1d4ed8] shadow-none focus-visible:ring-2 focus-visible:ring-[#2f6fed]/30"
+                    className="h-[52px] rounded-[10px] border-0 bg-[#16282d] text-center font-mono text-lg tracking-widest text-[#2dd4bf] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
                   />
                   <span className="block text-center text-[10px] text-[#8b93a7]">
                     {liveApi
@@ -296,7 +296,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
                   disabled={loading}
                 >
                   {loading ? 'Verifying...' : 'Verify and sign in'}
@@ -305,7 +305,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-[13px] text-[#8b93a7] hover:text-[#1a1a1a]"
+                  className="w-full text-[13px] text-[#8b93a7] hover:text-slate-200"
                   onClick={startOver}
                 >
                   Back to sign in
@@ -315,12 +315,12 @@ export default function LoginPage() {
 
             {step === 'mobile-only' && (
               <div className="mt-8 space-y-4 py-2 text-center">
-                <p className="text-sm text-[#1a1a1a]">Please use the mobile app.</p>
+                <p className="text-sm text-slate-200">Please use the mobile app.</p>
                 <p className="text-xs text-[#8b93a7]">
                   Citizens receive emergency broadcasts through mobile push notifications and SMS alerts.
                 </p>
                 <Button
-                  className="h-[52px] w-full rounded-[10px] bg-[#1e3a8a] text-[15px] font-semibold text-white hover:bg-[#1d4ed8]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
                   onClick={startOver}
                 >
                   Back to sign in

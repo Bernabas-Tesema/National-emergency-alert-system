@@ -5,7 +5,6 @@ from alerts_api.models import StaffAccount
 from alerts_api.passwords import generate_token, hash_password
 
 DEMO_STAFF = [
-    ("sysadmin1", "SUPER_ADMIN", "INSA Super Admin", "INSA"),
     ("admin1", "ADMINISTRATOR", "INSA Administrator", "INSA"),
     ("officer1", "HIGHER_OFFICER", "INSA Higher Officer", "INSA"),
     ("dispatcher1", "DISPATCHER", "INSA Dispatcher", "INSA"),

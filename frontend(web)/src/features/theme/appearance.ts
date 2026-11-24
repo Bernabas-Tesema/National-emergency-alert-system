@@ -1,15 +1,15 @@
 export type Appearance = 'bright' | 'dim'
 
-export const APPEARANCE_KEY = 'ness-appearance'
+export const APPEARANCE_KEY = 'ness-appearance-v2'
 export const APPEARANCE_EVENT = 'ness-appearance'
 
 export function readAppearance(): Appearance {
   try {
     const stored = localStorage.getItem(APPEARANCE_KEY)
-    if (stored === 'dim') return 'dim'
-    return 'bright'
+    if (stored === 'bright') return 'bright'
+    return 'dim'
   } catch {
-    return 'bright'
+    return 'dim'
   }
 }
 

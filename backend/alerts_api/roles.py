@@ -1,9 +1,9 @@
 """Map frontend role identifiers to JWT API roles used by the API."""
 
 ROLE_TO_JWT = {
-    "SUPER_ADMIN": "insa_admin",
     "ADMINISTRATOR": "insa_admin",
     "system_admin": "insa_admin",
+    "SUPER_ADMIN": "insa_admin",   # legacy alias kept for old tokens
     "HIGHER_OFFICER": "insa_officer",
     "higher_officer": "insa_officer",
     "DISPATCHER": "dispatcher",
@@ -21,7 +21,6 @@ ROLE_TO_JWT = {
 
 # Canonical roles stored on StaffAccount / returned to the web console.
 CANONICAL_STAFF_ROLES = {
-    "SUPER_ADMIN",
     "ADMINISTRATOR",
     "HIGHER_OFFICER",
     "DISPATCHER",
@@ -31,10 +30,10 @@ CANONICAL_STAFF_ROLES = {
 }
 
 ROLE_ALIASES = {
-    "system_admin": "SUPER_ADMIN",
-    "SUPER_ADMIN": "SUPER_ADMIN",
-    "admin": "ADMINISTRATOR",
+    "system_admin": "ADMINISTRATOR",
+    "SUPER_ADMIN": "ADMINISTRATOR",   # legacy
     "ADMINISTRATOR": "ADMINISTRATOR",
+    "admin": "ADMINISTRATOR",
     "insa_admin": "ADMINISTRATOR",
     "higher_officer": "HIGHER_OFFICER",
     "HIGHER_OFFICER": "HIGHER_OFFICER",
