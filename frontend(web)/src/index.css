@@ -1,0 +1,393 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: #f4f6fb;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #2563eb;
+    --primary-foreground: #ffffff;
+    --secondary: #eef2ff;
+    --secondary-foreground: #0f172a;
+    --muted: #eef2f7;
+    --muted-foreground: #64748b;
+    --accent: #dbeafe;
+    --accent-foreground: #1d4ed8;
+    --destructive: #ef4444;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #2563eb;
+    --chart-1: #2563eb;
+    --chart-2: #10b981;
+    --chart-3: #f59e0b;
+    --chart-4: #f97316;
+    --chart-5: #ef4444;
+    --radius: 0.75rem;
+    --sidebar: #2563eb;
+    --sidebar-foreground: #ffffff;
+    --sidebar-primary: #ffffff;
+    --sidebar-primary-foreground: #1d4ed8;
+    --sidebar-accent: rgba(255, 255, 255, 0.18);
+    --sidebar-accent-foreground: #ffffff;
+    --sidebar-border: rgba(255, 255, 255, 0.15);
+    --sidebar-ring: #93c5fd;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: #f4f6fb;
+    color: #0f172a;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+  html[data-appearance="dim"] {
+    color-scheme: dark;
+  }
+}
+
+/* Remap hardcoded dark console colors to the light dashboard look */
+.bg-\[\#0c1417\],
+.bg-\[\#0c1417\]\/90,
+.login-stage {
+  background-color: #f4f6fb !important;
+}
+
+.bg-\[\#09181b\],
+.bg-\[\#111d21\],
+.bg-\[\#152327\] {
+  background-color: #ffffff !important;
+}
+
+.bg-\[\#162327\],
+.bg-\[\#112328\],
+.hover\:bg-\[\#112328\]:hover,
+.hover\:bg-\[\#152327\]:hover {
+  background-color: #eef2f7 !important;
+}
+
+.bg-\[\#133e42\] {
+  background-color: #dbeafe !important;
+}
+
+.border-\[\#1b2e34\],
+.border-\[\#13262a\] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Only remap page content text — keep sidebar / login white text intact */
+main .text-white,
+main .text-slate-100,
+main .text-slate-200 {
+  color: #0f172a;
+}
+
+main .text-slate-300,
+main .text-slate-400,
+main .text-slate-500 {
+  color: #64748b;
+}
+
+main .text-teal-200,
+main .text-teal-300,
+main .text-teal-400,
+main .text-\[\#2dd4bf\],
+main .hover\:text-teal-300:hover,
+main .hover\:text-teal-400:hover,
+main .group-hover\:text-teal-300,
+main .group-hover\:text-teal-400 {
+  color: #2563eb;
+}
+
+.bg-teal-600,
+.bg-teal-500,
+.hover\:bg-teal-500:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.bg-red-950\/70,
+.bg-red-950\/20,
+.bg-amber-950\/60 {
+  background-color: #fff1f2;
+}
+
+.text-red-300,
+.text-amber-200 {
+  color: #9f1239;
+}
+
+.hover\:border-teal-500\/50:hover,
+.hover\:border-teal-500\/40:hover {
+  border-color: rgba(37, 99, 235, 0.45) !important;
+}
+
+.platform-panel {
+  background: linear-gradient(165deg, #1d4ed8 0%, #2563eb 55%, #3b82f6 100%);
+  color: #ffffff;
+}
+
+.platform-panel .platform-muted {
+  color: rgba(239, 246, 255, 0.9);
+}
+
+/* Soft white cards for internal pages */
+.rounded-xl.border.border-\[\#1b2e34\],
+.rounded-xl.border {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+/* Login page — exact mockup layout */
+.login-page {
+  background: #2f6fed;
+}
+
+.login-card {
+  min-height: 580px;
+}
+
+.login-brand {
+  background: linear-gradient(180deg, #2f6fed 0%, #2a67e6 55%, #2761dc 100%);
+}
+
+.login-spheres {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.login-sphere {
+  position: absolute;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 28%),
+    radial-gradient(circle at 35% 32%, #a9cbff 0%, #5b97f7 38%, #2f6fed 68%, #1d4ed8 100%);
+  box-shadow:
+    inset -22px -28px 46px rgba(15, 55, 140, 0.38),
+    inset 10px 12px 22px rgba(255, 255, 255, 0.22),
+    0 18px 40px rgba(15, 55, 140, 0.18);
+}
+
+/* Large clipped ball — top right, like the mockup */
+.login-sphere-lg {
+  width: 360px;
+  height: 360px;
+  right: -140px;
+  top: -120px;
+  z-index: 1;
+}
+
+/* Mid ball — lower right of welcome panel */
+.login-sphere-md {
+  width: 230px;
+  height: 230px;
+  right: 18px;
+  bottom: 48px;
+  z-index: 3;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 26%),
+    radial-gradient(circle at 36% 34%, #b7d4ff 0%, #6aa2f8 40%, #2f6fed 72%, #1e4fd6 100%);
+}
+
+/* Overlap helper between large and mid */
+.login-sphere-sm {
+  width: 150px;
+  height: 150px;
+  right: 118px;
+  top: 42%;
+  z-index: 2;
+  opacity: 0.92;
+}
+
+.login-sphere-xs {
+  width: 78px;
+  height: 78px;
+  right: 210px;
+  top: 26%;
+  z-index: 2;
+  opacity: 0.8;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 30%),
+    radial-gradient(circle at 40% 36%, #cfe2ff 0%, #7eaff9 45%, #3b7ff0 100%);
+}
+
+.login-sphere-tiny {
+  width: 46px;
+  height: 46px;
+  right: 168px;
+  bottom: 36px;
+  z-index: 4;
+  opacity: 0.75;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 32%),
+    radial-gradient(circle at 40% 36%, #dbeafe 0%, #8eb8fb 50%, #4d8ef5 100%);
+}
+
+html[data-appearance="dim"] .login-page {
+  background: #2f6fed;
+}
+
+/* Dim appearance keeps the previous dark console */
+html[data-appearance="dim"] {
+  --background: #0c1417;
+  --foreground: #f1f5f9;
+  --card: #111d21;
+  --card-foreground: #f1f5f9;
+  --popover: #111d21;
+  --popover-foreground: #f1f5f9;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #16282d;
+  --secondary-foreground: #f1f5f9;
+  --muted: #16282d;
+  --muted-foreground: #94a3b8;
+  --accent: #133e42;
+  --accent-foreground: #2dd4bf;
+  --destructive: #ef4444;
+  --border: #1b2e34;
+  --input: #1b2e34;
+  --ring: #2dd4bf;
+  --chart-1: #2dd4bf;
+  --chart-2: #38bdf8;
+  --chart-3: #f59e0b;
+  --chart-4: #f97316;
+  --chart-5: #ef4444;
+  --sidebar: #09181b;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #042f2e;
+  --sidebar-accent: #133e42;
+  --sidebar-accent-foreground: #2dd4bf;
+  --sidebar-border: #13262a;
+  --sidebar-ring: #2dd4bf;
+}
+
+html[data-appearance="dim"] body {
+  background-color: #0c1417;
+  color: #f1f5f9;
+}
+
+html[data-appearance="dim"] .bg-\[\#0c1417\],
+html[data-appearance="dim"] .bg-\[\#0c1417\]\/90,
+html[data-appearance="dim"] .login-stage {
+  background-color: #0c1417 !important;
+}
+
+html[data-appearance="dim"] .bg-\[\#09181b\] {
+  background-color: #09181b !important;
+}
+
+html[data-appearance="dim"] .bg-\[\#111d21\] {
+  background-color: #111d21 !important;
+}
+
+html[data-appearance="dim"] .bg-\[\#162327\],
+html[data-appearance="dim"] .bg-\[\#112328\],
+html[data-appearance="dim"] .hover\:bg-\[\#112328\]:hover {
+  background-color: #112328 !important;
+}
+
+html[data-appearance="dim"] .bg-\[\#133e42\] {
+  background-color: #133e42 !important;
+}
+
+html[data-appearance="dim"] .border-\[\#1b2e34\],
+html[data-appearance="dim"] .border-\[\#13262a\] {
+  border-color: #1b2e34 !important;
+}
+
+html[data-appearance="dim"] main .text-white,
+html[data-appearance="dim"] main .text-slate-100,
+html[data-appearance="dim"] main .text-slate-200 {
+  color: #f1f5f9;
+}
+
+html[data-appearance="dim"] main .text-slate-300 {
+  color: #cbd5e1;
+}
+
+html[data-appearance="dim"] main .text-slate-400,
+html[data-appearance="dim"] main .text-slate-500 {
+  color: #94a3b8;
+}
+
+html[data-appearance="dim"] main .text-teal-200,
+html[data-appearance="dim"] main .text-teal-300,
+html[data-appearance="dim"] main .text-teal-400,
+html[data-appearance="dim"] main .text-\[\#2dd4bf\] {
+  color: #2dd4bf;
+}
+
+html[data-appearance="dim"] .bg-teal-600,
+html[data-appearance="dim"] .bg-teal-500,
+html[data-appearance="dim"] .hover\:bg-teal-500:hover {
+  background-color: #0d9488 !important;
+  color: #ffffff !important;
+}
+
+html[data-appearance="dim"] .platform-panel {
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.18), transparent 32%),
+    linear-gradient(165deg, #062226 0%, #0c1417 48%, #10282c 100%);
+  color: #f8fafc;
+}
+
+html[data-appearance="dim"] .platform-panel .platform-muted {
+  color: #cbd5e1;
+}

@@ -1,0 +1,24 @@
+export type Appearance = 'bright' | 'dim'
+
+export const APPEARANCE_KEY = 'ness-appearance'
+export const APPEARANCE_EVENT = 'ness-appearance'
+
+export function readAppearance(): Appearance {
+  try {
+    const stored = localStorage.getItem(APPEARANCE_KEY)
+    if (stored === 'dim') return 'dim'
+    return 'bright'
+  } catch {
+    return 'bright'
+  }
+}
+
+export function applyAppearance(value: Appearance) {
+  document.documentElement.dataset.appearance = value
+  try {
+    localStorage.setItem(APPEARANCE_KEY, value)
+  } catch {
+    // Storage can be blocked. The choice still applies for this page view.
+  }
+  window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT, { detail: value }))
+}

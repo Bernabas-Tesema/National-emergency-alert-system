@@ -1,0 +1,109 @@
+# Render Blueprint — two separate services (do not mix them).
+# https://render.com/docs/blueprint-spec
+#
+# AI  = FastAPI  (root: Ai)
+# API = Django   (root: backend)
+
+services:
+  - type: web
+    name: ethioalert-ai
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: Ai
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /ai/health
+    envVars:
+      - key: AI_ENV
+        value: prod
+      - key: AI_MODE
+        value: live
+      - key: AI_SERVICE_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: AI_PROVIDER_ORDER
+        value: groq,openrouter
+      - key: WEB_CONCURRENCY
+        value: "1"
+
+  - type: web
+    name: ethioalert-api
+    runtime: docker
+    plan: free
+    region: oregon
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DEV_MODE
+        value: "false"
+      - key: SECURE_SSL_REDIRECT
+        value: "true"
+      - key: WEB_CONCURRENCY
+        value: "2"
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: DJANGO_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_DEMO_STAFF
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ethioalert-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      # Set manually after AI is live, e.g. https://ethioalert-ai.onrender.com
+      - key: AI_SERVICE_URL
+        sync: false
+      - key: AI_SERVICE_KEY
+        sync: false
+
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "true"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: STAFF_FALLBACK_OTP_EMAIL
+        sync: false
+
+  - type: web
+    name: ethioalert-web
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend(web)
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE
+        value: https://national-emergency-alert-system-1-backend.onrender.com
+
+databases:
+  - name: ethioalert-db
+    plan: free
+    region: oregon

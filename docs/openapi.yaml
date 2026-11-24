@@ -1,0 +1,306 @@
+openapi: 3.0.3
+info:
+  title: INSA National Emergency Alert & Citizen Safety System (EthioAlert) API
+  version: 2.4.0
+  description: >
+    Official REST contract for the INSA control centre and Resource Organization
+    portals. Supports two-tier emergency approval, multi-channel broadcast
+    dispatch, and SOS distress ticket triage.
+servers:
+  - url: https://api.ethioalert.insa.gov.et/v1
+    description: Production National Cluster
+  - url: http://localhost:5173/api
+    description: Local Mock Service Worker (MSW) Instance
+
+paths:
+  /auth/login:
+    post:
+      summary: Step 1 Authenticate with username and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Step 1 verified, returns challenge ID for 2FA
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  challengeId: { type: string, format: uuid }
+        '401':
+          description: Invalid username or password
+
+  /auth/2fa:
+    post:
+      summary: Step 2 Verify 6-digit TOTP token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeId, code]
+              properties:
+                challengeId: { type: string }
+                code: { type: string, example: "123456" }
+      responses:
+        '200':
+          description: JWT Bearer session and user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /cases:
+    get:
+      summary: List incident cases
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string }
+        - name: severity
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Case'
+    post:
+      summary: Submit a new case or save draft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaseInput'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+
+  /cases/{id}/verify:
+    post:
+      summary: INSA Administrator verifies case validity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Case marked verified
+
+  /cases/{id}/clarify:
+    post:
+      summary: INSA Administrator asks partner organization for clarification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: { type: string }
+      responses:
+        '200':
+          description: Clarification question delivered via WebSocket
+
+  /cases/{id}/reject:
+    post:
+      summary: INSA Administrator rejects case with required explanation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Case marked rejected with audit explanation
+
+  /alerts:
+    get:
+      summary: List public alerts
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+
+  /alerts/{id}/submit-tier1:
+    post:
+      summary: Tier-1 submission by Administrator
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Alert status updated to pending_approval
+
+  /alerts/{id}/approve-tier2:
+    post:
+      summary: Tier-2 cryptographic authorization by Higher Officer
+      description: Strictly enforces mutual exclusion. Submitter cannot approve.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [twoFactorCode]
+              properties:
+                twoFactorCode: { type: string, example: "123456" }
+      responses:
+        '200':
+          description: Digitally signed and approved for broadcast
+        '403':
+          description: Mutual exclusion violation (submitter == approver)
+
+  /alerts/{id}/dispatch:
+    post:
+      summary: Execute one-click multi-channel broadcast
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Cellular tower broadcast and mobile push initiated
+
+  /sos:
+    get:
+      summary: List real-time SOS distress tickets
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SosTicket'
+
+  /sos/{id}/reveal-identity:
+    post:
+      summary: Authorized unmasking of citizen identity
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [justification, twoFactorCode]
+              properties:
+                justification: { type: string, minLength: 20 }
+                twoFactorCode: { type: string, example: "123456" }
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fullName: { type: string }
+                  phone: { type: string }
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        username: { type: string }
+        fullName: { type: string }
+        role:
+          type: string
+          enum: [SUPER_ADMIN, ADMINISTRATOR, HIGHER_OFFICER, DISPATCHER, AUDITOR, ORG_ADMIN, ORG_OFFICER]
+        organization: { type: string }
+
+    Case:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        category: { type: string }
+        severity: { type: string, enum: [low, medium, high, critical] }
+        area: { type: string }
+        status: { type: string }
+        updatedAt: { type: string }
+
+    CaseInput:
+      type: object
+      required: [title, category, suggestedSeverity, area, description, recommendedAction]
+      properties:
+        title: { type: string }
+        category: { type: string }
+        suggestedSeverity: { type: string }
+        area: { type: string }
+        description: { type: string }
+        recommendedAction: { type: string }
+
+    Alert:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        severity: { type: string }
+        status: { type: string }
+        channels: { type: array, items: { type: string } }
+        estimatedCitizens: { type: integer }
+
+    SosTicket:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string }
+        status: { type: string }
+        region: { type: string }
+        coordinates: { type: array, items: { type: number } }
+        citizenHash: { type: string }

@@ -1,0 +1,98 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+  .ethio-ai-layout { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,0.95fr); gap:1.25rem; align-items:start; width:100%; }
+  @media (max-width: 1100px) { .ethio-ai-layout { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:100%;width:100%;box-sizing:border-box;">
+  <h1 style="margin-bottom:0.35rem;">EthioAlert AI</h1>
+  <p style="color:#64748b;margin-top:0;max-width:70rem;">
+    Dedicated suggestion tools: triage, alert draft, executive summary, threat ranking, and role assist.
+    AI never approves or dispatches — humans decide.
+  </p>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.25rem 0;">
+    <div style="border:1px solid #e2e8f0;border-radius:12px;padding:1.15rem 1.25rem;background:#fff;">
+      <div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;">Service</div>
+      <div style="font-size:1.1rem;font-weight:700;margin-top:0.35rem;">
+        {% if health_ok %}Online · {{ health.mode }} · {{ health.providers }} provider(s){% else %}Offline{% endif %}
+      </div>
+      {% if health_error %}<p style="color:#b91c1c;margin:0.5rem 0 0;">{{ health_error }}</p>{% endif %}
+    </div>
+    <div style="border:1px solid #e2e8f0;border-radius:12px;padding:1.15rem 1.25rem;background:#eff6ff;">
+      <div style="font-size:12px;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.04em;">Tip</div>
+      <p style="margin:0.35rem 0 0;color:#1e3a8a;font-size:0.95rem;">
+        Open a Case and use “AI triage” / “AI draft alert”, or use the console below for assist and summaries.
+      </p>
+    </div>
+  </div>
+
+  {% if messages %}
+    <ul class="messagelist">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  <div class="ethio-ai-layout">
+    <div>
+      <form method="post" style="border:1px solid #e2e8f0;border-radius:14px;padding:1.35rem 1.5rem;background:#fff;margin-bottom:1rem;">
+        {% csrf_token %}
+        <h2 style="margin-top:0;font-size:1.1rem;">Role assist chat</h2>
+        <p style="color:#64748b;font-size:0.9rem;">Ask EthioAlert AI as an INSA administrator.</p>
+        <textarea name="assist_message" rows="8" required style="width:100%;min-height:180px;padding:0.9rem 1rem;border:1px solid #cbd5e1;border-radius:12px;font-size:0.98rem;line-height:1.5;box-sizing:border-box;"
+          placeholder="Example: How should I triage a critical fire case near Bole?">{{ assist_message }}</textarea>
+        <div style="margin-top:0.9rem;">
+          <button type="submit" name="action" value="assist" class="default">Ask AI</button>
+        </div>
+      </form>
+
+      {% if assist_reply %}
+      <div style="border:1px solid #bfdbfe;border-radius:14px;padding:1.25rem 1.4rem;background:#f8fbff;margin-bottom:1.25rem;white-space:pre-wrap;font-size:1rem;line-height:1.55;min-height:140px;">{{ assist_reply }}</div>
+      {% endif %}
+    </div>
+
+    <div>
+      <form method="post" style="border:1px solid #e2e8f0;border-radius:14px;padding:1.35rem 1.5rem;background:#fff;margin-bottom:1rem;">
+        {% csrf_token %}
+        <h2 style="margin-top:0;font-size:1.1rem;">Executive summary / ranking</h2>
+        <p style="color:#64748b;font-size:0.9rem;">Uses the {{ open_cases|length }} most recent open cases.</p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <button type="submit" name="action" value="summary" class="default">AI summary</button>
+          <button type="submit" name="action" value="rank">AI threat ranking</button>
+        </div>
+      </form>
+
+      {% if summary_text %}
+      <div style="border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem 1.35rem;background:#fff;margin-bottom:1rem;">
+        <h3 style="margin-top:0;">Summary</h3>
+        <p style="white-space:pre-wrap;">{{ summary_text }}</p>
+        {% if summary_points %}
+        <ul>
+          {% for point in summary_points %}<li>{{ point }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if ranking %}
+      <div style="border:1px solid #e2e8f0;border-radius:14px;padding:1.2rem 1.35rem;background:#fff;">
+        <h3 style="margin-top:0;">Threat ranking</h3>
+        <ol>
+          {% for row in ranking %}
+            <li><strong>#{{ row.rank }}</strong> case {{ row.id }} (score {{ row.score }}) — {{ row.reason }}</li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
