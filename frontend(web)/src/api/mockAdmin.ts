@@ -8,7 +8,7 @@ import type {
   StaffAccount,
 } from '@/types/admin'
 import type { Role } from '@/types/role'
-import { liveApi } from './config'
+import { API_BASE, liveApi } from './config'
 import { ApiError, apiFetch } from './client'
 import { MOCK_ACCOUNTS } from './mockAccounts'
 
@@ -96,14 +96,82 @@ export async function createOrganization(
   if (ORGANIZATIONS.some((o) => o.name.toLowerCase() === name.toLowerCase())) {
     throw new AdminError('An organization with that name already exists.')
   }
+  const email = (input.email || '').trim()
+  if (!email || !email.includes('@')) {
+    throw new AdminError('Enter a valid official email to receive initial administrator credentials.')
+  }
+  const phone = (input.phone || '').trim()
+  if (!phone || phone.length < 7) {
+    throw new AdminError('Enter an official contact phone number.')
+  }
+
   const organization: Organization = {
     id: `org-${String(nextOrgNumber++).padStart(3, '0')}`,
     name,
     kind: input.kind,
+    email,
+    phone,
+    adminFullName: input.adminFullName?.trim(),
     status: 'active',
     createdAt: new Date().toISOString().slice(0, 10),
   }
   ORGANIZATIONS.push(organization)
+
+  // Automatically provision the initial Organization Administrator account
+  const adminFullName = input.adminFullName?.trim() || `${name} Admin`
+  const baseUsername = input.adminUsername?.trim() || `admin_${name.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 16)}`
+  const adminUsername = usernameTaken(baseUsername) ? `${baseUsername}_${Math.floor(Math.random() * 900 + 100)}` : baseUsername
+
+  // Attempt real SMTP dispatch via Django backend
+  const registerEndpoint = `${API_BASE || '/backend'}/api/v1/organizations/register`
+  const res = await fetch(registerEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      kind: input.kind,
+      email,
+      phone,
+      adminFullName,
+      adminUsername,
+    }),
+  })
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}))
+    throw new AdminError(
+      errBody.detail || `Failed to register organization on server (HTTP ${res.status}).`,
+    )
+  }
+  const data = await res.json()
+  if (data.email_sent === false || data.email_error) {
+    throw new AdminError(
+      `Organization created, but credentials email failed: ${data.email_error || 'SMTP delivery error'}`,
+    )
+  }
+
+  if (!usernameTaken(adminUsername)) {
+    STAFF.push({
+      id: `u-${nextStaffNumber++}`,
+      fullName: adminFullName,
+      username: adminUsername,
+      email,
+      phone,
+      role: 'org_admin',
+      organizationId: organization.id,
+      status: 'active',
+      lastLoginAt: null,
+    })
+    MOCK_ACCOUNTS.push({
+      id: `u-${nextStaffNumber}`,
+      username: adminUsername,
+      password: data.debug_temporary_password || 'Password123!',
+      fullName: adminFullName,
+      role: 'ORG_ADMIN',
+      organization: name,
+      mustChangePassword: true,
+    })
+  }
+
   return { ...organization }
 }
 

@@ -56,10 +56,20 @@ describe('staff safeguards', () => {
 
 describe('organizations', () => {
   it('registers an organization and refuses a duplicate name', async () => {
-    const org = await createOrganization({ name: 'Ethiopian Red Cross', kind: 'other' })
+    const org = await createOrganization({
+      name: 'Ethiopian Red Cross',
+      kind: 'other',
+      email: 'info@redcross.org.et',
+      phone: '+251 911 234 567',
+    })
     expect(org.status).toBe('active')
     await expect(
-      createOrganization({ name: 'ethiopian red cross', kind: 'other' }),
+      createOrganization({
+        name: 'ethiopian red cross',
+        kind: 'other',
+        email: 'info2@redcross.org.et',
+        phone: '+251 911 234 568',
+      }),
     ).rejects.toThrow(/already exists/i)
   })
 

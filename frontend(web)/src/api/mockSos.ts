@@ -17,6 +17,9 @@ export interface SosTicket {
   status: SosTicketStatus
   region: string
   coordinates: [number, number]
+  exactAddress?: string
+  accuracyMeters?: number
+  peopleCount?: string
   citizenHash: string
   citizenNameMasked: string
   citizenPhoneMasked: string
@@ -57,8 +60,11 @@ function fromApi(row: ApiSosCase): SosTicket {
     id: `SOS-${row.id}`,
     type: TYPE_MAP[row.case_type] || 'other',
     status: mapApiStatus(row.status),
-    region: row.region,
+    region: row.region || 'Addis Ababa',
     coordinates: [row.latitude ?? 9.03, row.longitude ?? 38.74],
+    exactAddress: row.region ? `${row.region}, Landmark Area` : 'Addis Ababa Central Zone',
+    accuracyMeters: 8,
+    peopleCount: '1-2 persons',
     citizenHash: `citizen-${row.id}`,
     citizenNameMasked: 'Citizen ****',
     citizenPhoneMasked: '+251 *** *** ***',
@@ -88,7 +94,10 @@ let sosTicketsStore: SosTicket[] = [
     type: 'trapped',
     status: 'new',
     region: 'Addis Ababa - Kirkos',
-    coordinates: [9.008, 38.761],
+    exactAddress: 'Kirkos Sub-City, Woreda 02, House 104, near Gotera Interchange',
+    coordinates: [9.0080, 38.7610],
+    accuracyMeters: 6,
+    peopleCount: '2 adults, 1 child',
     citizenHash: 'eth_id_88f921a4',
     citizenNameMasked: 'T*** G****',
     citizenPhoneMasked: '+251 91* *** 456',
@@ -98,7 +107,162 @@ let sosTicketsStore: SosTicket[] = [
     notes: ['Citizen reported trapped on 2nd floor balcony due to ground floor flash flood.'],
     createdAt: new Date(Date.now() - 300000).toISOString(),
   },
+  {
+    id: 'SOS-902',
+    type: 'fire',
+    status: 'new',
+    region: 'Addis Ababa - Bole Medhanealem',
+    exactAddress: 'Bole Sub-City, Woreda 03, Cameroon St., Commercial Center 4th Floor',
+    coordinates: [8.9984, 38.7889],
+    accuracyMeters: 4,
+    peopleCount: '5 individuals',
+    citizenHash: 'eth_id_bf4401d2',
+    citizenNameMasked: 'M*** K****',
+    citizenPhoneMasked: '+251 91* *** 889',
+    realCitizenName: 'Mekdes Kebede',
+    realCitizenPhone: '+251 911 556 889',
+    notes: ['Electrical room fire producing heavy toxic smoke in corridor. Escape stairs compromised.'],
+    createdAt: new Date(Date.now() - 720000).toISOString(),
+  },
+  {
+    id: 'SOS-903',
+    type: 'missing_person',
+    status: 'in_progress',
+    region: 'Addis Ababa - Yeka Sub-City',
+    exactAddress: 'Yeka Sub-City, Woreda 07, near British Embassy forest perimeter',
+    coordinates: [9.0435, 38.8021],
+    accuracyMeters: 15,
+    peopleCount: '1 missing child (8 yrs)',
+    citizenHash: 'eth_id_7709c311',
+    citizenNameMasked: 'B*** A****',
+    citizenPhoneMasked: '+251 92* *** 440',
+    realCitizenName: 'Biruk Assefa',
+    realCitizenPhone: '+251 922 890 440',
+    photoUrl: 'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?w=500&auto=format&fit=crop&q=60',
+    notes: ['Child went missing during heavy rain squall near hillside park trail.'],
+    createdAt: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 'SOS-904',
+    type: 'medical',
+    status: 'assigned',
+    region: 'Oromia - Adama City',
+    exactAddress: 'Adama Kebele 04, near Stadium roundabout, House 318',
+    coordinates: [8.5400, 39.2700],
+    accuracyMeters: 5,
+    peopleCount: '1 patient (critical)',
+    citizenHash: 'eth_id_ee31889a',
+    citizenNameMasked: 'H*** T****',
+    citizenPhoneMasked: '+251 93* *** 771',
+    realCitizenName: 'Haile Tadesse',
+    realCitizenPhone: '+251 935 901 771',
+    assignedDispatcher: 'Adama Red Cross EMS',
+    notes: ['Cardiac emergency, patient unresponsive. Field ambulance dispatched at 11:20.'],
+    createdAt: new Date(Date.now() - 5400000).toISOString(),
+  },
 ]
+
+export function registerIncomingCitizenSos(partial: {
+  type: SosType
+  region: string
+  coordinates?: [number, number]
+  exactAddress?: string
+  accuracyMeters?: number
+  peopleCount?: string
+  notes?: string[]
+  citizenName?: string
+  citizenPhone?: string
+}): SosTicket {
+  const newId = `SOS-${Math.floor(920 + Math.random() * 800)}`
+  const newTicket: SosTicket = {
+    id: newId,
+    type: partial.type || 'other',
+    status: 'new',
+    region: partial.region || 'Addis Ababa',
+    exactAddress: partial.exactAddress || `${partial.region}, Landmark Area`,
+    coordinates: partial.coordinates || [9.0080, 38.7610],
+    accuracyMeters: partial.accuracyMeters || 6,
+    peopleCount: partial.peopleCount || '1-2 persons',
+    citizenHash: `eth_id_${Math.random().toString(36).substring(2, 10)}`,
+    citizenNameMasked: partial.citizenName ? `${partial.citizenName.slice(0, 1)}***` : 'Citizen ****',
+    citizenPhoneMasked: partial.citizenPhone ? `${partial.citizenPhone.slice(0, 6)}***` : '+251 91* *** ***',
+    realCitizenName: partial.citizenName,
+    realCitizenPhone: partial.citizenPhone,
+    notes: partial.notes || ['Citizen emergency distress signal dispatched to INSA.'],
+    createdAt: new Date().toISOString(),
+  }
+  sosTicketsStore.unshift(newTicket)
+  emitMockEvent({ type: 'case_changed', caseId: newId, status: 'submitted' })
+  return newTicket
+}
+
+export function simulateInboundSosTicket(): SosTicket {
+  const samples = [
+    {
+      type: 'trapped' as SosType,
+      region: 'Addis Ababa - Kirkos Woreda 03',
+      exactAddress: 'Kirkos Sub-City, Gabon St., Building 12, Floor 4',
+      coordinates: [9.0065, 38.7589] as [number, number],
+      accuracyMeters: 5,
+      peopleCount: '3 people trapped',
+      description: 'Elevator power failure with water leaking into shaft. Alarm bells sounding.',
+      citizenNameMasked: 'D*** Z****',
+      realCitizenName: 'Dawit Zewdu',
+      citizenPhoneMasked: '+251 91* *** 332',
+      realCitizenPhone: '+251 911 345 332',
+    },
+    {
+      type: 'flood' as SosType,
+      region: 'Addis Ababa - Akaki Kality',
+      exactAddress: 'Akaki Sub-City, Woreda 01, Riverbank settlement Block 9',
+      coordinates: [8.8741, 38.7712] as [number, number],
+      accuracyMeters: 8,
+      peopleCount: '4 people (including 1 elderly)',
+      description: 'Akaki River overflowed banks rapidly. Water up to window sill.',
+      citizenNameMasked: 'E*** M****',
+      realCitizenName: 'Eleni Mengistu',
+      citizenPhoneMasked: '+251 92* *** 554',
+      realCitizenPhone: '+251 922 789 554',
+    },
+    {
+      type: 'accident' as SosType,
+      region: 'Addis Ababa - Gotera Flyover',
+      exactAddress: 'Gotera Interchange flyover inbound ramp, Debre Zeit Rd junction',
+      coordinates: [8.9862, 38.7554] as [number, number],
+      accuracyMeters: 4,
+      peopleCount: 'Multiple injured',
+      description: 'Overturned tanker blocking 2 lanes. Hazardous chemical smell detected.',
+      citizenNameMasked: 'S*** W****',
+      realCitizenName: 'Solomon Worku',
+      citizenPhoneMasked: '+251 91* *** 881',
+      realCitizenPhone: '+251 911 901 881',
+    },
+  ]
+
+  const pick = samples[Math.floor(Math.random() * samples.length)]
+  const newId = `SOS-${Math.floor(905 + Math.random() * 800)}`
+  const newTicket: SosTicket = {
+    id: newId,
+    type: pick.type,
+    status: 'new',
+    region: pick.region,
+    exactAddress: pick.exactAddress,
+    coordinates: pick.coordinates,
+    accuracyMeters: pick.accuracyMeters,
+    peopleCount: pick.peopleCount,
+    citizenHash: `eth_id_${Math.random().toString(36).substring(2, 10)}`,
+    citizenNameMasked: pick.citizenNameMasked,
+    citizenPhoneMasked: pick.citizenPhoneMasked,
+    realCitizenName: pick.realCitizenName,
+    realCitizenPhone: pick.realCitizenPhone,
+    notes: [pick.description],
+    createdAt: new Date().toISOString(),
+  }
+
+  sosTicketsStore.unshift(newTicket)
+  emitMockEvent({ type: 'case_changed', caseId: newId, status: 'submitted' })
+  return newTicket
+}
 
 export async function fetchSosTickets(): Promise<SosTicket[]> {
   if (liveApi) {

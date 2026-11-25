@@ -46,7 +46,11 @@ class _BootstrapState extends State<_Bootstrap> {
 
   Future<void> _boot() async {
     final prefs = await SharedPreferences.getInstance();
-    await EthioApi.instance.loadSession();
+    await Future.wait([
+      EthioApi.instance.loadSession(),
+      Future.delayed(const Duration(milliseconds: 1400)),
+    ]);
+    if (!mounted) return;
     setState(() {
       _introSeen = prefs.getBool(introSeenKey) ?? false;
       _signedIn = EthioApi.instance.accessToken != null;
@@ -63,11 +67,80 @@ class _BootstrapState extends State<_Bootstrap> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [ethioForest, ethioGreen],
+              colors: [ethioForest, ethioGreen, Color(0xFF14B8A6)],
             ),
           ),
-          child: const Center(
-            child: CircularProgressIndicator(color: Colors.white),
+          child: SafeArea(
+            child: Column(
+              children: [
+                const Spacer(),
+                Center(
+                  child: Container(
+                    width: 132,
+                    height: 132,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(32),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          blurRadius: 28,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        'assets/images/ethioalert_logo.jpg',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'EthioAlert',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Stay Informed. Stay Safe.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.88),
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const Spacer(),
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'NATIONAL EMERGENCY SYSTEM',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.78),
+                    letterSpacing: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 28),
+              ],
+            ),
           ),
         ),
       );

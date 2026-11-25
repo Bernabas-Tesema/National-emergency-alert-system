@@ -21,6 +21,7 @@ function toUser(account: MockAccount): User {
     fullName: account.fullName,
     role: account.role,
     organization: account.organization,
+    mustChangePassword: account.mustChangePassword,
   }
 }
 

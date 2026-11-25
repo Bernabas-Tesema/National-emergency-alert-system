@@ -14,9 +14,14 @@ class IntroScreen extends StatefulWidget {
   State<IntroScreen> createState() => _IntroScreenState();
 }
 
-class _IntroScreenState extends State<IntroScreen> {
+class _IntroScreenState extends State<IntroScreen>
+    with SingleTickerProviderStateMixin {
   final _controller = PageController();
   int _page = 0;
+
+  late final AnimationController _motionController;
+  late final Animation<double> _floatAnim;
+  late final Animation<double> _pulseAnim;
 
   static const _slides = [
     _Slide(
@@ -28,19 +33,37 @@ class _IntroScreenState extends State<IntroScreen> {
     _Slide(
       icon: Icons.sos_rounded,
       title: 'Send SOS fast',
-      body: 'Share your location and situation with responders when every second counts.',
+      body: 'Share your exact coordinates, camera photos, video and voice with responders in seconds.',
       accent: ethioDanger,
     ),
     _Slide(
       icon: Icons.auto_awesome_rounded,
-      title: 'Ask EAi',
-      body: 'EthioAlert AI gives calm citizen safety tips for fire, flood, accidents, and more.',
+      title: 'Ask EAi by voice',
+      body: 'EthioAlert AI gives calm citizen safety advice by text or direct voice recording.',
       accent: ethioGold,
     ),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _motionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
+    _floatAnim = Tween<double>(begin: -8.0, end: 8.0).animate(
+      CurvedAnimation(parent: _motionController, curve: Curves.easeInOut),
+    );
+
+    _pulseAnim = Tween<double>(begin: 0.94, end: 1.08).animate(
+      CurvedAnimation(parent: _motionController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
   void dispose() {
+    _motionController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -64,7 +87,6 @@ class _IntroScreenState extends State<IntroScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final slide = _slides[_page];
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -81,19 +103,64 @@ class _IntroScreenState extends State<IntroScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _finish,
-                  child: Text(
-                    'Skip',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w700,
+              // Header with EthioAlert Logo & Skip Button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.asset(
+                              'assets/images/ethioalert_logo.jpg',
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'EthioAlert',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    TextButton(
+                      onPressed: _finish,
+                      child: Text(
+                        'Skip',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+
+              // Motion Slides
               Expanded(
                 child: PageView.builder(
                   controller: _controller,
@@ -106,34 +173,89 @@ class _IntroScreenState extends State<IntroScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 118,
-                            height: 118,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.16),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white24, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: s.accent.withValues(alpha: 0.35),
-                                  blurRadius: 28,
-                                  offset: const Offset(0, 12),
+                          // Animated Motion Icon with Floating & Pulsing Glow Rings
+                          AnimatedBuilder(
+                            animation: _motionController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _floatAnim.value),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Outer Radar Halo
+                                    Transform.scale(
+                                      scale: _pulseAnim.value,
+                                      child: Container(
+                                        width: 150,
+                                        height: 150,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: s.accent.withValues(alpha: 0.18),
+                                        ),
+                                      ),
+                                    ),
+                                    // Mid Glowing Ring
+                                    Transform.scale(
+                                      scale: 1.0 + (_pulseAnim.value - 1.0) * 0.5,
+                                      child: Container(
+                                        width: 130,
+                                        height: 130,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: s.accent.withValues(alpha: 0.45),
+                                            width: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    // Core Icon Container
+                                    Container(
+                                      width: 112,
+                                      height: 112,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.18),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Colors.white,
+                                          width: 2.5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: s.accent.withValues(alpha: 0.5),
+                                            blurRadius: 32,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(s.icon, size: 54, color: Colors.white),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Icon(s.icon, size: 54, color: Colors.white),
+                              );
+                            },
                           ),
-                          const SizedBox(height: 36),
-                          Text(
-                            'EthioAlert',
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1.2,
-                              fontSize: 13,
+                          const SizedBox(height: 38),
+
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: BorderRadius.circular(99),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: Text(
+                              'NATIONAL EMERGENCY SYSTEM',
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.95),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.1,
+                                fontSize: 10,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 14),
+
                           Text(
                             s.title,
                             textAlign: TextAlign.center,
@@ -146,11 +268,12 @@ class _IntroScreenState extends State<IntroScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
+
                           Text(
                             s.body,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.88),
+                              color: Colors.white.withValues(alpha: 0.9),
                               fontSize: 16,
                               height: 1.55,
                             ),
@@ -161,6 +284,8 @@ class _IntroScreenState extends State<IntroScreen> {
                   },
                 ),
               ),
+
+              // Page Indicators
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(_slides.length, (i) {
@@ -168,7 +293,7 @@ class _IntroScreenState extends State<IntroScreen> {
                   return AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: active ? 22 : 8,
+                    width: active ? 24 : 8,
                     height: 8,
                     decoration: BoxDecoration(
                       color: active ? Colors.white : Colors.white38,
@@ -178,6 +303,8 @@ class _IntroScreenState extends State<IntroScreen> {
                 }),
               ),
               const SizedBox(height: 24),
+
+              // Bottom Button
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                 child: FilledButton(
@@ -185,10 +312,18 @@ class _IntroScreenState extends State<IntroScreen> {
                     backgroundColor: Colors.white,
                     foregroundColor: ethioForest,
                     minimumSize: const Size.fromHeight(54),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 3,
                   ),
                   onPressed: _next,
                   child: Text(
                     _page == _slides.length - 1 ? 'Get started' : 'Continue',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

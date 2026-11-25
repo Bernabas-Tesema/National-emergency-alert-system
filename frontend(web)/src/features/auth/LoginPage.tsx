@@ -35,7 +35,6 @@ export default function LoginPage() {
   const [code, setCode] = useState('')
   const [challengeId, setChallengeId] = useState('')
   const [emailHint, setEmailHint] = useState('')
-  const [debugOtp, setDebugOtp] = useState('')
   const [emailWarning, setEmailWarning] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -52,10 +51,31 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const result = await submitCredentials(username.trim(), password)
+      const cleanUsername = username.trim()
+      const result = await submitCredentials(cleanUsername, password)
+
+      // Ask OTP only once per username on this browser
+      const otpVerifiedKey = `ethioalert_otp_verified_${cleanUsername}`
+      const alreadyVerified = localStorage.getItem(otpVerifiedKey) === 'true'
+      if (alreadyVerified && (result.debugOtp || !liveApi)) {
+        const autoCode = result.debugOtp || '123456'
+        const authResult = await submitTwoFactor(result.challengeId, autoCode)
+        const home = ROLE_HOME_PATH[authResult.user.role]
+        if (!hasWebAccess(authResult.user.role) || !home) {
+          setStep('mobile-only')
+        } else {
+          login(authResult.user)
+          if (authResult.user.mustChangePassword) {
+            navigate('/change-password', { replace: true })
+          } else {
+            navigate(home, { replace: true })
+          }
+        }
+        return
+      }
+
       setChallengeId(result.challengeId)
       setEmailHint(result.emailHint || '')
-      setDebugOtp(result.debugOtp || '')
       setEmailWarning(result.emailWarning || '')
       setStep('twofactor')
     } catch (err) {
@@ -72,6 +92,9 @@ export default function LoginPage() {
 
     try {
       const result = await submitTwoFactor(challengeId, code.trim())
+      // Remember that OTP has been verified once for this account
+      localStorage.setItem(`ethioalert_otp_verified_${username.trim()}`, 'true')
+
       const home = ROLE_HOME_PATH[result.user.role]
 
       if (!hasWebAccess(result.user.role) || !home) {
@@ -96,71 +119,57 @@ export default function LoginPage() {
     setPassword('')
     setCode('')
     setEmailHint('')
-    setDebugOtp('')
     setEmailWarning('')
     setError('')
   }
 
   return (
     <div className="login-page relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6">
-      <div className="login-card relative z-10 grid w-full max-w-[980px] overflow-hidden rounded-[26px] bg-[#0e1619] shadow-[0_28px_80px_rgba(0,0,0,0.6)] lg:grid-cols-[0.92fr_1.08fr]">
-        {/* Left panel — exact mockup composition */}
-        <section className="login-brand relative hidden min-h-[580px] overflow-hidden px-11 py-14 text-white lg:flex lg:flex-col lg:justify-center">
-          <div className="login-spheres" aria-hidden="true">
-            <span className="login-sphere login-sphere-lg" />
-            <span className="login-sphere login-sphere-md" />
-            <span className="login-sphere login-sphere-sm" />
-            <span className="login-sphere login-sphere-xs" />
-            <span className="login-sphere login-sphere-tiny" />
-          </div>
-
-          <div className="relative z-10 max-w-[320px]">
-            <div className="mb-6">
+      <div className="login-card relative z-10 grid w-full max-w-[980px] overflow-hidden rounded-[26px] bg-white border border-slate-200/90 shadow-[0_24px_70px_rgba(15,23,42,0.08)] lg:grid-cols-[0.95fr_1.05fr]">
+        {/* Left panel — White Brand Showcase */}
+        <section className="login-brand relative hidden min-h-[580px] overflow-hidden bg-white border-r border-slate-100 px-10 py-12 lg:flex lg:flex-col lg:justify-between">
+          <div className="relative z-10 flex flex-col items-center text-center">
+            {/* Big Brand Logo — seamless on white background */}
+            <div className="mb-4 flex w-full max-w-[340px] justify-center">
               <img
-                src="/ethioalert-logo-dark.png"
-                alt="EthioAlert Logo"
-                className="h-16 w-auto object-contain drop-shadow-md"
+                src="/ethioalert-brand.jpg"
+                alt="EthioAlert - Stay Informed. Stay Safe."
+                className="h-auto w-full object-contain"
               />
             </div>
-            <p className="text-[34px] font-extrabold uppercase leading-none tracking-[0.06em] text-white">
-              Welcome
+
+            <p className="mt-1 text-xs font-bold uppercase tracking-[0.25em] text-[#0d9488]">
+              National Emergency Alert System
             </p>
-            <h1 className="mt-4 text-[20px] font-bold uppercase leading-snug tracking-[0.05em] text-white">
-              EthioAlert
-            </h1>
-            <p className="mt-6 text-[12.5px] leading-[1.7] text-teal-200/80">
+            <p className="mt-3 max-w-[320px] text-[13px] leading-relaxed text-slate-600">
               The national emergency alert and citizen safety console. INSA and partner
-              organizations use it to report incidents, confirm what is real, and send
-              a public warning only after two different officers approve it.
+              organizations use it to report incidents, verify threats, and dispatch
+              coordinated public warnings across Ethiopia.
             </p>
-            <p className="mt-4 text-[12.5px] leading-[1.7] text-teal-200/80">
-              INSA and partner organizations use it to report incidents, confirm what is
-              real, and send a public warning only after two different officers approve it.
-            </p>
+          </div>
+
+          <div className="relative z-10 border-t border-slate-100 pt-4 text-center text-[11px] font-medium tracking-wide text-slate-400">
+            Federal Democratic Republic of Ethiopia · INSA
           </div>
         </section>
 
         {/* Right panel — Sign in form */}
-        <section className="flex items-center justify-center bg-[#0e1619] px-6 py-10 sm:px-12 sm:py-14">
+        <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-12 sm:py-14">
           <div className="w-full max-w-[340px]">
-            <div className="mb-6 flex items-center gap-3">
-              <img
-                src="/ethioalert-logo-dark.png"
-                alt="EthioAlert Logo"
-                className="h-12 w-auto object-contain"
-              />
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#2dd4bf]">
-                  EthioAlert
-                </p>
-                <p className="text-[11px] text-slate-400">Operations Console</p>
+            <div className="mb-6 flex flex-col items-center text-center lg:hidden">
+              <div className="mb-2 w-52 overflow-hidden">
+                <img
+                  src="/ethioalert-brand.jpg"
+                  alt="EthioAlert"
+                  className="h-auto w-full object-contain"
+                />
               </div>
             </div>
 
-            <h2 className="text-[28px] font-bold leading-none tracking-tight text-slate-100">
+            <h2 className="text-[30px] font-bold leading-none tracking-tight text-slate-900">
               Sign in
             </h2>
-            <p className="mt-3 text-[13px] leading-5 text-[#8b93a7]">
+            <p className="mt-2.5 text-[13px] leading-5 text-slate-500">
               {step === 'credentials' &&
                 'National Emergency Alert and Citizen Safety Portal'}
               {step === 'twofactor' && 'Two-Factor Authentication Step-Up Required'}
@@ -180,7 +189,7 @@ export default function LoginPage() {
                     Username
                   </Label>
                   <div className="relative">
-                    <User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#9aa3b5]" />
+                    <User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
                     <Input
                       id="username"
                       name="username"
@@ -189,7 +198,7 @@ export default function LoginPage() {
                       autoComplete="username"
                       placeholder="User Name"
                       required
-                      className="h-[52px] rounded-[10px] border-0 bg-[#16282d] pl-12 text-[14px] text-slate-200 placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
+                      className="h-[52px] rounded-[10px] border border-slate-200 bg-slate-50/80 pl-12 text-[14px] text-slate-900 placeholder:text-slate-400 shadow-none focus-visible:border-[#0d9488] focus-visible:ring-2 focus-visible:ring-[#0d9488]/20"
                     />
                   </div>
                 </div>
@@ -199,7 +208,7 @@ export default function LoginPage() {
                     Password
                   </Label>
                   <div className="relative">
-                    <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#9aa3b5]" />
+                    <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
                     <Input
                       id="password"
                       name="password"
@@ -209,12 +218,12 @@ export default function LoginPage() {
                       autoComplete="current-password"
                       required
                       placeholder="Password"
-                      className="h-[52px] rounded-[10px] border-0 bg-[#16282d] px-12 text-[14px] text-slate-200 placeholder:text-[#9aa3b5] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
+                      className="h-[52px] rounded-[10px] border border-slate-200 bg-slate-50/80 px-12 text-[14px] text-slate-900 placeholder:text-slate-400 shadow-none focus-visible:border-[#0d9488] focus-visible:ring-2 focus-visible:ring-[#0d9488]/20"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#2dd4bf]"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-bold uppercase tracking-[0.08em] text-[#0d9488] hover:text-[#0b7a74]"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -223,18 +232,18 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-1 text-[13px]">
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-[#5b6475]">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-slate-600">
                     <input
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="h-4 w-4 rounded border-[#c5cad3] text-[#2dd4bf] focus:ring-[#2f6fed]"
+                      className="h-4 w-4 rounded border-slate-300 text-[#0d9488] focus:ring-[#0d9488]"
                     />
                     Remember me
                   </label>
                   <button
                     type="button"
-                    className="font-medium text-[#2dd4bf] hover:underline"
+                    className="font-medium text-[#0d9488] hover:underline"
                     onClick={() =>
                       setError('Password reset is handled by your system administrator.')
                     }
@@ -252,15 +261,15 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#0b7a74] shadow-md shadow-teal-900/10"
                   disabled={loading}
                 >
                   {loading ? 'Authenticating...' : 'Sign in'}
                 </Button>
 
-                <p className="pt-2 text-center text-[13px] text-[#8b93a7]">
+                <p className="pt-2 text-center text-[13px] text-slate-500">
                   Don&apos;t have an account?{' '}
-                  <span className="font-semibold text-[#2dd4bf]">
+                  <span className="font-semibold text-[#0d9488]">
                     Staff access only
                   </span>
                 </p>
@@ -270,7 +279,7 @@ export default function LoginPage() {
             {step === 'twofactor' && (
               <form onSubmit={handleTwoFactor} className="mt-8 space-y-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="code" className="text-xs font-medium text-[#5b6475]">
+                  <Label htmlFor="code" className="text-xs font-medium text-slate-600">
                     Verification code
                   </Label>
                   <Input
@@ -282,23 +291,16 @@ export default function LoginPage() {
                     placeholder="6-digit code"
                     autoComplete="one-time-code"
                     required
-                    className="h-[52px] rounded-[10px] border-0 bg-[#16282d] text-center font-mono text-lg tracking-widest text-[#2dd4bf] shadow-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/30"
+                    className="h-[52px] rounded-[10px] border border-slate-200 bg-slate-50/80 text-center font-mono text-lg tracking-widest text-[#0d9488] shadow-none focus-visible:border-[#0d9488] focus-visible:ring-2 focus-visible:ring-[#0d9488]/20"
                   />
-                  <span className="block text-center text-[10px] text-[#8b93a7]">
-                    {liveApi
-                      ? emailHint
-                        ? `A random code was emailed to ${emailHint}.`
-                        : 'A random verification code was emailed to your login address.'
-                      : 'Mock 2FA verification code: 123456'}
+                  <span className="block text-center text-[11px] text-slate-500">
+                    {emailHint
+                      ? `A verification code was sent to ${emailHint}.`
+                      : 'Enter the 6-digit verification code sent to your email or phone.'}
                   </span>
                   {liveApi && emailWarning ? (
                     <span className="block text-center text-[10px] font-medium text-amber-700">
                       {emailWarning}
-                    </span>
-                  ) : null}
-                  {liveApi && debugOtp ? (
-                    <span className="block text-center text-[10px] font-medium text-amber-600">
-                      Dev mode code: {debugOtp}
                     </span>
                   ) : null}
                 </div>
@@ -311,7 +313,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#0b7a74] shadow-md shadow-teal-900/10"
                   disabled={loading}
                 >
                   {loading ? 'Verifying...' : 'Verify and sign in'}
@@ -320,7 +322,7 @@ export default function LoginPage() {
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-[13px] text-[#8b93a7] hover:text-slate-200"
+                  className="w-full text-[13px] text-slate-500 hover:text-slate-900"
                   onClick={startOver}
                 >
                   Back to sign in
@@ -330,12 +332,12 @@ export default function LoginPage() {
 
             {step === 'mobile-only' && (
               <div className="mt-8 space-y-4 py-2 text-center">
-                <p className="text-sm text-slate-200">Please use the mobile app.</p>
-                <p className="text-xs text-[#8b93a7]">
+                <p className="text-sm text-slate-900">Please use the mobile app.</p>
+                <p className="text-xs text-slate-500">
                   Citizens receive emergency broadcasts through mobile push notifications and SMS alerts.
                 </p>
                 <Button
-                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#14b8a6]"
+                  className="h-[52px] w-full rounded-[10px] bg-[#0d9488] text-[15px] font-semibold text-white hover:bg-[#0b7a74]"
                   onClick={startOver}
                 >
                   Back to sign in

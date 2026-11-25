@@ -3,11 +3,14 @@ import {
   TrendingUp,
   FileSpreadsheet,
   FileText,
+  Sparkles,
 } from 'lucide-react'
+import AiReportSummaryModal from './AiReportSummaryModal'
 
 export default function ReportsAnalyticsPage() {
   const [dateRange, setDateRange] = useState('30d')
   const [exporting, setExporting] = useState(false)
+  const [aiModalOpen, setAiModalOpen] = useState(false)
 
   const handleExport = (format: 'pdf' | 'csv') => {
     setExporting(true)
@@ -46,21 +49,29 @@ export default function ReportsAnalyticsPage() {
           </select>
 
           <button
+            onClick={() => setAiModalOpen(true)}
+            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-teal-500 transition-all shadow-md shadow-teal-900/30"
+          >
+            <Sparkles className="w-4 h-4 text-teal-200" />
+            <span>AI Generated Summary</span>
+          </button>
+
+          <button
             onClick={() => handleExport('csv')}
             disabled={exporting}
             className="flex items-center gap-1.5 rounded-lg border border-[#1b2e34] bg-[#111d21] px-3 py-2 text-xs font-medium text-slate-200 hover:bg-[#162327] transition-colors shadow-sm"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-            <span>Export Excel / CSV</span>
+            <span>Export CSV</span>
           </button>
 
           <button
             onClick={() => handleExport('pdf')}
             disabled={exporting}
-            className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-3.5 py-2 text-xs font-semibold text-white hover:bg-teal-500 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 rounded-lg border border-[#1b2e34] bg-[#111d21] px-3 py-2 text-xs font-medium text-slate-200 hover:bg-[#162327] transition-colors shadow-sm"
           >
-            <FileText className="w-4 h-4" />
-            <span>Generate Executive PDF</span>
+            <FileText className="w-4 h-4 text-teal-400" />
+            <span>Executive PDF</span>
           </button>
         </div>
       </div>
@@ -156,6 +167,8 @@ export default function ReportsAnalyticsPage() {
           </div>
         </div>
       </div>
+
+      <AiReportSummaryModal open={aiModalOpen} onClose={() => setAiModalOpen(false)} />
     </div>
   )
 }

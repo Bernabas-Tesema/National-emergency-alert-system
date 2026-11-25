@@ -27,6 +27,9 @@ export interface Organization {
   id: string
   name: string
   kind: OrganizationKind
+  email?: string
+  phone?: string
+  adminFullName?: string
   status: AccountStatus
   createdAt: string // YYYY-MM-DD
 }
@@ -46,6 +49,10 @@ export interface StaffAccount {
 export interface NewOrganizationInput {
   name: string
   kind: ExternalKind
+  email: string
+  phone: string
+  adminFullName?: string
+  adminUsername?: string
 }
 
 export interface NewStaffInput {

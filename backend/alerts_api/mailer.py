@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives, get_connection
 from django.template.loader import render_to_string
 
 
@@ -18,14 +18,37 @@ def mask_email(email: str) -> str:
 
 
 def _send_html_email(*, subject: str, to_email: str, text_body: str, html_body: str) -> None:
-    message = EmailMultiAlternatives(
-        subject=subject,
-        body=text_body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[to_email],
-    )
-    message.attach_alternative(html_body, "text/html")
-    message.send(fail_silently=False)
+    def _build_message(connection=None) -> EmailMultiAlternatives:
+        msg = EmailMultiAlternatives(
+            subject=subject,
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[to_email],
+            connection=connection,
+        )
+        msg.attach_alternative(html_body, "text/html")
+        return msg
+
+    try:
+        _build_message().send(fail_silently=False)
+    except Exception:
+        # Fallback between SSL (465) and STARTTLS (587) if the primary SMTP port drops
+        if getattr(settings, "EMAIL_BACKEND", "").endswith("smtp.EmailBackend"):
+            fallback_port = 587 if getattr(settings, "EMAIL_PORT", 465) == 465 else 465
+            use_ssl = fallback_port == 465
+            use_tls = fallback_port == 587
+            conn = get_connection(
+                host=settings.EMAIL_HOST,
+                port=fallback_port,
+                username=settings.EMAIL_HOST_USER,
+                password=settings.EMAIL_HOST_PASSWORD,
+                use_tls=use_tls,
+                use_ssl=use_ssl,
+                timeout=15,
+            )
+            _build_message(connection=conn).send(fail_silently=False)
+        else:
+            raise
 
 
 def send_credentials_email(

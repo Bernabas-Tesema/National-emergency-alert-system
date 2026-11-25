@@ -18,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _otpSent = false;
   bool _busy = false;
   String? _error;
-  String? _debugOtp;
 
   @override
   void dispose() {
@@ -31,19 +30,18 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _busy = true;
       _error = null;
-      _debugOtp = null;
     });
     try {
       final result = await EthioApi.instance.verifyPhone(_phoneController.text.trim());
       if (result['linked'] != true) {
-        throw EthioApiException('Use a Fayda-linked +251 mobile number.');
+        throw EthioApiException('connect your phone to fyd');
       }
       setState(() {
         _otpSent = true;
-        _debugOtp = result['debug_otp']?.toString();
       });
     } catch (e) {
-      setState(() => _error = e.toString());
+      final msg = e.toString();
+      setState(() => _error = msg.contains('connect your phone to fyd') ? 'connect your phone to fyd' : msg);
     } finally {
       setState(() => _busy = false);
     }
@@ -87,16 +85,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.white24),
+                    Center(
+                      child: Container(
+                        width: 108,
+                        height: 108,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.18),
+                              blurRadius: 24,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.asset(
+                            'assets/images/ethioalert_logo.jpg',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
-                      child: const Icon(Icons.shield_rounded, color: Colors.white, size: 38),
                     ),
                     const SizedBox(height: 18),
                     Text(
@@ -145,8 +157,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           const SizedBox(height: 6),
                           Text(
                             _otpSent
-                                ? 'We sent a one-time code for your Fayda-linked number.'
-                                : 'Use your +251 number linked in the national registry.',
+                                ? 'We sent a 6-digit SMS verification code to your phone.'
+                                : 'Enter your Ethiopian mobile number (09…, 07…, or +251…).',
                             style: const TextStyle(color: ethioMuted, fontSize: 13, height: 1.4),
                           ),
                           const SizedBox(height: 18),
@@ -156,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.phone,
                             decoration: const InputDecoration(
                               labelText: 'Mobile number',
-                              hintText: '+2519…',
+                              hintText: '09… / 07… / +251…',
                               prefixIcon: Icon(Icons.phone_iphone_rounded),
                             ),
                           ),
@@ -173,17 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ],
-                          if (_debugOtp != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              'Dev OTP: $_debugOtp',
-                              style: const TextStyle(
-                                color: ethioGold,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
                           if (_error != null) ...[
                             const SizedBox(height: 10),
                             Text(_error!, style: const TextStyle(color: ethioDanger, fontSize: 12)),
@@ -196,7 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? 'Please wait…'
                                   : _otpSent
                                       ? 'Verify & continue'
-                                      : 'Send code',
+                                      : 'Send SMS code',
                             ),
                           ),
                           if (_otpSent)
@@ -206,7 +207,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                   : () => setState(() {
                                         _otpSent = false;
                                         _otpController.clear();
-                                        _debugOtp = null;
                                       }),
                               child: const Text('Use a different number'),
                             ),

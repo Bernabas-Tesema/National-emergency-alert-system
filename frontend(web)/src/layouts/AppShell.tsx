@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 import {
   LayoutDashboard,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 
 import ConnectionIndicator from '@/components/ConnectionIndicator'
+import GlobalSearchDialog from '@/components/GlobalSearchDialog'
 import EthioAlertAiAssistant from '@/features/ai/EthioAlertAiAssistant'
 import ThemeToggle from '@/features/theme/ThemeToggle'
 import SessionTimeout from '@/features/auth/SessionTimeout'
@@ -165,6 +166,19 @@ export default function AppShell() {
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  // Global Ctrl+K / Cmd+K shortcut listener to toggle search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const todayLabel = useMemo(
     () =>
@@ -263,11 +277,15 @@ export default function AppShell() {
       >
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 p-1">
-              <img src="/ethioalert-logo-dark.png" alt="EthioAlert Logo" className="h-8 w-8 object-contain" />
-            </div>
+            <img
+              src="/ethioalert-brand.jpg"
+              alt="EthioAlert logo"
+              className="h-10 w-10 rounded-xl object-cover ring-2 ring-teal-500/40"
+            />
             <div>
-              <span className="text-base font-bold tracking-tight">EthioAlert</span>
+              <span className="text-base font-bold tracking-tight">
+                <span className="text-white">Ethio</span><span className="text-[#2dd4bf]">Alert</span>
+              </span>
               <p className="text-[11px] text-teal-100">
                 {isLimitedDispatcher ? 'Dispatcher Console' : 'Operations Console'}
               </p>
@@ -316,11 +334,15 @@ export default function AppShell() {
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-4">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 p-1">
-                <img src="/ethioalert-logo-dark.png" alt="EthioAlert Logo" className="h-8 w-8 object-contain" />
-              </div>
+              <img
+                src="/ethioalert-brand.jpg"
+                alt="EthioAlert logo"
+                className="h-10 w-10 rounded-xl object-cover ring-2 ring-teal-500/40 shrink-0"
+              />
               <div>
-                <span className="text-base font-bold tracking-tight">EthioAlert</span>
+                <span className="text-base font-bold tracking-tight">
+                  <span className="text-white">Ethio</span><span className="text-[#2dd4bf]">Alert</span>
+                </span>
                 <p className="text-[11px] text-teal-100">
                   {isLimitedDispatcher ? 'Dispatcher Console' : 'Delivering safety alerts'}
                 </p>
@@ -379,19 +401,34 @@ export default function AppShell() {
               <Menu className="h-4 w-4" />
             </button>
 
-            <div className="relative hidden min-w-0 max-w-md flex-1 md:block">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                placeholder="Search cases, alerts, staff..."
-                className="h-10 w-full rounded-xl border border-[#1e3137] bg-[#0e1619] pl-9 pr-16 text-sm text-slate-200 outline-none placeholder:text-slate-500 focus:border-[#2dd4bf] focus:ring-2 focus:ring-[#2dd4bf]/15"
-                readOnly
-                aria-label="Search"
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md border border-[#1e3137] bg-[#0b292e] px-1.5 py-0.5 text-[10px] font-medium text-slate-400">
+            {/* Mobile search trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="rounded-lg border border-[#1e3137] p-1.5 text-slate-400 hover:bg-white/10 md:hidden"
+              aria-label="Search"
+              title="Search cases, alerts, staff"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+
+            {/* Desktop Clickable Search Bar & Ctrl+K Trigger */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="group relative hidden min-w-0 max-w-md flex-1 items-center justify-between rounded-xl border border-[#1e3137] bg-[#0e1619] px-3.5 py-2 text-left text-sm text-slate-400 hover:border-[#2dd4bf]/50 hover:bg-[#121f24] hover:text-slate-200 transition-colors md:flex shadow-xs"
+              aria-label="Search cases, alerts, staff"
+            >
+              <div className="flex items-center gap-2.5 truncate">
+                <Search className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#2dd4bf] transition-colors" />
+                <span className="truncate text-slate-500 group-hover:text-slate-300">
+                  Search cases, alerts, staff, SOS...
+                </span>
+              </div>
+              <span className="shrink-0 rounded-md border border-[#1e3137] bg-[#0b292e] px-1.5 py-0.5 text-[10px] font-mono font-medium text-slate-400 group-hover:text-[#2dd4bf] group-hover:border-teal-800">
                 Ctrl + K
               </span>
-            </div>
+            </button>
 
             <div className="hidden items-center gap-2 rounded-xl border border-[#1e3137] bg-[#0b292e] px-2.5 py-1.5 text-xs text-slate-300 lg:flex">
               <Building2 className="h-3.5 w-3.5 text-[#2dd4bf]" />
@@ -408,6 +445,18 @@ export default function AppShell() {
             <div className="hidden sm:block">
               <ConnectionIndicator />
             </div>
+
+            {/* Citizen SOS portal quick-link */}
+            <a
+              href="/sos"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden lg:flex items-center gap-1.5 rounded-xl border border-red-800/50 bg-red-950/40 px-2.5 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-900/60 hover:text-red-300 transition-colors"
+              title="Open citizen SOS portal"
+            >
+              <Siren className="h-3.5 w-3.5" />
+              SOS Portal
+            </a>
 
             <ThemeToggle />
 
@@ -450,6 +499,7 @@ export default function AppShell() {
         </main>
       </div>
 
+      <GlobalSearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
       <EthioAlertAiAssistant />
       <SessionTimeout />
     </div>

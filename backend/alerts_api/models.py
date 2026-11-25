@@ -66,6 +66,7 @@ class Case(models.Model):
     review_comment = models.TextField(null=True, blank=True)
     org_response = models.TextField(null=True, blank=True)
     status = models.CharField(max_length=32, default="submitted")
+    tracking_code = models.CharField(max_length=20, blank=True, default="", db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

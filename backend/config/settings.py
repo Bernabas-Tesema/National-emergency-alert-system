@@ -316,6 +316,12 @@ EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", default=True)
+EMAIL_USE_SSL = _env_bool("EMAIL_USE_SSL", default=False)
+EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "15"))
+
+AFROMESSAGE_API_KEY = os.getenv("AFROMESSAGE_API_KEY", "")
+AFROMESSAGE_SENDER_NAME = os.getenv("AFROMESSAGE_SENDER_NAME", "NEAS")
+AFROMESSAGE_BASE_URL = os.getenv("AFROMESSAGE_BASE_URL", "https://api.afromessage.com/api/send")
 
 LOGGING = {
     "version": 1,

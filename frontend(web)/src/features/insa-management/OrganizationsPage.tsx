@@ -51,7 +51,9 @@ export default function OrganizationsPage() {
     setOrganizations((prev) => [...prev, created])
     setShowForm(false)
     setActionError('')
-    setNotice(`${created.name} was registered.`)
+    setNotice(
+      `${created.name} was successfully registered. Initial administrator login credentials were sent to ${created.email || input.email}.`,
+    )
   }
 
   function requestStatusChange(org: Organization) {
@@ -87,8 +89,34 @@ export default function OrganizationsPage() {
   }
 
   const columns: Column<Organization>[] = [
-    { header: 'Name', cell: (o) => o.name },
+    {
+      header: 'Name',
+      cell: (o) => (
+        <div>
+          <p className="font-semibold text-slate-100">{o.name}</p>
+          {o.adminFullName && (
+            <p className="text-[11px] text-slate-400">Admin: {o.adminFullName}</p>
+          )}
+        </div>
+      ),
+    },
     { header: 'Type', cell: (o) => ORGANIZATION_KIND_LABELS[o.kind] },
+    {
+      header: 'Official Email',
+      cell: (o) => (
+        <span className="font-mono text-xs text-teal-300">
+          {o.email || `${o.id.replace('org-', '')}@agency.gov.et`}
+        </span>
+      ),
+    },
+    {
+      header: 'Phone',
+      cell: (o) => (
+        <span className="font-mono text-xs text-slate-300">
+          {o.phone || '+251 91 100 0000'}
+        </span>
+      ),
+    },
     { header: 'Status', cell: (o) => <AccountStatusBadge status={o.status} /> },
     { header: 'Registered', cell: (o) => o.createdAt },
     {

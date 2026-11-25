@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../api/ethio_api.dart';
 import '../theme/ethio_theme.dart';
+import '../utils/ambulance_alarm.dart';
 import '../widgets/ai_message_bubble.dart';
 import '../widgets/nav_icon.dart';
 import 'sos_screen.dart';
@@ -31,35 +33,86 @@ class _HomeShellState extends State<HomeShell> {
     ),
   ];
   bool _aiBusy = false;
+  bool _alarmMuted = false;
+  String? _lastAlarmedAlertId;
+  Timer? _alertPollTimer;
 
   @override
   void initState() {
     super.initState();
     _refresh();
+    _alertPollTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (mounted) _refresh(silent: true);
+    });
   }
 
   @override
   void dispose() {
+    _alertPollTimer?.cancel();
+    AmbulanceAlarm.stopAlarm();
     _aiController.dispose();
     super.dispose();
   }
 
-  Future<void> _refresh() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _refresh({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     try {
       final alerts = await EthioApi.instance.myAlerts();
       final cases = await EthioApi.instance.myCases();
+      if (!mounted) return;
       setState(() {
         _alerts = alerts;
         _reports = cases;
       });
+
+      if (alerts.isNotEmpty) {
+        final topAlert = alerts.first;
+        final topId = topAlert['id']?.toString() ?? '';
+        final isCritical = (topAlert['severity']?.toString().toLowerCase() ?? 'critical') == 'critical';
+        final alertTitle = topAlert['title']?.toString() ?? 'Emergency Alert';
+        final alertMessage = topAlert['message']?.toString() ?? '';
+
+        if (topId.isNotEmpty && topId != _lastAlarmedAlertId) {
+          _lastAlarmedAlertId = topId;
+          if (!_alarmMuted) {
+            AmbulanceAlarm.playAlertAlarm(
+              title: alertTitle,
+              message: alertMessage,
+              isCritical: isCritical,
+            );
+          } else {
+            AmbulanceAlarm.showNotification(
+              title: alertTitle,
+              message: alertMessage,
+              isCritical: isCritical,
+            );
+          }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('🚨 $alertTitle'),
+                backgroundColor: isCritical ? ethioDanger : ethioForest,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 5),
+                action: SnackBarAction(
+                  label: 'Silence',
+                  textColor: Colors.white,
+                  onPressed: () => AmbulanceAlarm.stopAlarm(),
+                ),
+              ),
+            );
+          }
+        }
+      }
     } catch (e) {
-      setState(() => _error = e.toString());
+      if (!silent && mounted) setState(() => _error = e.toString());
     } finally {
-      setState(() => _loading = false);
+      if (!silent && mounted) setState(() => _loading = false);
     }
   }
 
@@ -150,25 +203,29 @@ class _HomeShellState extends State<HomeShell> {
             Container(
               width: 38,
               height: 38,
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [ethioGreen, ethioForest],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ethioBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: ethioGreen.withValues(alpha: 0.28),
+                    color: ethioGreen.withValues(alpha: 0.16),
                     blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
-              child: Icon(
-                _index == 2 ? Icons.auto_awesome_rounded : Icons.shield_rounded,
-                color: Colors.white,
-                size: 20,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: _index == 2
+                    ? Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(colors: [ethioGold, ethioForest]),
+                        ),
+                        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+                      )
+                    : Image.asset('assets/images/ethioalert_logo.jpg', fit: BoxFit.contain),
               ),
             ),
             const SizedBox(width: 12),
@@ -192,9 +249,27 @@ class _HomeShellState extends State<HomeShell> {
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              setState(() => _alarmMuted = !_alarmMuted);
+              if (_alarmMuted) {
+                AmbulanceAlarm.stopAlarm();
+              } else if (_alerts.isNotEmpty) {
+                AmbulanceAlarm.playAlertAlarm(
+                  title: _alerts.first['title']?.toString() ?? 'Emergency Alert',
+                  message: _alerts.first['message']?.toString() ?? '',
+                );
+              }
+            },
+            tooltip: _alarmMuted ? 'Unmute Ambulance Alarm' : 'Mute Ambulance Alarm',
+            icon: Icon(
+              _alarmMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+              color: _alarmMuted ? ethioMuted : ethioDanger,
+            ),
+          ),
           if (_index != 2)
             IconButton(
-              onPressed: _loading ? null : _refresh,
+              onPressed: _loading ? null : () => _refresh(),
               icon: const Icon(Icons.refresh_rounded),
             ),
         ],
@@ -422,62 +497,284 @@ class _HomeTab extends StatelessWidget {
             const _InfoCard(
               icon: Icons.notifications_none_rounded,
               color: ethioGreen,
-              text: 'No dispatched alerts for your registered region yet.',
+              text: 'No active emergency alerts at this moment.',
             )
-          else
+          else ...[
+            // Top Critical Emergency Alarm Banner if alerts exist
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF450A0A), Color(0xFF1E1015)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: const Color(0xFFDC2626), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_active_rounded,
+                          color: Color(0xFFFCA5A5),
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          '🚨 ACTIVE EMERGENCY BROADCAST ALARM',
+                          style: TextStyle(
+                            color: Color(0xFFFECACA),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDC2626),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: const Text(
+                          'ALL REGIONS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    alerts.first['title']?.toString() ?? 'Emergency Warning',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    alerts.first['message']?.toString() ?? '',
+                    style: const TextStyle(
+                      color: Color(0xFFF1F5F9),
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(0, 42),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: onSos,
+                          icon: const Icon(Icons.sos_rounded, size: 20),
+                          label: const Text(
+                            'Send SOS',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.16),
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: const BorderSide(color: Colors.white24),
+                          ),
+                        ),
+                        onPressed: () {
+                          AmbulanceAlarm.playAlertAlarm(
+                            title: alerts.first['title']?.toString() ?? 'Emergency Alert',
+                            message: alerts.first['message']?.toString() ?? '',
+                          );
+                        },
+                        icon: const Icon(Icons.volume_up_rounded, size: 18, color: Color(0xFFFCA5A5)),
+                        label: const Text(
+                          'Siren',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white.withValues(alpha: 0.12),
+                          foregroundColor: Colors.white70,
+                        ),
+                        onPressed: () => AmbulanceAlarm.stopAlarm(),
+                        tooltip: 'Stop Alarm',
+                        icon: const Icon(Icons.volume_off_rounded, size: 18),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             ...alerts.map(
-              (alert) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Card(
-                  child: Padding(
+              (alert) {
+                final isCritical = (alert['severity']?.toString().toLowerCase() ?? '') == 'critical';
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
                     padding: const EdgeInsets.all(16),
-                    child: Row(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isCritical ? const Color(0xFFF87171) : ethioBorder,
+                        width: isCritical ? 1.5 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 46,
-                          height: 46,
-                          decoration: BoxDecoration(
-                            color: ethioGreen.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(Icons.campaign_rounded, color: ethioGreen),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isCritical
+                                    ? const Color(0xFFFEE2E2)
+                                    : ethioGreen.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(
+                                Icons.campaign_rounded,
+                                color: isCritical ? const Color(0xFFDC2626) : ethioGreen,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: isCritical ? const Color(0xFFDC2626) : ethioForest,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          (alert['severity']?.toString() ?? 'WARNING').toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          alert['region']?.toString() ?? 'All Regions',
+                                          style: const TextStyle(
+                                            color: ethioMuted,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    alert['title']?.toString() ?? 'Alert',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 15,
+                                      color: ethioInk,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                alert['title']?.toString() ?? 'Alert',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
+                        const SizedBox(height: 10),
+                        Text(
+                          alert['message']?.toString() ?? '',
+                          style: const TextStyle(color: ethioInk, fontSize: 13, height: 1.45),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.cell_tower_rounded, size: 14, color: ethioMuted),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Broadcast: PUSH · SMS · CELL',
+                                  style: TextStyle(color: ethioMuted.withValues(alpha: 0.8), fontSize: 11),
                                 ),
+                              ],
+                            ),
+                            TextButton(
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                alert['message']?.toString() ?? '',
-                                style: const TextStyle(color: ethioMuted, height: 1.4),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${alert['region'] ?? ''} · ${alert['severity'] ?? ''}',
-                                style: TextStyle(
-                                  color: ethioGreen.withValues(alpha: 0.9),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
+                              onPressed: onSos,
+                              child: const Text('Send SOS', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ),
-              ),
+                );
+              },
             ),
+          ],
         ],
       ),
     );
@@ -686,7 +983,7 @@ class _ReportsTab extends StatelessWidget {
   }
 }
 
-class _EaiTab extends StatelessWidget {
+class _EaiTab extends StatefulWidget {
   const _EaiTab({
     required this.messages,
     required this.controller,
@@ -698,6 +995,51 @@ class _EaiTab extends StatelessWidget {
   final TextEditingController controller;
   final bool busy;
   final Future<void> Function(String) onSend;
+
+  @override
+  State<_EaiTab> createState() => _EaiTabState();
+}
+
+class _EaiTabState extends State<_EaiTab> {
+  bool _isVoiceRecording = false;
+  int _voiceSeconds = 0;
+  Timer? _voiceTimer;
+
+  @override
+  void dispose() {
+    _voiceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startVoiceRecording() {
+    setState(() {
+      _isVoiceRecording = true;
+      _voiceSeconds = 0;
+    });
+    _voiceTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (_voiceSeconds >= 30) {
+        _finishVoiceRecording(send: true);
+      } else {
+        setState(() => _voiceSeconds++);
+      }
+    });
+  }
+
+  void _finishVoiceRecording({required bool send}) {
+    _voiceTimer?.cancel();
+    final recordedSeconds = _voiceSeconds;
+    setState(() {
+      _isVoiceRecording = false;
+      _voiceSeconds = 0;
+    });
+
+    if (send && recordedSeconds > 0) {
+      final voiceInput = widget.controller.text.trim().isNotEmpty
+          ? widget.controller.text.trim()
+          : 'Voice Query (${recordedSeconds}s audio recording): Please give me immediate emergency safety steps.';
+      widget.onSend(voiceInput);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -723,7 +1065,7 @@ class _EaiTab extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Ask calm safety steps for fire, flood, accidents, and SOS timing.',
+                  'Ask emergency safety guidance by text or tap the microphone for voice recording.',
                   style: TextStyle(color: ethioInk, fontSize: 12.5, height: 1.35),
                 ),
               ),
@@ -733,9 +1075,9 @@ class _EaiTab extends StatelessWidget {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-            itemCount: messages.length + (busy ? 1 : 0),
+            itemCount: widget.messages.length + (widget.busy ? 1 : 0),
             itemBuilder: (context, index) {
-              if (busy && index == messages.length) {
+              if (widget.busy && index == widget.messages.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Row(
@@ -751,7 +1093,7 @@ class _EaiTab extends StatelessWidget {
                   ),
                 );
               }
-              final m = messages[index];
+              final m = widget.messages[index];
               return AiMessageBubble(text: m.text, isUser: m.isUser);
             },
           ),
@@ -765,46 +1107,101 @@ class _EaiTab extends StatelessWidget {
                 'What should I do in a fire?',
                 'When should I send SOS?',
                 'Flood safety tips',
+                'Heart attack first response',
               ])
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ActionChip(
                     avatar: const Icon(Icons.bolt_rounded, size: 16, color: ethioGold),
                     label: Text(q),
-                    onPressed: busy ? null : () => onSend(q),
+                    onPressed: widget.busy ? null : () => widget.onSend(q),
                   ),
                 ),
             ],
           ),
         ),
+
+        // Bottom Input Area (with Voice Recording Bar or Text/Mic Buttons)
         SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Ask EAi about emergencies…',
-                      prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: ethioMuted),
+            child: _isVoiceRecording
+                ? Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
                     ),
-                    onSubmitted: busy ? null : onSend,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.fiber_manual_record_rounded, color: Colors.red, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Recording Voice Query: 00:${_voiceSeconds.toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                            color: Color(0xFF991B1B),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          onPressed: () => _finishVoiceRecording(send: false),
+                          icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                          tooltip: 'Cancel',
+                        ),
+                        FilledButton.icon(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: ethioDanger,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            minimumSize: const Size(0, 36),
+                          ),
+                          onPressed: () => _finishVoiceRecording(send: true),
+                          icon: const Icon(Icons.arrow_upward_rounded, size: 16),
+                          label: const Text('Ask EAi'),
+                        ),
+                      ],
+                    ),
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: widget.controller,
+                          decoration: const InputDecoration(
+                            hintText: 'Ask EAi or tap mic to speak…',
+                            prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: ethioMuted),
+                          ),
+                          onSubmitted: widget.busy ? null : widget.onSend,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Voice Recording Microphone Button
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: ethioForest.withValues(alpha: 0.12),
+                          foregroundColor: ethioForest,
+                          minimumSize: const Size(48, 48),
+                        ),
+                        onPressed: widget.busy ? null : _startVoiceRecording,
+                        icon: const Icon(Icons.mic_rounded),
+                        tooltip: 'Ask using voice recording',
+                      ),
+                      const SizedBox(width: 6),
+                      // Text Send Button
+                      IconButton.filled(
+                        style: IconButton.styleFrom(
+                          backgroundColor: ethioGold,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(48, 48),
+                        ),
+                        onPressed: widget.busy ? null : () => widget.onSend(widget.controller.text),
+                        icon: const Icon(Icons.send_rounded),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton.filled(
-                  style: IconButton.styleFrom(
-                    backgroundColor: ethioGold,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(48, 48),
-                  ),
-                  onPressed: busy ? null : () => onSend(controller.text),
-                  icon: const Icon(Icons.send_rounded),
-                ),
-              ],
-            ),
           ),
         ),
       ],

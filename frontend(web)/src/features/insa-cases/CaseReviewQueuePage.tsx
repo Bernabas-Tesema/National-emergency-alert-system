@@ -264,7 +264,11 @@ export default function CaseReviewQueuePage() {
                   </button>
 
                   <button
-                    onClick={() => navigate('/insa/alerts/composer')}
+                    onClick={() =>
+                      navigate('/insa/alerts/composer', {
+                        state: { sourceCase: selectedCase },
+                      })
+                    }
                     className="flex items-center justify-center gap-1.5 rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white hover:bg-teal-500 transition-colors shadow-sm"
                   >
                     <Radio className="w-3.5 h-3.5" />

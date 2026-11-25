@@ -18,7 +18,7 @@ const STORAGE_KEY = 'ness-mock-user'
 
 function loadSavedUser(): User | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as User
     // Ignore saved data that does not look right (e.g. an old or edited role).
@@ -33,11 +33,13 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(loadSavedUser)
 
   function login(nextUser: User) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
     setUser(nextUser)
   }
 
   function logout() {
+    localStorage.removeItem(STORAGE_KEY)
     sessionStorage.removeItem(STORAGE_KEY)
     clearAccessToken()
     setUser(null)

@@ -4,6 +4,10 @@
     <!-- Internet access for online maps and network requests -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Notifications and vibration for critical emergency alerts -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Location access for reporting incident coordinates -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

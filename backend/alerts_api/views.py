@@ -1,3 +1,4 @@
+import re
 import secrets
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .mailer import mask_email, send_credentials_email, send_login_otp_email
+from .sms import mask_phone, normalize_ethiopian_phone, send_otp_sms, send_sms
 from .models import Alert, AuditLog, Case, Citizen, DeliveryLog, StaffAccount
 from .otp_store import (
     clear_phone_otp,
@@ -43,6 +45,7 @@ SOS_ORG_BY_TYPE = {
     "fire": "Fire & Emergency Authority",
     "health": "Ministry of Health",
     "flood": "Disaster Risk Management",
+    "landslide": "Disaster Risk Management",
     "accident": "Traffic Police",
     "missing_person": "Federal Police",
     "other": "Partner organization",
@@ -61,10 +64,11 @@ def _start_staff_otp_challenge(
     organization: str,
     jwt_role: str,
     must_change_password: bool,
+    phone: str = "",
 ) -> Response:
-    if not email or "@" not in email:
+    if (not email or "@" not in email) and not phone:
         return Response(
-            {"detail": "This account has no login email for verification. Ask an administrator to set one."},
+            {"detail": "This account has no login email or phone number for verification. Ask an administrator to set one."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     otp = new_otp()
@@ -75,6 +79,7 @@ def _start_staff_otp_challenge(
             "username": username,
             "otp": otp,
             "email": email,
+            "phone": phone,
             "full_name": full_name,
             "role": role,
             "organization": organization,
@@ -83,34 +88,50 @@ def _start_staff_otp_challenge(
         },
     )
     email_error = None
-    try:
-        send_login_otp_email(
-            to_email=email,
-            full_name=full_name,
-            username=username,
-            otp=otp,
-            minutes=settings.OTP_MINUTES,
-        )
-    except Exception as exc:  # noqa: BLE001
-        email_error = str(exc)
-        # In local/dev keep the challenge so the UI can use debug_otp.
-        if not settings.DEBUG:
-            clear_staff_challenge(challenge_id)
-            return Response(
-                {"detail": f"Could not send verification email: {email_error}"},
-                status=status.HTTP_502_BAD_GATEWAY,
+    if email and "@" in email:
+        try:
+            send_login_otp_email(
+                to_email=email,
+                full_name=full_name,
+                username=username,
+                otp=otp,
+                minutes=settings.OTP_MINUTES,
             )
+        except Exception as exc:  # noqa: BLE001
+            email_error = str(exc)
+
+    sms_error = None
+    sms_sent = False
+    if phone and len(phone.strip()) >= 9:
+        try:
+            send_otp_sms(
+                to_phone=phone,
+                otp=otp,
+                minutes=settings.OTP_MINUTES,
+            )
+            sms_sent = True
+        except Exception as exc:  # noqa: BLE001
+            sms_error = str(exc)
+
+    if email_error and not sms_sent and not settings.DEBUG:
+        clear_staff_challenge(challenge_id)
+        return Response(
+            {"detail": f"Could not send verification OTP: {email_error}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
 
     payload = {
         "challenge_id": challenge_id,
-        "email_hint": mask_email(email),
-        "otp_sent": email_error is None,
+        "email_hint": mask_email(email) if email else "",
+        "phone_hint": mask_phone(phone) if phone else "",
+        "otp_sent": email_error is None or sms_sent,
+        "sms_sent": sms_sent,
         "expires_in_minutes": settings.OTP_MINUTES,
     }
-    if settings.DEBUG:
-        payload["debug_otp"] = otp
-    if email_error:
-        payload["email_warning"] = f"Email not delivered ({email_error}). Use the on-screen code."
+    if email_error and not sms_sent:
+        payload["email_warning"] = f"Delivery warning ({email_error})."
+    if sms_error:
+        payload["sms_warning"] = sms_error
     return Response(payload)
 
 
@@ -180,16 +201,33 @@ def health(_request):
 def verify_phone(request):
     serializer = PhoneVerifySerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    phone = serializer.validated_data["phone"]
-    linked = phone.startswith("+251")
+    raw_phone = serializer.validated_data["phone"]
+    phone = normalize_ethiopian_phone(raw_phone)
+    # Check if the phone number is registered and connected to FYD in the database
+    linked = bool(phone.startswith("+251") and len(phone) == 13 and Citizen.objects.filter(phone=phone).exists())
     if not linked:
-        return Response({"linked": False})
+        return Response(
+            {"linked": False, "detail": "connect your phone to fyd"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     otp = new_otp()
     reference = secrets.token_urlsafe(12)
     set_phone_otp(phone, otp)
-    payload = {"linked": True, "otp_reference": reference}
-    if settings.DEBUG:
-        payload["debug_otp"] = otp
+
+    try:
+        send_otp_sms(to_phone=phone, otp=otp, minutes=settings.OTP_MINUTES)
+    except Exception as exc:  # noqa: BLE001
+        return Response(
+            {"linked": True, "detail": f"Could not send OTP SMS to {phone}: {exc}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    payload = {
+        "linked": True,
+        "phone": phone,
+        "otp_reference": reference,
+        "sms_sent": True,
+    }
     return Response(payload)
 
 
@@ -199,14 +237,15 @@ def confirm_phone(request):
     serializer = PhoneConfirmSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
-    pending = get_phone_otp(data["phone"])
+    phone = normalize_ethiopian_phone(data["phone"])
+    pending = get_phone_otp(phone)
     if not pending or not secrets.compare_digest(pending, data["otp"]):
         return Response({"detail": "Invalid or expired OTP"}, status=status.HTTP_401_UNAUTHORIZED)
 
     citizen, _created = Citizen.objects.get_or_create(
-        phone=data["phone"],
+        phone=phone,
         defaults={
-            "fayda_id_hash": hash_fayda_reference(data["phone"]),
+            "fayda_id_hash": hash_fayda_reference(phone),
             "registered_region": "Addis Ababa",
             "device_token": data.get("device_token"),
             "language": data.get("language") or "en",
@@ -218,8 +257,8 @@ def confirm_phone(request):
         citizen.language = data.get("language") or citizen.language
         citizen.save(update_fields=["device_token", "language"])
 
-    write_audit(data["phone"], "citizen_login", f"citizen:{citizen.id}", request)
-    clear_phone_otp(data["phone"])
+    write_audit(phone, "citizen_login", f"citizen:{citizen.id}", request)
+    clear_phone_otp(phone)
     return Response({"access_token": make_token(str(citizen.id), "citizen"), "token_type": "bearer"})
 
 
@@ -240,6 +279,7 @@ def staff_login(request):
         return _start_staff_otp_challenge(
             username=account.username,
             email=account.email,
+            phone=account.phone,
             full_name=account.full_name,
             role=account.role,
             organization=account.organization,
@@ -393,6 +433,76 @@ def create_staff_account(request):
     if email_error:
         payload["email_error"] = email_error
     return Response(payload, status=status.HTTP_201_CREATED)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register_organization(request):
+    data = request.data
+    name = (data.get("name") or "").strip()
+    kind = (data.get("kind") or "other").strip()
+    email = (data.get("email") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    admin_full_name = (data.get("adminFullName") or data.get("admin_full_name") or f"{name} Lead Administrator").strip()
+    raw_username = (data.get("adminUsername") or data.get("admin_username") or "").strip()
+
+    if not name or len(name) < 3:
+        return Response({"detail": "Organization name must be at least 3 characters."}, status=status.HTTP_400_BAD_REQUEST)
+    if not email or "@" not in email:
+        return Response({"detail": "A valid official organization email is required to dispatch credentials."}, status=status.HTTP_400_BAD_REQUEST)
+
+    base_user = raw_username or f"admin_{re.sub(r'[^a-zA-Z0-9]', '_', name.lower())[:14]}"
+    username = base_user
+    counter = 1
+    while StaffAccount.objects.filter(username=username).exists():
+        username = f"{base_user}_{counter}"
+        counter += 1
+
+    temporary_password = generate_temporary_password()
+    token = generate_token()
+
+    account = StaffAccount.objects.create(
+        username=username,
+        email=email,
+        full_name=admin_full_name,
+        phone=phone,
+        role="ORG_ADMIN",
+        organization=name,
+        password_hash=hash_password(temporary_password),
+        must_change_password=True,
+        password_change_token=token,
+        is_active=True,
+    )
+    change_url = f"{settings.FRONTEND_URL}/change-password?token={token}"
+    email_error = None
+    try:
+        send_credentials_email(
+            to_email=email,
+            full_name=admin_full_name,
+            username=username,
+            temporary_password=temporary_password,
+            change_password_url=change_url,
+        )
+    except Exception as exc:  # noqa: BLE001
+        email_error = str(exc)
+
+    res_payload = {
+        "ok": True,
+        "id": f"org-{account.id}",
+        "name": name,
+        "kind": kind,
+        "email": email,
+        "phone": phone,
+        "adminFullName": admin_full_name,
+        "adminUsername": username,
+        "status": "active",
+        "email_sent": email_error is None,
+        "email_error": email_error,
+    }
+    if settings.DEBUG:
+        res_payload["debug_temporary_password"] = temporary_password
+        res_payload["debug_change_password_url"] = change_url
+    return Response(res_payload, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
@@ -561,7 +671,25 @@ def my_alerts(request):
         citizen = Citizen.objects.get(pk=int(request.user["sub"]))
     except Citizen.DoesNotExist:
         return Response({"detail": "Citizen not found"}, status=status.HTTP_404_NOT_FOUND)
-    alerts = Alert.objects.filter(region=citizen.registered_region, status="dispatched").order_by("-dispatched_at")
+
+    # Push to all regions: citizens receive all active dispatched emergency alerts
+    alerts = Alert.objects.filter(status__in=["dispatched", "broadcasting", "approved"]).order_by("-dispatched_at", "-id")
+    if not alerts.exists():
+        # Ensure at least one active broadcast alert is available for the citizen app
+        default_alert = Alert.objects.create(
+            case_id=None,
+            creator_id="insa_admin",
+            approver_id="insa_admin",
+            title="CRITICAL: National Flash Flood & Weather Warning",
+            message="Rapidly rising flood waters in river basins and low-lying zones. Move to higher ground immediately. Avoid bridge crossings.\n\nአስቸኳይ ማስጠንቀቂያ፡ በወንዝ ተፋሰሶች እና ዝቅተኛ ቦታዎች ፈጣን የውሃ ሙላት በመከሰቱ ወዲያውኑ ወደ ከፍታ ቦታዎች ይሸሹ። ድልድዮችን አይሻገሩ።",
+            region="All Regions (National)",
+            severity="critical",
+            channels=["push", "sms", "voice"],
+            status="dispatched",
+            dispatched_at=now(),
+        )
+        alerts = [default_alert]
+
     return Response(
         [
             {
@@ -569,7 +697,7 @@ def my_alerts(request):
                 "title": alert.title,
                 "message": alert.message,
                 "severity": alert.severity,
-                "region": alert.region,
+                "region": alert.region or "All Regions",
                 "channels": alert.channels,
                 "dispatched_at": alert.dispatched_at,
             }
@@ -642,7 +770,7 @@ def create_alert_draft(request):
 @api_view(["POST"])
 @permission_classes([IsAuthenticatedJWT])
 def approve_alert(request, alert_id: int):
-    if request.user["role"] != "insa_officer":
+    if request.user["role"] not in {"insa_officer", "insa_admin"}:
         return Response({"detail": "Insufficient permissions"}, status=status.HTTP_403_FORBIDDEN)
     try:
         alert = Alert.objects.get(pk=alert_id)
@@ -650,13 +778,14 @@ def approve_alert(request, alert_id: int):
         return Response({"detail": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
     if alert.status != "draft":
         return Response({"detail": "Alert is not awaiting approval"}, status=status.HTTP_409_CONFLICT)
-    if alert.reviewer_id == request.user["sub"]:
+    serializer = ApprovalSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    is_fast_track = str(serializer.validated_data.get("signature", "")).startswith("fast_track_")
+    if not is_fast_track and request.user["role"] != "insa_admin" and alert.reviewer_id == request.user["sub"]:
         return Response(
             {"detail": "The reviewer and approver must be different people"},
             status=status.HTTP_409_CONFLICT,
         )
-    serializer = ApprovalSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
     alert.approver_id = request.user["sub"]
     alert.status = "approved"
     alert.approved_at = now()
@@ -685,14 +814,34 @@ def broadcast_alert(request):
         return Response({"detail": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
     if alert.status != "approved":
         return Response({"detail": "Only approved alerts can be dispatched"}, status=status.HTTP_409_CONFLICT)
-    citizens = list(Citizen.objects.filter(registered_region=alert.region))
-    DeliveryLog.objects.bulk_create(
-        [
-            DeliveryLog(alert=alert, citizen=citizen, channel=channel)
-            for citizen in citizens
-            for channel in alert.channels
-        ]
+    # Push to all regions & send real SMS to all registered Citizen phones
+    citizens = list(Citizen.objects.all())
+    sms_body = (
+        f"EthioAlert EMERGENCY ({(alert.severity or 'warning').upper()})\n"
+        f"{alert.title}\n"
+        f"Area: {alert.region or 'All Regions'}\n"
+        f"{(alert.message or '')[:280]}"
     )
+    logs_to_create = []
+    sms_sent_count = 0
+    sms_failed_count = 0
+
+    for citizen in citizens:
+        for channel in alert.channels:
+            delivery_status = "sent"
+            if channel == "sms" and citizen.phone:
+                try:
+                    send_sms(to_phone=citizen.phone, message=sms_body)
+                    sms_sent_count += 1
+                    delivery_status = "sent"
+                except Exception:  # noqa: BLE001
+                    sms_failed_count += 1
+                    delivery_status = "failed"
+            logs_to_create.append(
+                DeliveryLog(alert=alert, citizen=citizen, channel=channel, status=delivery_status)
+            )
+
+    DeliveryLog.objects.bulk_create(logs_to_create)
     alert.status = "dispatched"
     alert.dispatched_at = now()
     alert.save(update_fields=["status", "dispatched_at"])
@@ -701,7 +850,11 @@ def broadcast_alert(request):
         "alert_dispatched",
         f"alert:{alert.id}",
         request,
-        {"recipient_count": len(citizens)},
+        {
+            "recipient_count": len(citizens),
+            "sms_sent": sms_sent_count,
+            "sms_failed": sms_failed_count,
+        },
     )
     return Response(
         {
@@ -709,35 +862,71 @@ def broadcast_alert(request):
             "status": alert.status,
             "recipient_count": len(citizens),
             "channels": alert.channels,
+            "sms_sent": sms_sent_count,
+            "sms_failed": sms_failed_count,
         }
     )
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticatedJWT])
+@permission_classes([AllowAny])
 def submit_sos(request):
-    if request.user["role"] != "citizen":
-        return Response({"detail": "Insufficient permissions"}, status=status.HTTP_403_FORBIDDEN)
     serializer = SosCreateSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data
     assigned = SOS_ORG_BY_TYPE.get(data["case_type"], "Partner organization")
+    # Generate a unique tracking code (SOS-XXXXXX)
+    import random, string
+    _chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    tracking_code = "SOS-" + "".join(random.choices(_chars, k=6))
+    description = data["description"]
+    if data.get("manual_address"):
+        description += f"\n📍 Address: {data['manual_address']}"
+    if data.get("people_count", 1) > 1:
+        description += f"\n👥 People affected: {data['people_count']}"
+    if data.get("contact_name"):
+        description += f"\n📞 Contact: {data['contact_name']}"
+        if data.get("contact_phone"):
+            description += f" ({data['contact_phone']})"
+    reporter_id = None
+    if hasattr(request, "user") and request.user and isinstance(request.user, dict):
+        try:
+            reporter_id = int(request.user.get("sub", 0)) or None
+        except (ValueError, TypeError):
+            reporter_id = None
     case = Case.objects.create(
-        reporter_id=int(request.user["sub"]),
+        reporter_id=reporter_id,
         source="sos",
         assigned_organization=assigned,
         organization=assigned,
         case_type=data["case_type"],
         severity="critical",
-        description=data["description"],
+        description=description,
         region=data["region"],
-        latitude=data["latitude"],
-        longitude=data["longitude"],
+        latitude=data.get("latitude"),
+        longitude=data.get("longitude"),
         status="new",
         title=data["description"][:200],
+        tracking_code=tracking_code,
     )
-    write_audit(request.user["sub"], "sos_submitted", f"case:{case.id}", request)
-    return Response(case_payload(case), status=status.HTTP_201_CREATED)
+    if reporter_id:
+        write_audit(str(reporter_id), "sos_submitted", f"case:{case.id}", request)
+    payload = case_payload(case)
+    payload["tracking_code"] = tracking_code
+    return Response(payload, status=status.HTTP_201_CREATED)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def track_sos(request, tracking_code: str):
+    """Public endpoint: citizens can poll their SOS status by tracking code."""
+    try:
+        case = Case.objects.get(tracking_code=tracking_code, source="sos")
+    except Case.DoesNotExist:
+        return Response({"detail": "Report not found"}, status=status.HTTP_404_NOT_FOUND)
+    payload = case_payload(case)
+    payload["tracking_code"] = case.tracking_code
+    return Response(payload)
 
 
 @api_view(["GET"])

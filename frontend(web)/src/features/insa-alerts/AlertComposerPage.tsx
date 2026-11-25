@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import {
   Sparkles,
   Smartphone,
@@ -15,6 +15,7 @@ import { liveAiDraft } from '@/api/liveAi'
 import { createAlertDraft, submitTier1, type AlertSeverity, type AlertChannel } from '@/api/mockAlerts'
 import { MapPicker, type GeoJsonFeature } from '@/packages/ui/MapPicker'
 import { useAuth } from '@/features/auth/useAuth'
+import type { Case } from '@/types/case'
 
 const TEMPLATES = [
   {
@@ -37,25 +38,45 @@ const TEMPLATES = [
   },
 ]
 
+function mapCaseSeverity(sev?: string): AlertSeverity {
+  const s = (sev || '').toLowerCase()
+  if (s === 'critical' || s === 'high' || s === 'medium' || s === 'low') return s
+  return 'high'
+}
+
 export default function AlertComposerPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
+  const sourceCase = (location.state as { sourceCase?: Case } | null)?.sourceCase
 
-  const [title, setTitle] = useState('URGENT: Flash Flood Emergency Warning')
-  const [severity, setSeverity] = useState<AlertSeverity>('critical')
-  const [targetArea, setTargetArea] = useState('Oromia - East Shewa (Adama, Mojo corridor)')
+  const initialSeverity = sourceCase ? mapCaseSeverity(sourceCase.severity) : 'critical'
+  const initialArea = sourceCase?.area || 'Oromia - East Shewa (Adama, Mojo corridor)'
+  const initialTitle = sourceCase
+    ? `${initialSeverity.toUpperCase()}: ${sourceCase.title}`
+    : 'URGENT: Flash Flood Emergency Warning'
+
+  const [title, setTitle] = useState(initialTitle)
+  const [severity, setSeverity] = useState<AlertSeverity>(initialSeverity)
+  const [targetArea, setTargetArea] = useState(initialArea)
   const [mapGeo, setMapGeo] = useState<GeoJsonFeature | null>(null)
   const [selectedChannels, setSelectedChannels] = useState<AlertChannel[]>(['push', 'sms'])
   const [activeLang, setActiveLang] = useState<'en' | 'am' | 'om'>('en')
 
   const [textEn, setTextEn] = useState(
-    'EMERGENCY ALERT: Rapidly rising river levels in Awash basin. Residents in low-lying zones must evacuate immediately to higher ground.',
+    sourceCase
+      ? `EMERGENCY ALERT (${(sourceCase.category || 'HAZARD').toUpperCase()}): ${sourceCase.title} Reported in ${initialArea}. Follow instructions from local emergency responders immediately.`
+      : 'EMERGENCY ALERT: Rapidly rising river levels in Awash basin. Residents in low-lying zones must evacuate immediately to higher ground.',
   )
   const [textAm, setTextAm] = useState(
-    'አስቸኳይ ማስጠንቀቂያ፡ በአዋሽ ተፋሰስ የውሃ ሙላት በመከሰቱ ዝቅተኛ ቦታዎች የሚኖሩ ዜጎች ወዲያውኑ ወደ ከፍታ ቦታዎች ይሸሹ።',
+    sourceCase
+      ? `አስቸኳይ ማስጠንቀቂያ (${initialArea})፡ ${sourceCase.title}። የአካባቢውን የድንገተኛ አደጋ ምላሽ ሰጪዎች መመሪያ ወዲያውኑ ይከተሉ።`
+      : 'አስቸኳይ ማስጠንቀቂያ፡ በአዋሽ ተፋሰስ የውሃ ሙላት በመከሰቱ ዝቅተኛ ቦታዎች የሚኖሩ ዜጎች ወዲያውኑ ወደ ከፍታ ቦታዎች ይሸሹ።',
   )
   const [textOm, setTextOm] = useState(
-    'AKEEKKACHIISA HATATTAMAA: Loolaan laggeen Awaash keessatti waan dabaleef uummanni gara bakka olka\'aatti akka baqatu gaafanna.',
+    sourceCase
+      ? `AKEEKKACHIISA HATATTAMAA (${initialArea}): ${sourceCase.title}. Qajeelfama qaama nageenyaa naannoo keessanii hatattamaan hordofaa.`
+      : 'AKEEKKACHIISA HATATTAMAA: Loolaan laggeen Awaash keessatti waan dabaleef uummanni gara bakka olka\'aatti akka baqatu gaafanna.',
   )
 
   const [busy, setBusy] = useState(false)
@@ -78,6 +99,7 @@ export default function AlertComposerPage() {
     try {
       const draft = await createAlertDraft(
         {
+          caseId: sourceCase?.id,
           title,
           severity,
           area: targetArea,

@@ -6,6 +6,11 @@ import PlaceholderPage from '@/components/PlaceholderPage'
 import AppShell from '@/layouts/AppShell'
 import RealtimeProvider from '@/features/realtime/RealtimeProvider'
 
+// Public Citizen SOS Portal (no auth required)
+import SosLandingPage from '@/features/sos/SosLandingPage'
+import SosSubmitPage from '@/features/sos/SosSubmitPage'
+import SosTrackPage from '@/features/sos/SosTrackPage'
+
 // Resource Portal Views
 import CaseDashboardPage from '@/features/resource-portal/CaseDashboardPage'
 import CaseDetailPage from '@/features/resource-portal/CaseDetailPage'
@@ -52,6 +57,12 @@ export default function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
       <Route path="/" element={<HomeRedirect />} />
+
+      {/* Public Citizen SOS Portal — no authentication required */}
+      <Route path="/sos" element={<SosLandingPage />} />
+      <Route path="/sos/submit" element={<SosSubmitPage />} />
+      <Route path="/sos/track" element={<SosTrackPage />} />
+      <Route path="/sos/track/:code" element={<SosTrackPage />} />
 
       {/* Outer guard: must be signed in with a staff role. */}
       <Route element={<ProtectedRoute allowedRoles={WEB_ROLES} />}>

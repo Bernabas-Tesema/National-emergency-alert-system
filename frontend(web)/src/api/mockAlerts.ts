@@ -1,4 +1,5 @@
 import type { User } from '@/types/user'
+import { canonicalRole } from '@/types/role'
 import { emitMockEvent } from './mockRealtimeBus'
 import { liveApi } from './config'
 import {
@@ -238,8 +239,9 @@ export async function approveTier2(id: string, user: User, code: string): Promis
   const alert = alertsStore.find((a) => a.id === id)
   if (!alert) throw new Error('Alert not found')
 
-  // HARD RULE ENFORCED: Mutual exclusion between Tier 1 and Tier 2
-  if (alert.tier1SubmittedBy && alert.tier1SubmittedBy.id === user.id) {
+  // HARD RULE ENFORCED: Mutual exclusion between Tier 1 and Tier 2 (relaxed for INSA Administrator)
+  const isAdmin = canonicalRole(user.role) === 'ADMINISTRATOR'
+  if (!isAdmin && alert.tier1SubmittedBy && alert.tier1SubmittedBy.id === user.id) {
     const error: any = new Error('HARD SECURITY RULE: The same official who submitted Tier-1 approval cannot act as the Tier-2 approver.')
     error.status = 403
     throw error
@@ -258,8 +260,16 @@ export async function approveTier2(id: string, user: User, code: string): Promis
 }
 
 export async function emergencyFastTrack(id: string, user: User, reason: string): Promise<Alert> {
+  if (reason.trim().length < 20) {
+    throw new Error('A detailed written justification (minimum 20 characters) is required for audit logs.')
+  }
   if (liveApi) {
-    throw new Error('Emergency fast-track is not available on the API. A different officer must approve the draft.')
+    const approved = await liveApproveTier2(id, user, `fast_track_${reason.trim()}`)
+    return {
+      ...approved,
+      isFastTrack: true,
+      fastTrackReason: reason.trim(),
+    }
   }
   await delay()
   const alert = alertsStore.find((a) => a.id === id)

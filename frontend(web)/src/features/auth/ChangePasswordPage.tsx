@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, CheckCircle2, Circle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -32,11 +32,23 @@ export default function ChangePasswordPage() {
     [user?.mustChangePassword, usingEmailLink],
   )
 
+  const passwordRules = useMemo(
+    () => [
+      { label: 'At least 8 characters', met: newPassword.length >= 8 },
+      { label: 'One uppercase letter (A-Z)', met: /[A-Z]/.test(newPassword) },
+      { label: 'One lowercase letter (a-z)', met: /[a-z]/.test(newPassword) },
+      { label: 'One number (0-9)', met: /[0-9]/.test(newPassword) },
+      { label: 'One special character (!@#$%...)', met: /[^A-Za-z0-9]/.test(newPassword) },
+    ],
+    [newPassword],
+  )
+  const isStrongPassword = passwordRules.every((r) => r.met)
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
-    if (newPassword.length < 8) {
-      setError('Use at least 8 characters for the new password.')
+    if (!isStrongPassword) {
+      setError('Password must meet all strong password requirements below.')
       return
     }
     if (newPassword !== confirmPassword) {
@@ -112,13 +124,13 @@ export default function ChangePasswordPage() {
                   autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="h-11 rounded-xl border-0 bg-[#16282d]"
+                  className="h-11 rounded-xl border border-[#1b2e34] bg-[#16282d] text-slate-100 placeholder:text-slate-400"
                   required
                 />
               </div>
             )}
             <div className="space-y-1.5">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password" className="text-slate-300">New password</Label>
               <Input
                 id="new-password"
                 name="new-password"
@@ -126,13 +138,30 @@ export default function ChangePasswordPage() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-11 rounded-xl border-0 bg-[#16282d]"
+                className="h-11 rounded-xl border border-[#1b2e34] bg-[#16282d] text-slate-100 placeholder:text-slate-400"
                 required
                 minLength={8}
               />
+              <div className="mt-2 space-y-1 rounded-xl border border-[#1b2e34] bg-[#0a1215] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Strong Password Requirements
+                </p>
+                {passwordRules.map((rule) => (
+                  <div key={rule.label} className="flex items-center gap-2 text-xs">
+                    {rule.met ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Circle className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                    )}
+                    <span className={rule.met ? 'text-emerald-300' : 'text-slate-400'}>
+                      {rule.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="confirm-password">Confirm new password</Label>
+              <Label htmlFor="confirm-password" className="text-slate-300">Confirm new password</Label>
               <Input
                 id="confirm-password"
                 name="confirm-password"
@@ -140,7 +169,7 @@ export default function ChangePasswordPage() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-11 rounded-xl border-0 bg-[#16282d]"
+                className="h-11 rounded-xl border border-[#1b2e34] bg-[#16282d] text-slate-100 placeholder:text-slate-400"
                 required
                 minLength={8}
               />

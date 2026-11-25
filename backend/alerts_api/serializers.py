@@ -1,6 +1,7 @@
+import re
 from rest_framework import serializers
 
-CASE_TYPES = {"accident", "fire", "missing_person", "health", "flood", "other"}
+CASE_TYPES = {"accident", "fire", "missing_person", "health", "flood", "landslide", "other"}
 SEVERITIES = {"information", "warning", "critical"}
 CHANNELS = {"push", "sms", "voice"}
 REVIEW_DECISIONS = {"verify", "reject", "clarification"}
@@ -41,6 +42,19 @@ class ChangePasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(min_length=8, max_length=128)
     token = serializers.CharField(required=False, allow_blank=True, default="")
 
+    def validate_new_password(self, value: str) -> str:
+        if len(value) < 8:
+            raise serializers.ValidationError("Password must be at least 8 characters long.")
+        if not re.search(r"[A-Z]", value):
+            raise serializers.ValidationError("Password must include at least one uppercase letter (A-Z).")
+        if not re.search(r"[a-z]", value):
+            raise serializers.ValidationError("Password must include at least one lowercase letter (a-z).")
+        if not re.search(r"[0-9]", value):
+            raise serializers.ValidationError("Password must include at least one number (0-9).")
+        if not re.search(r"[^A-Za-z0-9]", value):
+            raise serializers.ValidationError("Password must include at least one special character (e.g. !@#$%).")
+        return value
+
 
 class CaseCreateSerializer(serializers.Serializer):
     case_type = serializers.ChoiceField(choices=sorted(CASE_TYPES))
@@ -77,8 +91,12 @@ class SosCreateSerializer(serializers.Serializer):
     case_type = serializers.ChoiceField(choices=sorted(CASE_TYPES))
     description = serializers.CharField(min_length=5, max_length=5000)
     region = serializers.CharField(min_length=1, max_length=128)
-    latitude = serializers.FloatField(min_value=-90, max_value=90)
-    longitude = serializers.FloatField(min_value=-180, max_value=180)
+    latitude = serializers.FloatField(required=False, allow_null=True, min_value=-90, max_value=90)
+    longitude = serializers.FloatField(required=False, allow_null=True, min_value=-180, max_value=180)
+    manual_address = serializers.CharField(required=False, allow_blank=True, max_length=500, default="")
+    people_count = serializers.IntegerField(required=False, default=1, min_value=1)
+    contact_name = serializers.CharField(required=False, allow_blank=True, max_length=160, default="")
+    contact_phone = serializers.CharField(required=False, allow_blank=True, max_length=32, default="")
 
 
 class SosReturnSerializer(serializers.Serializer):
@@ -114,4 +132,5 @@ def case_payload(case) -> dict:
         "review_comment": case.review_comment,
         "org_response": getattr(case, "org_response", None),
         "created_by": case.created_by,
+        "tracking_code": getattr(case, "tracking_code", "") or "",
     }
