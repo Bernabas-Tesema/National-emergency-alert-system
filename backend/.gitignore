@@ -3,3 +3,11 @@ __pycache__/
 *.db
 .env
 .venv/
+
+
+
+and it saying Access denied
+
+Your operational role does not possess authorization to access this secured zone.   when i click Promote to Broadcast Queue
+
+, it saying for all including the higher admin

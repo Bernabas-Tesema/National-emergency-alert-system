@@ -19,7 +19,6 @@ import {
   Search,
   Bell,
   CalendarDays,
-  ShieldCheck,
 } from 'lucide-react'
 
 import ConnectionIndicator from '@/components/ConnectionIndicator'
@@ -264,8 +263,8 @@ export default function AppShell() {
       >
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
-              <ShieldCheck className="h-5 w-5" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 p-1">
+              <img src="/ethioalert-logo-dark.png" alt="EthioAlert Logo" className="h-8 w-8 object-contain" />
             </div>
             <div>
               <span className="text-base font-bold tracking-tight">EthioAlert</span>
@@ -317,8 +316,8 @@ export default function AppShell() {
         <div className="flex items-center justify-between border-b border-white/15 px-4 py-4">
           {!collapsed && (
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
-                <ShieldCheck className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 p-1">
+                <img src="/ethioalert-logo-dark.png" alt="EthioAlert Logo" className="h-8 w-8 object-contain" />
               </div>
               <div>
                 <span className="text-base font-bold tracking-tight">EthioAlert</span>

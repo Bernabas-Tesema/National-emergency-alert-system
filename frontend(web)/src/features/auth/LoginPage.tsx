@@ -114,11 +114,18 @@ export default function LoginPage() {
             <span className="login-sphere login-sphere-tiny" />
           </div>
 
-          <div className="relative z-10 max-w-[300px]">
+          <div className="relative z-10 max-w-[320px]">
+            <div className="mb-6">
+              <img
+                src="/ethioalert-logo-dark.png"
+                alt="EthioAlert Logo"
+                className="h-16 w-auto object-contain drop-shadow-md"
+              />
+            </div>
             <p className="text-[34px] font-extrabold uppercase leading-none tracking-[0.06em] text-white">
               Welcome
             </p>
-            <h1 className="mt-5 text-[20px] font-bold uppercase leading-snug tracking-[0.05em] text-white">
+            <h1 className="mt-4 text-[20px] font-bold uppercase leading-snug tracking-[0.05em] text-white">
               EthioAlert
             </h1>
             <p className="mt-6 text-[12.5px] leading-[1.7] text-teal-200/80">
@@ -134,15 +141,23 @@ export default function LoginPage() {
         </section>
 
         {/* Right panel — Sign in form */}
-        <section className="flex items-center justify-center bg-white px-6 py-10 sm:px-12 sm:py-14">
+        <section className="flex items-center justify-center bg-[#0e1619] px-6 py-10 sm:px-12 sm:py-14">
           <div className="w-full max-w-[340px]">
-            <div className="mb-6 lg:hidden">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#2dd4bf]">
-                EthioAlert
-              </p>
+            <div className="mb-6 flex items-center gap-3">
+              <img
+                src="/ethioalert-logo-dark.png"
+                alt="EthioAlert Logo"
+                className="h-12 w-auto object-contain"
+              />
+              <div>
+                <p className="text-sm font-bold uppercase tracking-[0.15em] text-[#2dd4bf]">
+                  EthioAlert
+                </p>
+                <p className="text-[11px] text-slate-400">Operations Console</p>
+              </div>
             </div>
 
-            <h2 className="text-[32px] font-bold leading-none tracking-tight text-slate-200">
+            <h2 className="text-[28px] font-bold leading-none tracking-tight text-slate-100">
               Sign in
             </h2>
             <p className="mt-3 text-[13px] leading-5 text-[#8b93a7]">
