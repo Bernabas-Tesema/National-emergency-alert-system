@@ -161,7 +161,11 @@ class EthioApi {
     );
     final body = _decode(response);
     if (response.statusCode >= 400) {
-      throw EthioApiException(body['detail']?.toString() ?? 'SOS submit failed');
+      final msg = body['detail']?.toString() ??
+          (body.isNotEmpty
+              ? body.entries.map((e) => '${e.key}: ${e.value}').join('; ')
+              : 'SOS submit failed');
+      throw EthioApiException(msg);
     }
     return body;
   }

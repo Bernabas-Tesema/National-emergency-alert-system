@@ -133,7 +133,7 @@ export default function CaseDashboardPage() {
             Incident Command Dashboard
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Submit, monitor, and coordinate emergency incident reports with the INSA control centre.
+            Submit, monitor, and coordinate emergency incident reports with the Ethio Alert control centre.
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default function CaseDashboardPage() {
           </div>
           <div className="mt-3">
             <div className="text-3xl font-bold font-mono text-white">{pendingReviewCount}</div>
-            <p className="text-[11px] text-slate-400 mt-1">Awaiting INSA triage/verification</p>
+            <p className="text-[11px] text-slate-400 mt-1">Awaiting Ethio Alert triage/verification</p>
           </div>
         </div>
 

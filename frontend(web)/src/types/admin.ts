@@ -14,7 +14,7 @@ export type OrganizationKind = (typeof ORGANIZATION_KINDS)[number]
 export type ExternalKind = Exclude<OrganizationKind, 'insa'>
 
 export const ORGANIZATION_KIND_LABELS: Record<OrganizationKind, string> = {
-  insa: 'INSA',
+  insa: 'Ethio Alert',
   police: 'Police',
   fire: 'Fire and emergency',
   health: 'Health',

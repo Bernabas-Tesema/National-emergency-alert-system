@@ -43,6 +43,7 @@ from .serializers import (
 
 SOS_ORG_BY_TYPE = {
     "fire": "Fire & Emergency Authority",
+    "trapped": "Fire & Emergency Authority",
     "health": "Ministry of Health",
     "flood": "Disaster Risk Management",
     "landslide": "Disaster Risk Management",
@@ -121,6 +122,7 @@ def _start_staff_otp_challenge(
         )
 
     payload = {
+        "requires_otp": True,
         "challenge_id": challenge_id,
         "email_hint": mask_email(email) if email else "",
         "phone_hint": mask_phone(phone) if phone else "",
@@ -128,6 +130,8 @@ def _start_staff_otp_challenge(
         "sms_sent": sms_sent,
         "expires_in_minutes": settings.OTP_MINUTES,
     }
+    if settings.DEBUG:
+        payload["debug_otp"] = otp
     if email_error and not sms_sent:
         payload["email_warning"] = f"Delivery warning ({email_error})."
     if sms_error:
@@ -203,13 +207,24 @@ def verify_phone(request):
     serializer.is_valid(raise_exception=True)
     raw_phone = serializer.validated_data["phone"]
     phone = normalize_ethiopian_phone(raw_phone)
-    # Check if the phone number is registered and connected to FYD in the database
-    linked = bool(phone.startswith("+251") and len(phone) == 13 and Citizen.objects.filter(phone=phone).exists())
-    if not linked:
+    # Any valid Ethiopian phone number (+2519... / +2517...) is connected to a Fayda National ID
+    is_valid_ethiopian = bool(phone.startswith("+251") and len(phone) == 13 and phone[1:].isdigit())
+    if not is_valid_ethiopian:
         return Response(
-            {"linked": False, "detail": "connect your phone to fyd"},
+            {"linked": False, "detail": "Enter a valid Ethiopian phone number (+2519XXXXXXXX or 09XXXXXXXX)."},
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+    # Store phone number & Fayda National ID hash in the database
+    Citizen.objects.get_or_create(
+        phone=phone,
+        defaults={
+            "fayda_id_hash": hash_fayda_reference(phone),
+            "registered_region": "Addis Ababa",
+            "language": "en",
+        },
+    )
+
     otp = new_otp()
     reference = secrets.token_urlsafe(12)
     set_phone_otp(phone, otp)
@@ -228,6 +243,8 @@ def verify_phone(request):
         "otp_reference": reference,
         "sms_sent": True,
     }
+    if settings.DEBUG:
+        payload["debug_otp"] = otp
     return Response(payload)
 
 
@@ -265,7 +282,7 @@ def confirm_phone(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def staff_login(request):
-    """Step 1: verify password, email a random OTP, return challenge_id (no JWT yet)."""
+    """Step 1: verify password; require OTP on first login only, return JWT directly on subsequent logins."""
     serializer = StaffLoginSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     username = serializer.validated_data["username"]
@@ -275,27 +292,63 @@ def staff_login(request):
     if account:
         if not verify_password(password, account.password_hash):
             return Response({"detail": "Invalid staff credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-        write_audit(username, "staff_login_otp_requested", f"staff:{username}", request)
-        return _start_staff_otp_challenge(
-            username=account.username,
-            email=account.email,
-            phone=account.phone,
-            full_name=account.full_name,
-            role=account.role,
-            organization=account.organization,
-            jwt_role=to_jwt_role(account.role),
-            must_change_password=account.must_change_password,
+
+        # Check if first time login (OTP required only once)
+        is_first_login = not getattr(account, "otp_verified", False) and account.last_login_at is None
+        if is_first_login:
+            write_audit(username, "staff_login_otp_requested", f"staff:{username}", request)
+            return _start_staff_otp_challenge(
+                username=account.username,
+                email=account.email,
+                phone=account.phone,
+                full_name=account.full_name,
+                role=account.role,
+                organization=account.organization,
+                jwt_role=to_jwt_role(account.role),
+                must_change_password=account.must_change_password,
+            )
+
+        # Subsequent logins: sign in directly without OTP
+        account.last_login_at = now()
+        account.save(update_fields=["last_login_at", "updated_at"])
+        write_audit(username, "staff_login", f"staff:{username}", request)
+        return Response(
+            {
+                "requires_otp": False,
+                "access_token": make_token(username, to_jwt_role(account.role)),
+                "token_type": "bearer",
+                "must_change_password": account.must_change_password,
+                "full_name": account.full_name,
+                "role": account.role,
+                "organization": account.organization,
+                "email": account.email,
+            }
         )
 
     # Dev fallback accounts from .env (OTP still required; email must exist on a StaffAccount)
     credentials = {
-        "insa_admin": (settings.STAFF_ADMIN_PASSWORD, "insa_admin", "ADMINISTRATOR", "INSA"),
-        "insa_officer": (settings.STAFF_OFFICER_PASSWORD, "insa_officer", "HIGHER_OFFICER", "INSA"),
+        "insa_admin": (settings.STAFF_ADMIN_PASSWORD, "insa_admin", "ADMINISTRATOR", "Ethio Alert"),
+        "insa_officer": (settings.STAFF_OFFICER_PASSWORD, "insa_officer", "HIGHER_OFFICER", "Ethio Alert"),
         "org_officer": (settings.STAFF_ADMIN_PASSWORD, "organization_officer", "ORG_OFFICER", "Partner organization"),
     }
     expected = credentials.get(username)
     if not expected or not secrets.compare_digest(password, expected[0]):
         return Response({"detail": "Invalid staff credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if username in _DEV_FALLBACK_VERIFIED:
+        write_audit(username, "staff_login", f"staff:{username}", request)
+        return Response(
+            {
+                "requires_otp": False,
+                "access_token": make_token(username, expected[1]),
+                "token_type": "bearer",
+                "must_change_password": False,
+                "full_name": NAMES_FALLBACK.get(username, username),
+                "role": expected[2],
+                "organization": expected[3],
+                "email": getattr(settings, "STAFF_FALLBACK_OTP_EMAIL", "demo@ethioalert.local"),
+            }
+        )
 
     fallback_email = (getattr(settings, "STAFF_FALLBACK_OTP_EMAIL", "") or "").strip()
     if not fallback_email:
@@ -321,10 +374,11 @@ def staff_login(request):
 
 
 NAMES_FALLBACK = {
-    "insa_admin": "INSA Administrator",
-    "insa_officer": "INSA Officer",
+    "insa_admin": "Ethio Alert Administrator",
+    "insa_officer": "Ethio Alert Officer",
     "org_officer": "Organization Officer",
 }
+_DEV_FALLBACK_VERIFIED = set()
 
 
 @api_view(["POST"])
@@ -347,10 +401,12 @@ def staff_verify_otp(request):
 
     clear_staff_challenge(challenge_id)
     username = pending["username"]
+    _DEV_FALLBACK_VERIFIED.add(username)
     account = StaffAccount.objects.filter(username=username, is_active=True).first()
     if account:
         account.last_login_at = now()
-        account.save(update_fields=["last_login_at", "updated_at"])
+        account.otp_verified = True
+        account.save(update_fields=["last_login_at", "otp_verified", "updated_at"])
 
     write_audit(username, "staff_login", f"staff:{username}", request)
     return Response(
@@ -379,7 +435,7 @@ def create_staff_account(request):
         return Response(
             {
                 "detail": (
-                    "Role must be one of: SUPER_ADMIN, ADMINISTRATOR, HIGHER_OFFICER, "
+                    "Role must be one of: ADMINISTRATOR, HIGHER_OFFICER, "
                     "DISPATCHER, AUDITOR, ORG_ADMIN, ORG_OFFICER."
                 )
             },
@@ -966,7 +1022,7 @@ def return_sos_to_insa(request, case_id: int):
     except Case.DoesNotExist:
         return Response({"detail": "SOS not found"}, status=status.HTTP_404_NOT_FOUND)
     if case.status not in {"new", "org_reviewing"}:
-        return Response({"detail": "SOS was already returned to INSA"}, status=status.HTTP_409_CONFLICT)
+        return Response({"detail": "SOS was already returned to Ethio Alert"}, status=status.HTTP_409_CONFLICT)
     serializer = SosReturnSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     data = serializer.validated_data

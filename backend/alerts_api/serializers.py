@@ -1,7 +1,7 @@
 import re
 from rest_framework import serializers
 
-CASE_TYPES = {"accident", "fire", "missing_person", "health", "flood", "landslide", "other"}
+CASE_TYPES = {"accident", "fire", "missing_person", "health", "flood", "landslide", "trapped", "other"}
 SEVERITIES = {"information", "warning", "critical"}
 CHANNELS = {"push", "sms", "voice"}
 REVIEW_DECISIONS = {"verify", "reject", "clarification"}

@@ -381,7 +381,7 @@ class _SosScreenState extends State<SosScreen> {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  'Your high-precision telemetry, camera media, and voice distress dispatch will be transmitted directly to regional INSA dispatchers.',
+                  'Your high-precision telemetry, camera media, and voice distress dispatch will be transmitted directly to regional Ethio Alert dispatchers.',
                   style: TextStyle(color: Color(0xFFE2E8F0), fontSize: 12, height: 1.35),
                 ),
               ],
@@ -621,24 +621,30 @@ class _SosScreenState extends State<SosScreen> {
                   children: [
                     const Icon(Icons.people_alt_rounded, color: Colors.amberAccent, size: 18),
                     const SizedBox(width: 8),
-                    const Text(
-                      'People in Danger:',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    const Expanded(
+                      child: Text(
+                        'People in Danger:',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    const Spacer(),
-                    DropdownButton<String>(
-                      value: _peopleCount,
-                      dropdownColor: const Color(0xFF1E293B),
-                      style: const TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold),
-                      underline: const SizedBox(),
-                      items: const [
-                        DropdownMenuItem(value: '1 person', child: Text('1 person')),
-                        DropdownMenuItem(value: '1-2 persons', child: Text('1-2 persons')),
-                        DropdownMenuItem(value: '3-5 persons', child: Text('3-5 persons')),
-                        DropdownMenuItem(value: 'Group (6+)', child: Text('Group (6+)')),
-                        DropdownMenuItem(value: 'Crowd / Mass', child: Text('Crowd / Mass')),
-                      ],
-                      onChanged: (v) => setState(() => _peopleCount = v ?? _peopleCount),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: DropdownButton<String>(
+                        isExpanded: true,
+                        value: _peopleCount,
+                        dropdownColor: const Color(0xFF1E293B),
+                        style: const TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                        underline: const SizedBox(),
+                        items: const [
+                          DropdownMenuItem(value: '1 person', child: Text('1 person', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: '1-2 persons', child: Text('1-2 persons', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: '3-5 persons', child: Text('3-5 persons', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Group (6+)', child: Text('Group (6+)', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(value: 'Crowd / Mass', child: Text('Crowd / Mass', overflow: TextOverflow.ellipsis)),
+                        ],
+                        onChanged: (v) => setState(() => _peopleCount = v ?? _peopleCount),
+                      ),
                     ),
                   ],
                 ),

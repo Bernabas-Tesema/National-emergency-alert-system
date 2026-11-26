@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent, { type UserEvent } from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { rememberTimeoutSignOut } from '@/lib/session'
 import AuthProvider from './AuthProvider'
 import LoginPage from './LoginPage'
@@ -41,9 +41,14 @@ async function submitCode(user: UserEvent, code: string) {
 }
 
 describe('login page', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+
   it('rejects a wrong password', async () => {
     renderLogin()
-    await submitCredentials('sysadmin1', 'wrong-password')
+    await submitCredentials('admin1', 'wrong-password')
     expect(
       await screen.findByText('Invalid username or password', {}, WAIT),
     ).toBeInTheDocument()
@@ -52,23 +57,23 @@ describe('login page', () => {
 
   it('rejects a wrong 2FA code', async () => {
     renderLogin()
-    const user = await submitCredentials('sysadmin1', 'Password123!')
+    const user = await submitCredentials('admin1', 'Password123!')
     await submitCode(user, '000000')
     expect(
       await screen.findByText('Incorrect verification code', {}, WAIT),
     ).toBeInTheDocument()
   })
 
-  it('sends a system admin to the INSA dashboard', async () => {
+  it('sends an administrator to the INSA dashboard on first login with 2FA', async () => {
     renderLogin()
-    const user = await submitCredentials('sysadmin1', 'Password123!')
+    const user = await submitCredentials('admin1', 'Password123!')
     await submitCode(user, '123456')
     expect(
       await screen.findByText('INSA dashboard page', {}, WAIT),
     ).toBeInTheDocument()
   })
 
-  it('sends a provider to the resource dashboard', async () => {
+  it('sends a provider to the resource dashboard on first login with 2FA', async () => {
     renderLogin()
     const user = await submitCredentials('provider1', 'Password123!')
     await submitCode(user, '123456')
@@ -77,15 +82,25 @@ describe('login page', () => {
     ).toBeInTheDocument()
   })
 
-  it('tells a citizen to use the mobile app and does not sign them in', async () => {
+  it('skips 2FA on subsequent logins after logging out', async () => {
     renderLogin()
-    const user = await submitCredentials('citizen1', 'Password123!')
+    // First login requires 2FA
+    const user = await submitCredentials('admin1', 'Password123!')
     await submitCode(user, '123456')
     expect(
-      await screen.findByText('Please use the mobile app.', {}, WAIT),
+      await screen.findByText('INSA dashboard page', {}, WAIT),
     ).toBeInTheDocument()
-    expect(screen.queryByText('INSA dashboard page')).not.toBeInTheDocument()
-    expect(sessionStorage.getItem('ness-mock-user')).toBeNull()
+
+    // Simulate logout and return to /login
+    sessionStorage.clear()
+    renderLogin()
+
+    // Second login: signs in directly without 2FA
+    await submitCredentials('admin1', 'Password123!')
+    expect(
+      await screen.findByText('INSA dashboard page', {}, WAIT),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Verification code')).not.toBeInTheDocument()
   })
 
   it('explains an inactivity sign-out', () => {

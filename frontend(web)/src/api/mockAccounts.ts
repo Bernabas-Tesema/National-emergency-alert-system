@@ -30,7 +30,7 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     password: MOCK_PASSWORD,
     fullName: 'Dawit Alemu',
     role: 'dispatcher',
-    organization: 'INSA',
+    organization: 'Ethio Alert',
   },
   {
     id: 'u-004',
@@ -38,7 +38,7 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     password: MOCK_PASSWORD,
     fullName: 'Hanna Bekele',
     role: 'higher_officer',
-    organization: 'INSA',
+    organization: 'Ethio Alert',
   },
   {
     id: 'u-005',
@@ -46,7 +46,7 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     password: MOCK_PASSWORD,
     fullName: 'Yonas Girma',
     role: 'auditor',
-    organization: 'INSA',
+    organization: 'Ethio Alert',
   },
   {
     id: 'u-006',
@@ -54,6 +54,6 @@ export const MOCK_ACCOUNTS: MockAccount[] = [
     password: MOCK_PASSWORD,
     fullName: 'Marta Haile',
     role: 'ADMINISTRATOR',
-    organization: 'INSA',
+    organization: 'Ethio Alert',
   },
 ]

@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.core import mail
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
@@ -48,6 +50,16 @@ class StaffAuthAndCasesTests(TestCase):
         self.assertEqual(verified.status_code, 200)
         token = verified.json()["access_token"]
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+        # Subsequent login: OTP is NOT required, returns JWT directly
+        subsequent_login = self.client.post(
+            "/api/v1/auth/staff/login",
+            {"username": "org_officer", "password": "change-me"},
+            format="json",
+        )
+        self.assertEqual(subsequent_login.status_code, 200)
+        self.assertFalse(subsequent_login.json().get("requires_otp", True))
+        self.assertIn("access_token", subsequent_login.json())
 
         created = self.client.post(
             "/api/v1/cases",
@@ -200,7 +212,6 @@ class StaffAuthAndCasesTests(TestCase):
         admin_token = make_token("insa_admin", "insa_admin")
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {admin_token}")
         roles = [
-            "SUPER_ADMIN",
             "ADMINISTRATOR",
             "HIGHER_OFFICER",
             "DISPATCHER",
@@ -223,3 +234,21 @@ class StaffAuthAndCasesTests(TestCase):
             )
             self.assertEqual(created.status_code, 201, created.content)
             self.assertEqual(created.json()["role"], role)
+
+    @override_settings(DEBUG=True)
+    @patch("alerts_api.views.send_otp_sms", return_value={"acknowledge": "success"})
+    def test_phone_verify_stores_citizen_with_fayda_and_sends_otp(self, mock_sms) -> None:
+        resp = self.client.post(
+            "/api/v1/auth/phone/verify",
+            {"phone": "0911223344"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200, resp.content)
+        data = resp.json()
+        self.assertTrue(data["linked"])
+        self.assertTrue(data["sms_sent"])
+        self.assertEqual(data["phone"], "+251911223344")
+        self.assertTrue(Citizen.objects.filter(phone="+251911223344").exists())
+        citizen = Citizen.objects.get(phone="+251911223344")
+        self.assertTrue(bool(citizen.fayda_id_hash))
+        mock_sms.assert_called_once()

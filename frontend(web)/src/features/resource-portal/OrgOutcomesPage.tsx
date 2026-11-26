@@ -89,12 +89,12 @@ export default function OrgOutcomesPage() {
           Case outcomes
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Track what INSA did with your submitted incidents — verified, broadcast, clarification, or rejected.
+          Track what Ethio Alert did with your submitted incidents — verified, broadcast, clarification, or rejected.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric icon={<FileCheck className="h-4 w-4" />} label="Awaiting INSA" value={pending} tone="amber" />
+        <Metric icon={<FileCheck className="h-4 w-4" />} label="Awaiting Ethio Alert" value={pending} tone="amber" />
         <Metric icon={<CheckCircle2 className="h-4 w-4" />} label="Verified / approved" value={verified} tone="green" />
         <Metric icon={<Radio className="h-4 w-4" />} label="Broadcast" value={broadcast} tone="blue" />
         <Metric icon={<XCircle className="h-4 w-4" />} label="Rejected" value={rejected} tone="red" />

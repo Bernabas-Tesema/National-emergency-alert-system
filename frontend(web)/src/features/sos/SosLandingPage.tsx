@@ -118,7 +118,7 @@ export default function SosLandingPage() {
       </div>
 
       <p className="mt-8 text-[10px] text-slate-700 text-center">
-        INSA National Emergency Alert System · EthioAlert v2.4
+        Ethio Alert National Emergency Alert System · v2.4
       </p>
     </div>
   )

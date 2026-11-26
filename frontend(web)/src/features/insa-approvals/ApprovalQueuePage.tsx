@@ -106,7 +106,7 @@ export default function ApprovalQueuePage() {
       {/* Eyebrow & Title */}
       <div>
         <p className="text-[11px] font-bold text-teal-400 tracking-widest uppercase">
-          INSA High Command Authorization
+          Ethio Alert High Command Authorization
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-white mt-0.5">
           Tier-2 Public Broadcast Approval Queue
@@ -221,8 +221,8 @@ export default function ApprovalQueuePage() {
                 <div className="rounded-lg bg-teal-950/50 border border-teal-700/60 p-3 text-xs text-teal-200 flex items-center gap-2.5">
                   <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0" />
                   <div>
-                    <strong className="block font-semibold text-teal-300">INSA Executive Authority Active</strong>
-                    <span>As INSA Administrator, you have direct clearance to approve and broadcast this alert immediately.</span>
+                    <strong className="block font-semibold text-teal-300">Ethio Alert Executive Authority Active</strong>
+                    <span>As Ethio Alert Administrator, you have direct clearance to approve and broadcast this alert immediately.</span>
                   </div>
                 </div>
               )}
@@ -354,7 +354,7 @@ export default function ApprovalQueuePage() {
               rows={3}
               value={fastTrackReason}
               onChange={(e) => setFastTrackReason(e.target.value)}
-              placeholder="e.g. Rapid dam breach detected by emergency radar. Evacuation window under 15 minutes. Authorized per INSA Crisis Directive 4."
+              placeholder="e.g. Rapid dam breach detected by emergency radar. Evacuation window under 15 minutes. Authorized per Ethio Alert Crisis Directive 4."
               className="w-full rounded-lg bg-[#111d21] border border-[#1b2e34] p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-red-500"
             />
             <div className="flex items-center justify-between text-[11px] text-slate-400">

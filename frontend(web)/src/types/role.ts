@@ -32,8 +32,8 @@ export const ROLE_LABELS: Record<Role, string> = {
   dispatcher: 'Emergency Dispatcher',
   higher_officer: 'Higher Officer',
   auditor: 'Auditor',
-  system_admin: 'Administrator (INSA)',   // legacy alias
-  ADMINISTRATOR: 'Administrator (INSA)',
+  system_admin: 'Administrator (Ethio Alert)',   // legacy alias
+  ADMINISTRATOR: 'Administrator (Ethio Alert)',
   HIGHER_OFFICER: 'Higher Officer',
   DISPATCHER: 'Emergency Dispatcher',
   AUDITOR: 'Auditor',

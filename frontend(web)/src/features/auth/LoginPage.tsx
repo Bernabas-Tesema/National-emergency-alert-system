@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
-import { AlertCircle, Eye, EyeOff, Lock, User } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff, Lock, User as UserIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +13,7 @@ import {
   wasSignedOutByTimeout,
 } from '@/lib/session'
 import { ROLE_HOME_PATH, hasWebAccess } from '@/types/role'
+import type { User } from '@/types/user'
 import { liveApi } from '@/api/config'
 
 type Step = 'credentials' | 'twofactor' | 'mobile-only'
@@ -35,6 +36,7 @@ export default function LoginPage() {
   const [code, setCode] = useState('')
   const [challengeId, setChallengeId] = useState('')
   const [emailHint, setEmailHint] = useState('')
+  const [debugOtp, setDebugOtp] = useState('')
   const [emailWarning, setEmailWarning] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -43,6 +45,20 @@ export default function LoginPage() {
     return err instanceof AuthError
       ? err.message
       : 'Something went wrong. Please try again.'
+  }
+
+  function completeLogin(user: User) {
+    const home = ROLE_HOME_PATH[user.role]
+    if (!hasWebAccess(user.role) || !home) {
+      setStep('mobile-only')
+    } else {
+      login(user)
+      if (user.mustChangePassword) {
+        navigate('/change-password', { replace: true })
+      } else {
+        navigate(home, { replace: true })
+      }
+    }
   }
 
   async function handleCredentials(e: FormEvent) {
@@ -54,28 +70,25 @@ export default function LoginPage() {
       const cleanUsername = username.trim()
       const result = await submitCredentials(cleanUsername, password)
 
-      // Ask OTP only once per username on this browser
-      const otpVerifiedKey = `ethioalert_otp_verified_${cleanUsername}`
-      const alreadyVerified = localStorage.getItem(otpVerifiedKey) === 'true'
-      if (alreadyVerified && (result.debugOtp || !liveApi)) {
-        const autoCode = result.debugOtp || '123456'
-        const authResult = await submitTwoFactor(result.challengeId, autoCode)
-        const home = ROLE_HOME_PATH[authResult.user.role]
-        if (!hasWebAccess(authResult.user.role) || !home) {
-          setStep('mobile-only')
-        } else {
-          login(authResult.user)
-          if (authResult.user.mustChangePassword) {
-            navigate('/change-password', { replace: true })
-          } else {
-            navigate(home, { replace: true })
-          }
-        }
+      // If OTP is not required (already verified previously / subsequent login):
+      if (!result.requiresTwoFactor && result.user) {
+        completeLogin(result.user)
         return
       }
 
-      setChallengeId(result.challengeId)
+      // Check if browser already verified this account
+      const otpVerifiedKey = `ethioalert_otp_verified_${cleanUsername}`
+      const alreadyVerified = localStorage.getItem(otpVerifiedKey) === 'true'
+      if (alreadyVerified && result.challengeId && (result.debugOtp || !liveApi)) {
+        const autoCode = result.debugOtp || '123456'
+        const authResult = await submitTwoFactor(result.challengeId, autoCode)
+        completeLogin(authResult.user)
+        return
+      }
+
+      setChallengeId(result.challengeId || '')
       setEmailHint(result.emailHint || '')
+      setDebugOtp(result.debugOtp || '')
       setEmailWarning(result.emailWarning || '')
       setStep('twofactor')
     } catch (err) {
@@ -94,19 +107,7 @@ export default function LoginPage() {
       const result = await submitTwoFactor(challengeId, code.trim())
       // Remember that OTP has been verified once for this account
       localStorage.setItem(`ethioalert_otp_verified_${username.trim()}`, 'true')
-
-      const home = ROLE_HOME_PATH[result.user.role]
-
-      if (!hasWebAccess(result.user.role) || !home) {
-        setStep('mobile-only')
-      } else {
-        login(result.user)
-        if (result.user.mustChangePassword) {
-          navigate('/change-password', { replace: true })
-        } else {
-          navigate(home, { replace: true })
-        }
-      }
+      completeLogin(result.user)
     } catch (err) {
       setError(messageFrom(err))
     } finally {
@@ -142,14 +143,14 @@ export default function LoginPage() {
               National Emergency Alert System
             </p>
             <p className="mt-3 max-w-[320px] text-[13px] leading-relaxed text-slate-600">
-              The national emergency alert and citizen safety console. INSA and partner
+              The national emergency alert and citizen safety console. Ethio Alert and partner
               organizations use it to report incidents, verify threats, and dispatch
               coordinated public warnings across Ethiopia.
             </p>
           </div>
 
           <div className="relative z-10 border-t border-slate-100 pt-4 text-center text-[11px] font-medium tracking-wide text-slate-400">
-            Federal Democratic Republic of Ethiopia · INSA
+            Federal Democratic Republic of Ethiopia · Ethio Alert
           </div>
         </section>
 
@@ -189,7 +190,7 @@ export default function LoginPage() {
                     Username
                   </Label>
                   <div className="relative">
-                    <User className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
+                    <UserIcon className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400" />
                     <Input
                       id="username"
                       name="username"
@@ -301,6 +302,11 @@ export default function LoginPage() {
                   {liveApi && emailWarning ? (
                     <span className="block text-center text-[10px] font-medium text-amber-700">
                       {emailWarning}
+                    </span>
+                  ) : null}
+                  {debugOtp ? (
+                    <span className="block text-center font-mono text-[11px] font-semibold text-teal-400">
+                      On-screen OTP code: {debugOtp}
                     </span>
                   ) : null}
                 </div>

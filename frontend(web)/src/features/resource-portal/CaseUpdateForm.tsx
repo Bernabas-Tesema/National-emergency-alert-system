@@ -18,7 +18,7 @@ export default function CaseUpdateForm({ onSubmit }: CaseUpdateFormProps) {
     e.preventDefault()
     const trimmed = text.trim()
     if (!trimmed) {
-      setError('Write what INSA should publish.')
+      setError('Write what Ethio Alert should publish.')
       return
     }
     setError('')
@@ -59,7 +59,7 @@ export default function CaseUpdateForm({ onSubmit }: CaseUpdateFormProps) {
       </div>
       {error && <p className="text-xs text-red-400 font-medium">{error}</p>}
       <Button type="submit" disabled={busy} className="bg-teal-600 hover:bg-teal-500 text-white text-xs">
-        {busy ? 'Sending...' : 'Send to INSA'}
+        {busy ? 'Sending...' : 'Send to Ethio Alert'}
       </Button>
     </form>
   )

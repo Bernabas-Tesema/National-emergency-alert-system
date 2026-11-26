@@ -383,7 +383,7 @@ export default function AppShell() {
                 Open console
               </button>
             </div>
-            <p className="mt-3 text-[10px] text-teal-100/80">INSA Safety Network · v2.4</p>
+            <p className="mt-3 text-[10px] text-teal-100/80">Ethio Alert Safety Network · v2.4</p>
           </div>
         )}
       </aside>

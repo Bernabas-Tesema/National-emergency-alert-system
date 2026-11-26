@@ -85,7 +85,7 @@ export default function OrgSosInboxPage() {
 
   async function handleReturn(decision: 'verify' | 'escalate') {
     if (!selected || !comment.trim()) {
-      setError('Add a short note before sending back to INSA.')
+      setError('Add a short note before sending back to Ethio Alert.')
       return
     }
     setBusy(true)
@@ -109,11 +109,11 @@ export default function OrgSosInboxPage() {
       setComment('')
       setMessage(
         decision === 'verify'
-          ? 'SOS verified by your organization and sent to INSA.'
-          : 'SOS escalated back to INSA for national handling.',
+          ? 'SOS verified by your organization and sent to Ethio Alert.'
+          : 'SOS escalated back to Ethio Alert for national handling.',
       )
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not return SOS to INSA')
+      setError(err instanceof Error ? err.message : 'Could not return SOS to Ethio Alert')
     } finally {
       setBusy(false)
     }
@@ -133,7 +133,7 @@ export default function OrgSosInboxPage() {
         </p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">SOS inbox</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Review citizen SOS tickets assigned to partner organizations, check them, and send findings back to INSA.
+          Review citizen SOS tickets assigned to partner organizations, check them, and send findings back to Ethio Alert.
         </p>
       </div>
 
@@ -227,12 +227,12 @@ export default function OrgSosInboxPage() {
               {(selected.status === 'new' || selected.status === 'org_reviewing') && (
                 <>
                   <label className="block space-y-1.5">
-                    <span className="text-xs font-medium text-slate-600">Response to INSA</span>
+                    <span className="text-xs font-medium text-slate-600">Response to Ethio Alert</span>
                     <textarea
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       rows={4}
-                      placeholder="Describe what your team checked and what INSA should do next..."
+                      placeholder="Describe what your team checked and what Ethio Alert should do next..."
                       className="w-full rounded-xl border border-slate-200 bg-[#f8fafc] px-3 py-2 text-sm text-slate-800 outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15"
                     />
                   </label>
@@ -256,7 +256,7 @@ export default function OrgSosInboxPage() {
                       className="inline-flex items-center gap-2 rounded-xl bg-[#0d9488] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#14b8a6] disabled:opacity-60"
                     >
                       <Send className="h-4 w-4" />
-                      Escalate to INSA
+                      Escalate to Ethio Alert
                     </button>
                     <button
                       type="button"
@@ -265,7 +265,7 @@ export default function OrgSosInboxPage() {
                       className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
                     >
                       <CheckCircle2 className="h-4 w-4" />
-                      Verify & send to INSA
+                      Verify & send to Ethio Alert
                     </button>
                   </div>
                 </>
@@ -273,7 +273,7 @@ export default function OrgSosInboxPage() {
 
               {selected.status !== 'new' && selected.status !== 'org_reviewing' && (
                 <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                  This SOS was already returned to INSA ({selected.status}).
+                  This SOS was already returned to Ethio Alert ({selected.status}).
                 </p>
               )}
             </div>

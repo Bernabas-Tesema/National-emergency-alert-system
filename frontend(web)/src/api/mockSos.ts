@@ -78,7 +78,7 @@ function fromApi(row: ApiSosCase): SosTicket {
     sourceStatus: row.status,
     assignedDispatcher:
       row.status === 'org_reviewing' || row.status === 'submitted' || row.status === 'verified'
-        ? row.assigned_organization || 'Organization / INSA'
+        ? row.assigned_organization || 'Organization / Ethio Alert'
         : undefined,
   }
 }
@@ -188,7 +188,7 @@ export function registerIncomingCitizenSos(partial: {
     citizenPhoneMasked: partial.citizenPhone ? `${partial.citizenPhone.slice(0, 6)}***` : '+251 91* *** ***',
     realCitizenName: partial.citizenName,
     realCitizenPhone: partial.citizenPhone,
-    notes: partial.notes || ['Citizen emergency distress signal dispatched to INSA.'],
+    notes: partial.notes || ['Citizen emergency distress signal dispatched to Ethio Alert.'],
     createdAt: new Date().toISOString(),
   }
   sosTicketsStore.unshift(newTicket)

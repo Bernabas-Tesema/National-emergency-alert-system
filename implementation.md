@@ -815,19 +815,50 @@ Configure the backend URL in `mobile/lib/config.dart`.
 ### Credentials Quick Reference
 
 > [!IMPORTANT]
-> **Mock mode** (default, no backend needed): Password = `Password123!` · 2FA Code = `123456`
-> **Live mode** (Django backend running): Password = `change-me` · 2FA Code sent via email
+> **One-Time First Login OTP**: 
+> Verification code (OTP/2FA) is required **only on the first login** for each account.
+> Once verified, when users log out and log in again, they sign in directly with their username and password without being prompted for OTP again.
+> 
+> **Mock mode** (default, no backend needed): Password = `Password123!` · First login 2FA Code = `123456`
+> **Live mode** (Django backend running): Password = `change-me` · First login 2FA Code sent via email / on-screen debug OTP
 
 ### All Demo Accounts with Passwords
 
-| # | Username | Password (Mock) | Password (Live) | Role | Label | Organization | 2FA Code |
-|---|----------|----------------|-----------------|------|-------|-------------|----------|
+| # | Username | Password (Mock) | Password (Live) | Role | Label | Organization | 2FA Code (1st Login Only) |
+|---|----------|----------------|-----------------|------|-------|-------------|----------------------------|
 | 1 | `admin1` | `Password123!` | `change-me` | ADMINISTRATOR | Administrator (INSA) | INSA | `123456` |
 | 2 | `officer1` | `Password123!` | `change-me` | HIGHER_OFFICER | Higher Officer (Tier-2 Approver) | INSA | `123456` |
 | 3 | `dispatcher1` | `Password123!` | `change-me` | DISPATCHER | Emergency Dispatcher (SOS) | INSA | `123456` |
 | 4 | `auditor1` | `Password123!` | `change-me` | AUDITOR | Compliance Auditor | INSA | `123456` |
 | 5 | `orgadmin1` | `Password123!` | `change-me` | ORG_ADMIN | Organization Administrator | Fire & Emergency Authority | `123456` |
 | 6 | `provider1` | `Password123!` | `change-me` | ORG_OFFICER | Organization Officer | Fire & Emergency Authority | `123456` |
+
+### Email Configuration & OTP Delivery
+
+The backend supports two modes for delivering the first-time login verification codes:
+
+1. **Development Console Mode (Recommended for Local Dev - Zero Setup)**:
+   In `backend/.env`:
+   ```env
+   EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+   ```
+   When set to `console.EmailBackend`, Django prints the OTP directly to the terminal running `python manage.py runserver`, and in DEBUG mode the OTP is also available on-screen.
+
+2. **Real SMTP Mode (Gmail)**:
+   In `backend/.env`:
+   ```env
+   STAFF_FALLBACK_OTP_EMAIL=your-real-email@gmail.com
+   DEFAULT_FROM_EMAIL=your-real-email@gmail.com
+   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_USE_TLS=true
+   EMAIL_HOST_USER=your-real-email@gmail.com
+   EMAIL_HOST_PASSWORD=xxxx-xxxx-xxxx-xxxx   # 16-character Google App Password (not your normal password)
+   ```
+   > [!NOTE]
+   > If you see `yo***@gmail.com`, that was the placeholder `your-gmail@gmail.com` masked by the privacy filter.
+   > The error `Connection unexpectedly closed` happens when placeholder credentials (`your-gmail-app-password`) attempt to connect to Gmail SMTP. Updating `backend/.env` with your real email and App Password (or switching to `console.EmailBackend`) resolves this.
 
 ### Role Descriptions & Access Summary
 

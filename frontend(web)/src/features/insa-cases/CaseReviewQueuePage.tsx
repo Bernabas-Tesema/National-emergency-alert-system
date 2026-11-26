@@ -187,7 +187,7 @@ export default function CaseReviewQueuePage() {
       {/* Eyebrow & Title */}
       <div>
         <p className="text-[11px] font-bold text-teal-400 tracking-widest uppercase">
-          INSA Triage Operations
+          Ethio Alert Triage Operations
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-white mt-0.5">
           Case Review & Moderation Queue

@@ -438,7 +438,7 @@ ${summaryData.recommendations.map((r) => `• ${r}`).join('\n')}
         {/* Footer */}
         <div className="border-t border-[#1b2e34] bg-[#0c1417] px-6 py-3.5 flex items-center justify-between">
           <span className="text-[11px] text-slate-500">
-            {summaryData ? `Generated at ${summaryData.generatedAt}` : 'INSA Operations Analytics Engine'}
+            {summaryData ? `Generated at ${summaryData.generatedAt}` : 'Ethio Alert Operations Analytics Engine'}
           </span>
 
           <div className="flex items-center gap-2">

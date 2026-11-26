@@ -5,10 +5,10 @@ from alerts_api.models import StaffAccount
 from alerts_api.passwords import generate_token, hash_password
 
 DEMO_STAFF = [
-    ("admin1", "ADMINISTRATOR", "INSA Administrator", "INSA"),
-    ("officer1", "HIGHER_OFFICER", "INSA Higher Officer", "INSA"),
-    ("dispatcher1", "DISPATCHER", "INSA Dispatcher", "INSA"),
-    ("auditor1", "AUDITOR", "INSA Auditor", "INSA"),
+    ("admin1", "ADMINISTRATOR", "Ethio Alert Administrator", "Ethio Alert"),
+    ("officer1", "HIGHER_OFFICER", "Ethio Alert Higher Officer", "Ethio Alert"),
+    ("dispatcher1", "DISPATCHER", "Ethio Alert Dispatcher", "Ethio Alert"),
+    ("auditor1", "AUDITOR", "Ethio Alert Auditor", "Ethio Alert"),
     ("orgadmin1", "ORG_ADMIN", "Org Administrator", "Fire & Emergency Authority"),
     ("provider1", "ORG_OFFICER", "Org Officer", "Fire & Emergency Authority"),
 ]

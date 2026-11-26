@@ -161,7 +161,7 @@ export default function CaseForm({
             className="flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white hover:bg-teal-500 transition-colors shadow-md disabled:opacity-50"
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Submit to INSA</span>
+            <span>Submit to Ethio Alert</span>
           </button>
         </div>
       </div>

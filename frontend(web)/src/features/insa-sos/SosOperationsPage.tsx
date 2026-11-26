@@ -155,7 +155,7 @@ export default function SosOperationsPage() {
       playEmergencyChime()
     }
     if (voiceEnabledRef.current) {
-      const speech = `Emergency Alert! Direct citizen SOS distress signal received at INSA from ${ticket.region}. Emergency type: ${ticket.type}. Immediate emergency response required.`
+      const speech = `Emergency Alert! Direct citizen SOS distress signal received at Ethio Alert from ${ticket.region}. Emergency type: ${ticket.type}. Immediate emergency response required.`
       speakVoiceAlarm(speech)
     }
     setIncomingAlertBanner(ticket)

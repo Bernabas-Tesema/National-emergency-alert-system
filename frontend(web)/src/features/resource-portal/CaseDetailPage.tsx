@@ -173,7 +173,7 @@ export default function CaseDetailPage() {
           <div className="flex items-center gap-3 p-3 rounded-lg bg-red-950/60 border border-red-800 text-red-300 text-xs">
             <XCircle className="w-5 h-5 text-red-400 shrink-0" />
             <div>
-              <p className="font-semibold">Case Rejected by INSA</p>
+              <p className="font-semibold">Case Rejected by Ethio Alert</p>
               <p className="text-[11px] mt-0.5 text-red-200">
                 Reason: {record.decision?.comment || 'Duplicate or unverified information.'}
               </p>
@@ -221,9 +221,9 @@ export default function CaseDetailPage() {
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
             <div>
-              <h4 className="text-xs font-bold text-purple-200">INSA Clarification Requested</h4>
+              <h4 className="text-xs font-bold text-purple-200">Ethio Alert Clarification Requested</h4>
               <p className="text-xs text-purple-300 mt-1">
-                INSA officials require additional on-ground clarification before proceeding to Tier-1 alert drafting.
+                Ethio Alert officials require additional on-ground clarification before proceeding to Tier-1 alert drafting.
                 Please respond in the coordination thread below, then resubmit.
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function CaseDetailPage() {
               disabled={busy}
               className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 shadow-sm disabled:opacity-50"
             >
-              {busy ? 'Resubmitting...' : 'Mark Clarified & Resubmit to INSA'}
+              {busy ? 'Resubmitting...' : 'Mark Clarified & Resubmit to Ethio Alert'}
             </button>
             {actionError && <p className="text-xs text-red-400">{actionError}</p>}
           </div>
@@ -314,7 +314,7 @@ export default function CaseDetailPage() {
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-teal-400" />
             <h4 className="text-xs font-bold uppercase tracking-wider text-teal-300">
-              INSA Alert Broadcast Delivery Summary
+              Ethio Alert Broadcast Delivery Summary
             </h4>
           </div>
 

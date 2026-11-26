@@ -50,7 +50,7 @@ export default function EthioAlertAiAssistant() {
       const result = await liveAiAssist({
         role,
         message: trimmed,
-        context: `User: ${user?.fullName || 'staff'}; org: ${user?.organization || 'INSA'}; page: EthioAlert web console.`,
+        context: `User: ${user?.fullName || 'staff'}; org: ${user?.organization || 'Ethio Alert'}; page: EthioAlert web console.`,
       })
       setMessages((prev) => [
         ...prev,

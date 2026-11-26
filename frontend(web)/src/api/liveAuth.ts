@@ -32,12 +32,19 @@ function readRole(token: string): string {
 }
 
 interface StaffLoginChallengeResponse {
-  challenge_id: string
+  challenge_id?: string
   email_hint?: string
   otp_sent?: boolean
   expires_in_minutes?: number
   debug_otp?: string
   email_warning?: string
+  requires_otp?: boolean
+  access_token?: string
+  must_change_password?: boolean
+  full_name?: string
+  role?: string
+  organization?: string
+  email?: string
 }
 
 interface StaffLoginResponse {
@@ -49,7 +56,7 @@ interface StaffLoginResponse {
   email?: string
 }
 
-function toUser(username: string, token: string, login: StaffLoginResponse): User {
+function toUser(username: string, token: string, login: Partial<StaffLoginResponse>): User {
   const apiRole = readRole(token)
   const frontendRole = (login.role as Role | undefined) || ROLE_BY_API[apiRole] || 'ADMINISTRATOR'
   return {
@@ -57,7 +64,7 @@ function toUser(username: string, token: string, login: StaffLoginResponse): Use
     username,
     fullName: login.full_name || username,
     role: frontendRole,
-    organization: login.organization || (apiRole === 'organization_officer' ? 'Partner organization' : 'INSA'),
+    organization: login.organization || (apiRole === 'organization_officer' ? 'Partner organization' : 'Ethio Alert'),
     mustChangePassword: Boolean(login.must_change_password),
     email: login.email || '',
   }
@@ -66,19 +73,52 @@ function toUser(username: string, token: string, login: StaffLoginResponse): Use
 export async function liveSubmitCredentials(
   username: string,
   password: string,
-): Promise<{ challengeId: string; emailHint?: string; debugOtp?: string; emailWarning?: string }> {
+): Promise<{
+  requiresTwoFactor: boolean
+  challengeId?: string
+  emailHint?: string
+  debugOtp?: string
+  emailWarning?: string
+  token?: string
+  user?: User
+}> {
   try {
     const result = await apiFetch<StaffLoginChallengeResponse>('/api/v1/auth/staff/login', {
       method: 'POST',
       body: JSON.stringify({ username, password }),
     })
-    const challengeId = result.challenge_id
+
+    // If backend returned access_token directly (subsequent login / requires_otp === false):
+    if (result.access_token && result.requires_otp === false) {
+      setAccessToken(result.access_token)
+      let subUsername = username
+      try {
+        const payload = result.access_token.split('.')[1]
+        if (payload) {
+          const claims = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+            sub?: string
+          }
+          subUsername = claims.sub || username
+        }
+      } catch {
+        subUsername = username
+      }
+      const user = toUser(subUsername, result.access_token, result)
+      return {
+        requiresTwoFactor: false,
+        token: result.access_token,
+        user,
+      }
+    }
+
+    const challengeId = result.challenge_id || ''
     pending.set(challengeId, {
       challengeId,
       emailHint: result.email_hint || '',
       debugOtp: result.debug_otp,
     })
     return {
+      requiresTwoFactor: true,
       challengeId,
       emailHint: result.email_hint,
       debugOtp: result.debug_otp,

@@ -133,7 +133,7 @@ export default function AlertComposerPage() {
         setTextAm(result.data.am)
       } else {
         setTextEn(
-          `OFFICIAL INSA WARNING: ${severity.toUpperCase()} hazard detected in ${targetArea}. Public safety protocols are activated. Follow instructions from local emergency personnel immediately.`,
+          `OFFICIAL ETHIO ALERT WARNING: ${severity.toUpperCase()} hazard detected in ${targetArea}. Public safety protocols are activated. Follow instructions from local emergency personnel immediately.`,
         )
         setTextAm(
           `ይፋዊ የኢንሳ ማስጠንቀቂያ፡ በ${targetArea} አደገኛ ሁኔታ ተከስቷል። የደህንነት መመሪያዎችን ተግባራዊ ያድርጉና የአካባቢውን የድንገተኛ አደጋ መመሪያዎችን ይከተሉ።`,

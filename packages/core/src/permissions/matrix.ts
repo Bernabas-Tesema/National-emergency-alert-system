@@ -70,10 +70,10 @@ export const PERMISSIONS = [
 export type Permission = (typeof PERMISSIONS)[number]
 
 export const ROLE_LABELS: Record<StaffRole, string> = {
-  ADMINISTRATOR: 'Administrator (INSA)',
+  ADMINISTRATOR: 'Administrator (Ethio Alert)',
   HIGHER_OFFICER: 'Higher Officer (Tier-2 Approver)',
   DISPATCHER: 'Emergency Dispatcher (SOS)',
-  AUDITOR: 'Compliance Auditor (INSA)',
+  AUDITOR: 'Compliance Auditor (Ethio Alert)',
   ORG_ADMIN: 'Organization Administrator',
   ORG_OFFICER: 'Organization Officer',
 }

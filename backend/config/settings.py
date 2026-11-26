@@ -21,6 +21,8 @@ def _env_list(name: str, default: str = "") -> list[str]:
 DEBUG = _env_bool("DEV_MODE", default=True)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY") or os.getenv("JWT_SECRET") or "django-dev-secret-change-me"
 ALLOWED_HOSTS = _env_list("ALLOWED_HOSTS", "127.0.0.1,localhost")
+if "testserver" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("testserver")
 
 INSTALLED_APPS = [
     "jazzmin",

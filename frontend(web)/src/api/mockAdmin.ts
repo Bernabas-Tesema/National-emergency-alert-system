@@ -19,7 +19,7 @@ export class AdminError extends Error {}
 
 // All names, numbers and dates below are invented.
 const ORGANIZATIONS: Organization[] = [
-  { id: 'org-insa', name: 'INSA', kind: 'insa', status: 'active', createdAt: '2026-09-21' },
+  { id: 'org-insa', name: 'Ethio Alert', kind: 'insa', status: 'active', createdAt: '2026-09-21' },
   { id: 'org-fire', name: 'Addis Ababa Fire & Emergency Authority', kind: 'fire', status: 'active', createdAt: '2026-09-22' },
   { id: 'org-police', name: 'Addis Ababa Police Commission', kind: 'police', status: 'active', createdAt: '2026-09-22' },
   { id: 'org-health', name: 'Addis Ababa Health Bureau', kind: 'health', status: 'active', createdAt: '2026-09-23' },
@@ -91,7 +91,7 @@ export async function createOrganization(
     throw new AdminError('The name must be 3 to 80 characters.')
   }
   if ((input.kind as string) === 'insa') {
-    throw new AdminError('INSA is built in and cannot be registered again.')
+    throw new AdminError('Ethio Alert is built in and cannot be registered again.')
   }
   if (ORGANIZATIONS.some((o) => o.name.toLowerCase() === name.toLowerCase())) {
     throw new AdminError('An organization with that name already exists.')
@@ -183,7 +183,7 @@ export async function setOrganizationStatus(
   const found = findOrganization(id)
   if (!found) throw new AdminError('Organization not found.')
   if (found.kind === 'insa' && status === 'suspended') {
-    throw new AdminError('INSA cannot be suspended.')
+    throw new AdminError('Ethio Alert cannot be suspended.')
   }
   found.status = status
   // Real backend: suspending an organization must also block its staff.

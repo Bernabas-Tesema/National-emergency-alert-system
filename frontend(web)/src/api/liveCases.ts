@@ -125,7 +125,7 @@ function toRecord(api: ApiCase): CaseRecord {
       authorId: 'org',
       authorName: api.assigned_organization || api.organization || 'Organization',
       authorRole: 'ORG_OFFICER',
-      text: `Org handoff to INSA: ${api.org_response}`,
+      text: `Org handoff to Ethio Alert: ${api.org_response}`,
       sentAt: api.created_at,
     })
   }
@@ -133,7 +133,7 @@ function toRecord(api: ApiCase): CaseRecord {
     messages.unshift({
       id: `review-${id}`,
       authorId: 'insa',
-      authorName: 'INSA',
+      authorName: 'Ethio Alert',
       authorRole: 'ADMINISTRATOR',
       text: comment,
       sentAt: api.created_at,
@@ -159,7 +159,7 @@ function toRecord(api: ApiCase): CaseRecord {
       status === 'rejected'
         ? {
             outcome: 'rejected',
-            decidedBy: 'INSA',
+            decidedBy: 'Ethio Alert',
             decidedAt: api.created_at,
             comment,
           }

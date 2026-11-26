@@ -78,7 +78,7 @@ export default function GlobalSearchDialog({ open, onClose }: GlobalSearchDialog
         id: 'nav-new-case',
         title: 'Submit New Incident',
         category: 'Pages',
-        description: 'Report a new disaster or hazard area to INSA',
+        description: 'Report a new disaster or hazard area to Ethio Alert',
         path: '/resource/cases/new',
         icon: FileText,
         roles: ['ORG_ADMIN', 'ORG_OFFICER'],
@@ -393,7 +393,7 @@ export default function GlobalSearchDialog({ open, onClose }: GlobalSearchDialog
               Select
             </span>
           </div>
-          <span>INSA National Safety Operations</span>
+          <span>Ethio Alert National Safety Operations</span>
         </div>
       </div>
     </div>

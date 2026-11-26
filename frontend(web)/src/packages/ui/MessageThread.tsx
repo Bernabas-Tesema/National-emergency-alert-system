@@ -72,7 +72,7 @@ export function MessageThread({
       <div className="flex-1 p-4 space-y-3.5 max-h-[380px] overflow-y-auto">
         {messages.length === 0 ? (
           <div className="py-12 text-center text-xs text-slate-400">
-            No messages yet. Direct questions or clarifications between INSA and the Resource Organization appear here.
+            No messages yet. Direct questions or clarifications between Ethio Alert and the Resource Organization appear here.
           </div>
         ) : (
           messages.map((msg) => {
@@ -90,7 +90,7 @@ export function MessageThread({
                   {isInsa ? (
                     <span className="flex items-center gap-1 text-teal-400 font-medium">
                       <ShieldAlert className="w-3 h-3" />
-                      {msg.senderName} (INSA)
+                      {msg.senderName} (Ethio Alert)
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-sky-400 font-medium">
@@ -157,7 +157,7 @@ export function MessageThread({
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type a message or response to INSA..."
+            placeholder="Type a message or response to Ethio Alert..."
             className="flex-1 rounded-md bg-[#162327] border border-[#1b2e34] px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-teal-500"
             disabled={sending}
           />

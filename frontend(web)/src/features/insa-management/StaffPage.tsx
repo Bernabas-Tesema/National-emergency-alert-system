@@ -212,7 +212,7 @@ export default function StaffPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-white">Staff accounts</h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage INSA control centre operators and partner organization emergency officers.
+            Manage Ethio Alert control centre operators and partner organization emergency officers.
           </p>
         </div>
         {!showForm && (

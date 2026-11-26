@@ -56,7 +56,7 @@ const ROLE_PROMPTS: Record<string, string[]> = {
   ],
   DISPATCHER: [
     'How do I prioritize multiple SOS tickets?',
-    'Checklist after an org returns an SOS to INSA.',
+    'Checklist after an org returns an SOS to Ethio Alert.',
   ],
   AUDITOR: [
     'What audit events matter after an alert dispatch?',
@@ -64,11 +64,11 @@ const ROLE_PROMPTS: Record<string, string[]> = {
   ],
   ORG_ADMIN: [
     'How should our officers handle SOS inbox returns?',
-    'Tips for tracking case outcomes after INSA broadcast.',
+    'Tips for tracking case outcomes after Ethio Alert broadcast.',
   ],
   ORG_OFFICER: [
-    'Help me write a clear incident description for INSA.',
-    'What belongs in an SOS return note to INSA?',
+    'Help me write a clear incident description for Ethio Alert.',
+    'What belongs in an SOS return note to Ethio Alert?',
   ],
 }
 

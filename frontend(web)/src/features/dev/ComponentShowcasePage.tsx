@@ -55,7 +55,7 @@ export default function ComponentShowcasePage() {
       caseId: 'ETH-001',
       senderId: 'u-insa-1',
       senderName: 'Marta Haile',
-      senderRole: 'INSA Administrator',
+      senderRole: 'Ethio Alert Administrator',
       content: 'Please verify the downstream coordinates for the Awash river overflow before we release the Tier-1 alert draft.',
       timestamp: new Date(Date.now() - 3600000).toISOString(),
     },
@@ -235,7 +235,7 @@ export default function ComponentShowcasePage() {
           <div>
             <h3 className="text-sm font-semibold text-slate-200">Clarification & Communication Thread</h3>
             <p className="text-xs text-slate-400">
-              Two-way messaging between Resource Organizations and INSA control centre with attachments.
+              Two-way messaging between Resource Organizations and Ethio Alert control centre with attachments.
             </p>
           </div>
 

@@ -18,6 +18,7 @@ class StaffAccount(models.Model):
     password_hash = models.CharField(max_length=256, blank=True, default="")
     must_change_password = models.BooleanField(default=True)
     password_change_token = models.CharField(max_length=128, blank=True, default="")
+    otp_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
